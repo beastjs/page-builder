@@ -1,0 +1,7 @@
+node_modules/
+dist/
+playwright-report/
+test-results/
+playground/src/pages/*.btsx
+!playground/src/pages/Home.btsx
+.DS_Store

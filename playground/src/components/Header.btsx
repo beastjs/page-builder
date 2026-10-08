@@ -1,0 +1,13 @@
+import { Link } from '@octanejs/tanstack-router'
+
+header.workspace-header
+  a.wordmark(href="/")
+    svg(width="24" height="27" viewBox="0 0 24 27" fill="none" aria-hidden="true")
+      path(d="M12 1 23 7.5v12L12 26 1 19.5v-12L12 1Z" stroke="currentColor" strokeWidth="1.5")
+      path(d="m1 7.5 11 6.5 11-6.5M12 14v12" stroke="currentColor" strokeWidth="1.5")
+    | beast
+    span.studio STUDIO
+  nav.workspace-nav
+    Link(to="/" activeProps={{className: "active"}}) Overview
+    a(href="https://github.com/beastjs" target="_blank" rel="noreferrer") Resources ↗
+  span.workspace-avatar P

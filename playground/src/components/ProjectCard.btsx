@@ -1,0 +1,15 @@
+module
+  interface Props { number: string; title: string; description: string; kind: string }
+
+props { number, title, description, kind }: Props
+article.project-card
+  div.card-top
+    span.card-number #{number}
+    span ↗
+  div.card-lines
+    div
+    div
+    div
+  span.card-kind #{kind}
+  h3 #{title}
+  p #{description}

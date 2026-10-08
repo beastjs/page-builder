@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false, "declaration": true, "emitDeclarationOnly": true,
+    "rootDir": ".", "outDir": "dist/types"
+  },
+  "include": ["vite.ts", "rspack.ts", "rsbuild.ts", "server", "shared"]
+}

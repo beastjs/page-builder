@@ -1,0 +1,22 @@
+import { useState } from 'octane'
+import { workspaceTabs } from '../lib/sections'
+
+setup const [selected, setSelected] = useState('ideas');
+
+section.section-tabs
+  div.section-tab-list(role="tablist" aria-label="Workspace sections")
+    each tab in workspaceTabs key tab.value
+      button.section-tab(role="tab" id={"tab-" + tab.value} aria-selected={selected === tab.value} aria-controls={"panel-" + tab.value} tabIndex={selected === tab.value ? 0 : -1} disabled={tab.disabled} onClick={() => setSelected(tab.value)} onKeyDown={(event) => { if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) { event.preventDefault(); const index = event.key === 'Home' ? 0 : event.key === 'End' ? workspaceTabs.length - 1 : (workspaceTabs.findIndex(item => item.value === selected) + (event.key === 'ArrowRight' ? 1 : -1) + workspaceTabs.length) % workspaceTabs.length; const next = workspaceTabs[index]; setSelected(next.value); document.getElementById('tab-' + next.value)?.focus(); } }}) #{tab.label}
+  div.section-tab-panel(role="tabpanel" id={"panel-" + selected} aria-labelledby={"tab-" + selected} tabIndex="0")
+    if selected === 'ideas'
+      p Your next page starts with a small idea. Open the builder to give it a home.
+    else
+      p Pages you create will appear in your navigation. Your workspace grows with you.
+
+style
+  .section-tabs { margin-bottom: 36px; }
+  .section-tab-list { display: flex; gap: 24px; border-bottom: 1px solid #deded9; }
+  .section-tab { padding: 12px 0; margin-bottom: -1px; border: 0; border-bottom: 2px solid transparent; color: #969590; background: transparent; font: inherit; font-size: 13px; cursor: pointer; }
+  .section-tab[aria-selected="true"] { border-bottom-color: #33342e; color: #33342e; }
+  .section-tab-panel { padding: 14px 0 0; color: #8a8b84; font-size: 12px; }
+  .section-tab-panel p { margin: 0; }
