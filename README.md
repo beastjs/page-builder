@@ -17,7 +17,13 @@ Open `http://127.0.0.1:5190` and press **⌘B**, or click **Builder** in the bot
 
 ## Add it to a Beast project
 
-This repository is not published yet. Build and link it locally:
+After the release is published to npm, install it in your Beast app:
+
+```sh
+bun add -d @beastjs/page-builder
+```
+
+To try the package locally before publishing, build and link it:
 
 ```sh
 # In beast-page-builder
@@ -181,3 +187,15 @@ client/                         Widget, sonar animation, page starters
 playground/                     Beast app for trying the plugin
 tests/                          Project, API, bundler, and browser checks
 ```
+
+## Release and publish
+
+Release artifacts are attached to the corresponding [GitHub release](https://github.com/beastjs/page-builder/releases). The package is published to npm manually.
+
+To publish the verified tarball from a release:
+
+```sh
+npm publish ./releases/beastjs-page-builder-0.1.0.tgz --access public
+```
+
+For a future release, update the package version and changelog, run `bun run check` and `bun run test:browser`, then run `npm pack --pack-destination releases`. `prepack` builds the distribution so each tarball includes the adapters, declarations, and browser widget. Publishing from the repository also runs `prepublishOnly` checks. Check the packed file list with `bun run pack:check`.

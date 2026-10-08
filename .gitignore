@@ -5,3 +5,5 @@ test-results/
 playground/src/pages/*.btsx
 !playground/src/pages/Home.btsx
 .DS_Store
+releases/
+*.tgz

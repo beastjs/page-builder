@@ -24,7 +24,12 @@
       "default": "./dist/rsbuild.js"
     }
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
   "engines": {
     "node": ">=22.22.2"
   },
@@ -35,7 +40,9 @@
     "test": "bun run build && bun test",
     "test:browser": "playwright test",
     "check": "bun run typecheck && bun run test",
-    "prepublishOnly": "bun run check"
+    "prepublishOnly": "bun run check",
+    "prepack": "bun run build",
+    "pack:check": "npm pack --dry-run"
   },
   "dependencies": {
     "beast-tsrx": "0.4.3",
@@ -68,5 +75,31 @@
     "@types/node": "^26.2.0",
     "esbuild": "^0.25.0",
     "vite": "^8.0.16"
+  },
+  "author": "phtn",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/beastjs/page-builder.git"
+  },
+  "homepage": "https://github.com/beastjs/page-builder#readme",
+  "bugs": {
+    "url": "https://github.com/beastjs/page-builder/issues"
+  },
+  "keywords": [
+    "beast",
+    "btsx",
+    "tsrx",
+    "octane",
+    "page-builder",
+    "devtools",
+    "vite",
+    "vite-plugin",
+    "rspack",
+    "rspack-plugin",
+    "rsbuild",
+    "rsbuild-plugin"
+  ],
+  "publishConfig": {
+    "access": "public"
   }
 }
