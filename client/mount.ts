@@ -322,8 +322,10 @@ function mount(): void {
     `<button class="icon-button move" aria-label="Move builder" title="Drag to move. Arrow keys move; Home resets position.">${icon('grip')}</button>`
   const header = (title: string, subtitle = '') =>
     `<header class="topbar"><button class="icon-button back" aria-label="Back to builder">${icon('back')}</button><div class="header-text"><h2>${title}</h2>${subtitle ? `<p>${subtitle}</p>` : ''}</div>${moveHandle()}${closeButton()}</header>`
+  const themeToggle = () =>
+    `<button type="button" class="icon-button-small theme-toggle" aria-label="Dark mode" aria-pressed="${isDark()}" title="${isDark() ? 'Switch to light mode' : 'Switch to dark mode'}">${icon(isDark() ? 'sun' : 'moon')}</button>`
   const footer = () =>
-    `<footer class="footer"><span class="project-chip">${icon('logo')}${projectName()}</span><span><kbd>↑</kbd><kbd>↓</kbd> Navigate <kbd>↵</kbd> Select</span><button type="button" class="icon-button-small theme-toggle" aria-label="Dark mode" aria-pressed="${isDark()}" title="${isDark() ? 'Switch to light mode' : 'Switch to dark mode'}">${icon(isDark() ? 'sun' : 'moon')}</button></footer>`
+    `<footer class="footer"><span class="project-chip">${icon('logo')}${projectName()}</span><span><kbd>↑</kbd><kbd>↓</kbd> Navigate <kbd>↵</kbd> Select</span>${themeToggle()}</footer>`
   const notify = (text: string) => {
     message = text
     const target = panel.querySelector<HTMLElement>('.message')
@@ -525,6 +527,7 @@ function mount(): void {
       panel.innerHTML = `${header('Couldn’t connect to your project')}<div class="error-body">${icon('scan')}<h2>Let’s try that again.</h2><p class="error-note" role="alert">${escape(message)}</p><button class="primary retry">Scan project ${icon('scan')}</button></div>${footer()}`
       panel.querySelector('.retry')!.addEventListener('click', () => void scan())
     }
+    panel.querySelector('.action-footer')?.insertAdjacentHTML('beforeend', themeToggle())
     if (entering) {
       enter(panel.querySelectorAll<HTMLElement>(':scope > header, :scope > nav, :scope > footer'))
       enter(

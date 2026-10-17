@@ -799,6 +799,10 @@ summary::-webkit-details-marker {
   justify-content: flex-end;
   gap: 8px;
 }
+.action-footer > .primary,
+.action-footer > .file-actions {
+  margin-left: auto;
+}
 .existing-tabs {
   display: flex;
   flex-wrap: wrap;
