@@ -1,0 +1,16 @@
+import type { PlannedFile as FileChange } from '../../shared/types.js'
+import Icon from '../ui/Icon.btsx'
+import SourceViewer from '../ui/SourceViewer.btsx'
+
+props { file }: { file: FileChange }
+
+details.planned-file(open)
+  summary
+    Icon(name={file.action === 'create' ? 'plus' : 'page'})
+    span #{file.path}
+    small #{file.action === 'create' ? 'New file' : 'Update'}
+  SourceViewer(source={file.source} label={`Proposed ${file.path}`})
+  if file.before !== null
+    details.original-file
+      summary Current source
+      SourceViewer(source={file.before} label={`Current ${file.path}`})

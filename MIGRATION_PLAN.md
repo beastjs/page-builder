@@ -2,7 +2,7 @@
 
 Updated: October 18, 2026
 
-Next deliverable: migrate the shared review and save screen for page creation, page editing, and tabs.
+Next deliverable: migrate the source and collection inspectors, reusing the source viewer and type contract components.
 
 ## Progress board
 
@@ -13,8 +13,8 @@ Next deliverable: migrate the shared review and save screen for page creation, p
 | 2 | Search palette | Done | 0 |
 | 3 | Shared view components | Done | 1, 2 |
 | 4 | Page creation and editing | Done | 3 |
-| 5 | Review and save screens | Next | 3, 4 |
-| 6 | Source and collection inspectors | Queued | 3, 5 |
+| 5 | Review and save screens | Done | 3, 4 |
+| 6 | Source and collection inspectors | Next | 3, 5 |
 | 7 | Scan, success, and error screens | Queued | 3 |
 | 8 | Builder shell and state cleanup | Queued | 4–7 |
 | 9 | Final verification and measurements | Queued | 8 |
@@ -75,24 +75,24 @@ Evidence (October 18, 2026): production build and type checking passed. `bun run
 
 ## 5. Review and save screens
 
-Status: **Next**
+Status: **Done**
 
-Proposed files: `client/review/ReviewView.btsx`, `PlannedFile.btsx`, and `client/ui/SourceViewer.btsx`.
+Files: `client/review/ReviewView.btsx`, `PlannedFile.btsx`, `types.ts`, and `client/ui/SourceViewer.btsx`.
 
-- [ ] Migrate the shared page/tabs review screen with explicit create-page, edit-page, add-tabs, and edit-tabs modes.
-- [ ] Render proposed files and original source through a reusable source viewer, preserving literal source text.
-- [ ] Preserve file actions, compiler confirmation, route summary, and mode-specific save labels.
-- [ ] Keep API calls and reviewed hashes in TypeScript; preserve server checks for changed drafts, files, and contracts.
-- [ ] Preserve pending/error feedback, duplicate-submit protection, route eligibility for tabs, and back-to-draft behavior.
-- [ ] Verify review/save for all four modes, stale-review rejection, and recovery after a failed save.
+- [x] Migrate the shared page/tabs review screen with explicit create-page, edit-page, add-tabs, and edit-tabs modes.
+- [x] Render proposed files and original source through a reusable source viewer, preserving literal source text.
+- [x] Preserve file actions, compiler confirmation, route summary, and mode-specific save labels.
+- [x] Keep API calls and reviewed hashes in TypeScript; preserve server checks for changed drafts, files, and contracts.
+- [x] Preserve pending/error feedback, duplicate-submit protection, route eligibility for tabs, and back-to-draft behavior.
+- [x] Verify review/save for all four modes, stale-review rejection, and recovery after a failed save.
 
 Complete when: every page and tabs save flows through the BTSX review screen and retains the existing review protections.
 
-Evidence: pending.
+Evidence (October 18, 2026): `bun run check` passed all 57 non-browser tests, including 6 bundler integration tests and server checks for changed drafts, files, and component contracts. The final production build and type check passed. All 39 widget browser tests passed: 22 existing workflows, 5 shared-component tests, 4 page-editor tests, and 8 new read-only review tests. These cover all four save modes, real page/tabs writes, proposed and original literal source (including empty originals), retained disclosure state, back-to-draft focus, pending/duplicate-submit protection, failed-save retry and receipt cleanup, new hashes after stale-review rejection, tabs route eligibility, and closing during a pending save. Desktop and mobile screenshots were inspected, including horizontal scrolling for long source lines. The client bundle is 438,819 bytes minified and 136,411 bytes gzipped (Node zlib defaults): increases of 3,537 and 1,100 bytes over section 4. Dependencies, server behavior, and the plain TypeScript build script are unchanged.
 
 ## 6. Source and collection inspectors
 
-Status: **Queued**
+Status: **Next**
 
 Proposed files: `client/inspect/FileInspector.btsx`, `CollectionInspector.btsx`, and `DetectedItem.btsx`.
 

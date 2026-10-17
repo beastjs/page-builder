@@ -19,9 +19,13 @@ Open `http://127.0.0.1:5190` and press **⌘B**, or click **Builder** in the bot
 
 Track the remaining sections and their task checklists in the [BTSX migration plan](MIGRATION_PLAN.md).
 
-The search palette lives in `client/palette/*.btsx`, the tabs editor in `client/tabs/*.btsx`, and page creation/editing in `client/pages/*.btsx`. Palette action construction and filtering live in `client/palette/actions.ts`; page suggestions and section insertion live in `client/pages/model.ts`. The remaining views and the widget shell are TypeScript. `scripts/build.ts` stays plain TypeScript and compiles BTSX through Beast and Octane before esbuild bundles the client, including source-distributed Octane bindings. Consumers still receive a self-contained `dist/client.js` on Vite, Rspack, and Rsbuild.
+The search palette lives in `client/palette/*.btsx`, the tabs editor in `client/tabs/*.btsx`, and page creation/editing in `client/pages/*.btsx`. Palette action construction and filtering live in `client/palette/actions.ts`; page suggestions and section insertion live in `client/pages/model.ts`.
 
-Shared headers, action footers, and status messages live in `client/ui/`. The tabs and page editors use these components, and the palette shares the status message. Both page modes share `SourceEditor.btsx`. New views should reuse them as they migrate.
+The shared page/tabs review screens live in `client/review/*.btsx` and use `client/ui/SourceViewer.btsx` for proposed and original source. API requests and reviewed hashes remain in the TypeScript shell. The remaining views and the widget shell are TypeScript.
+
+Shared headers, action footers, and status messages live in `client/ui/`. The tabs editor, page editor, and review screens use these components, and the palette shares the status message. Both page modes share `SourceEditor.btsx`. New views should reuse them as they migrate.
+
+`scripts/build.ts` stays plain TypeScript and compiles BTSX through Beast and Octane before esbuild bundles the client, including source-distributed Octane bindings. Consumers still receive a self-contained `dist/client.js` on Vite, Rspack, and Rsbuild.
 
 `bun run typecheck` checks the TypeScript shell and type-checks generated TSRX for the client components in a temporary directory. Edit the authored BTSX files; the check removes its generated files afterward. The tabs and page forms use `@octanejs/tanstack-form`, while the shell handles API requests, draft persistence, navigation, dragging, and focus management.
 

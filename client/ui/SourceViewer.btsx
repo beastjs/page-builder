@@ -1,0 +1,10 @@
+module
+  export interface SourceViewerProps {
+    source: string
+    label?: string
+  }
+
+props { source, label }: SourceViewerProps
+
+pre.source-preview(tabIndex={0} aria-label={label})
+  code #{source}

@@ -1,0 +1,34 @@
+import type { ReviewMode, ReviewViewProps } from './types.js'
+import ViewHeader from '../ui/ViewHeader.btsx'
+import ActionFooter from '../ui/ActionFooter.btsx'
+import StatusMessage from '../ui/StatusMessage.btsx'
+import Icon from '../ui/Icon.btsx'
+import PlannedFile from './PlannedFile.btsx'
+
+module
+  const modes = {
+    'create-page': { label: 'Create page', hint: 'Creates the page and updates the route and navigation together.' },
+    'edit-page': { label: 'Save page', hint: 'Updates the existing page source.' },
+    'add-tabs': { label: 'Add Tabs', hint: 'Adds the Tabs component and its items to this page.' },
+    'edit-tabs': { label: 'Save tabs', hint: 'Updates this tab group in place.' }
+  } satisfies Record<ReviewMode, { label: string; hint: string }>
+
+props { mode, preview, ready = true, busy, dark, message, onSave, onBack, onClose }: ReviewViewProps
+setup
+  const content = modes[mode]
+  const save = () => { if (!busy && ready) void onSave() }
+
+ViewHeader(title="One last look" subtitle={preview.path} onBack={onBack} onClose={onClose})
+.preview-body
+  .validation
+    Icon(name="check")
+    | Compiles with Beast and Octane
+  each file in preview.files key file.path
+    PlannedFile(file={file})
+  StatusMessage(message={message})
+  p.hint #{content.hint}
+ActionFooter(
+  ~ description={`${preview.files.length} files · ${preview.routePath}`}
+  ~ dark={dark}
+  ~ action={{ type: 'button', className: 'save', label: content.label, pendingLabel: 'Saving…', pending: busy, disabled: !ready, icon: 'plus', onClick: save }}
+  ~ )

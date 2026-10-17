@@ -18,6 +18,8 @@ import { createRoot, flushSync, type Root } from 'octane'
 import TabsEditor from './tabs/TabsEditor.btsx'
 import Palette from './palette/Palette.btsx'
 import PageEditor from './pages/PageEditor.btsx'
+import ReviewView from './review/ReviewView.btsx'
+import type { ReviewViewProps } from './review/types.js'
 import type { PageEditorProps } from './pages/types.js'
 import { insertSection } from './pages/model.js'
 import { paletteActions } from './palette/actions.js'
@@ -201,6 +203,7 @@ function mount(): void {
   let tabsRoot: Root | undefined
   let paletteRoot: Root | undefined
   let pageRoot: Root | undefined
+  let reviewRoot: Root | undefined
   let draftRevision = 0
   let resumeTabs = false
   const routePrefix = apiBase.slice(0, -BASE.length)
@@ -247,6 +250,10 @@ function mount(): void {
     (themeOverride ?? config.theme) === 'dark' || ((themeOverride ?? config.theme) === 'auto' && systemTheme.matches)
   function applyTheme(): void {
     widget.dataset.theme = themeOverride ?? config.theme
+    if ((view === 'preview' || view === 'tabs-preview') && reviewRoot) {
+      renderReview()
+      return
+    }
     if ((view === 'draft' || view === 'page-edit') && pageRoot) {
       renderPageEditor()
       return
@@ -323,6 +330,10 @@ function mount(): void {
       renderPalette()
       return
     }
+    if ((view === 'preview' || view === 'tabs-preview') && reviewRoot) {
+      renderReview()
+      return
+    }
     if ((view === 'draft' || view === 'page-edit') && pageRoot) {
       renderPageEditor()
       return
@@ -351,6 +362,10 @@ function mount(): void {
       pageRoot.unmount()
       pageRoot = undefined
     }
+    if (view !== 'preview' && view !== 'tabs-preview' && reviewRoot) {
+      reviewRoot.unmount()
+      reviewRoot = undefined
+    }
     const entering = panel.dataset.view !== view
     panel.dataset.view = view
     if (view === 'scan') {
@@ -363,10 +378,7 @@ function mount(): void {
     } else if (view === 'tabs-draft') {
       renderTabsForm()
     } else if (view === 'preview' || view === 'tabs-preview') {
-      const isTabs = view === 'tabs-preview'
-      const proposed = isTabs ? tabsPreview! : preview!
-      panel.innerHTML = `${header('One last look', escape(proposed.path))}<div class="preview-body"><div class="validation">${icon('check')} Compiles with Beast and Octane</div>${proposed.files.map((file) => `<details class="planned-file" open><summary>${icon(file.action === 'create' ? 'plus' : 'page')}<span>${escape(file.path)}</span><small>${file.action === 'create' ? 'New file' : 'Update'}</small></summary><pre class="source-preview" tabindex="0" aria-label="Proposed ${escape(file.path)}"><code>${escape(file.source)}</code></pre>${file.before !== null ? `<details class="original-file"><summary>Current source</summary><pre class="source-preview" tabindex="0"><code>${escape(file.before)}</code></pre></details>` : ''}</details>`).join('')}<div class="message" role="status">${escape(message)}</div><p class="hint">${isTabs ? (tabsDraft.instance ? 'Updates this tab group in place.' : 'Adds the Tabs component and its items to this page.') : draft.path ? 'Updates the existing page source.' : 'Creates the page and updates the route and navigation together.'}</p></div><footer class="action-footer"><span>${proposed.files.length} files · ${escape(proposed.routePath)}</span><button class="primary save" ${busy || (isTabs && !tabsReady()) ? 'disabled' : ''}>${busy ? 'Saving…' : isTabs ? (tabsDraft.instance ? 'Save tabs' : 'Add Tabs') : draft.path ? 'Save page' : 'Create page'} ${icon('plus')}</button></footer>`
-      panel.querySelector('.save')!.addEventListener('click', () => void (isTabs ? saveTabs() : save()))
+      renderReview()
     } else if (view === 'file') {
       panel.innerHTML = `${header(escape(currentFile!.name), escape(currentFile!.path))}<div class="preview-body">${renderFileTabs()}${currentFile!.error ? `<p class="error-note">${escape(currentFile!.error)}</p>` : ''}<pre class="source-preview" tabindex="0"><code>${escape(currentSource)}</code></pre><div class="message" role="status"></div></div><footer class="action-footer"><span>${currentFile!.lines} lines · ${currentFile!.components.length} component${currentFile!.components.length === 1 ? '' : 's'}</span><div class="file-actions"><button class="secondary copy">Copy source</button>${currentFile!.kind === 'page' ? '<button class="primary edit-page">Edit page</button>' : ''}</div></footer>`
       panel.querySelector('.copy')!.addEventListener('click', () => {
@@ -423,7 +435,7 @@ function mount(): void {
       panel.innerHTML = `${header('Couldn’t connect to your project')}<div class="error-body">${icon('scan')}<h2>Let’s try that again.</h2><p class="error-note" role="alert">${escape(message)}</p><button class="primary retry">Scan project ${icon('scan')}</button></div>${footer()}`
       panel.querySelector('.retry')!.addEventListener('click', () => void scan())
     }
-    if (view !== 'tabs-draft' && view !== 'draft' && view !== 'page-edit') panel.querySelector('.action-footer')?.insertAdjacentHTML('beforeend', themeToggle())
+    if (view !== 'tabs-draft' && view !== 'draft' && view !== 'page-edit' && view !== 'preview' && view !== 'tabs-preview') panel.querySelector('.action-footer')?.insertAdjacentHTML('beforeend', themeToggle())
     if (entering) {
       enter(panel.querySelectorAll<HTMLElement>(':scope > header, :scope > nav, :scope > footer'))
       enter(
@@ -434,13 +446,12 @@ function mount(): void {
       )
     }
     positionPanel()
-    if (view === 'tabs-draft' || view === 'palette' || view === 'draft' || view === 'page-edit') return
+    if (view === 'tabs-draft' || view === 'palette' || view === 'draft' || view === 'page-edit' || view === 'preview' || view === 'tabs-preview') return
     panel.querySelector('.close')?.addEventListener('click', close)
     panel.querySelector('.back')?.addEventListener('click', () => {
       message = ''
       if (view === 'tabs-draft' || view === 'tabs-success') tabsReceipt(null)
-      view =
-        view === 'preview' ? (draft.path ? 'page-edit' : 'draft') : view === 'tabs-preview' ? 'tabs-draft' : 'palette'
+      view = 'palette'
       if (!report) {
         void scan()
         return
@@ -588,7 +599,7 @@ function mount(): void {
     }
   }
   async function saveTabs(): Promise<void> {
-    if (busy || !tabsPreview || !tabsReady()) return
+    if (busy || view !== 'tabs-preview' || !tabsPreview || !tabsReady()) return
     const turn = generation
     busy = true
     message = ''
@@ -607,6 +618,27 @@ function mount(): void {
         focusSearch()
       }
     }
+  }
+
+  function renderReview(): void {
+    if (!reviewRoot) {
+      panel.replaceChildren()
+      reviewRoot = createRoot(panel)
+    }
+    const controls = {
+      busy, dark: isDark(), message,
+      onBack() {
+        message = ''
+        view = view === 'tabs-preview' ? 'tabs-draft' : draft.path ? 'page-edit' : 'draft'
+        render()
+        panel.querySelector<HTMLElement>('input:not(:disabled), textarea:not(:disabled), select:not(:disabled)')?.focus()
+      },
+      onClose: close
+    }
+    const props: ReviewViewProps = view === 'tabs-preview'
+      ? { ...controls, mode: tabsDraft.instance ? 'edit-tabs' : 'add-tabs', preview: tabsPreview!, ready: tabsReady(), onSave: saveTabs }
+      : { ...controls, mode: draft.path ? 'edit-page' : 'create-page', preview: preview!, onSave: save }
+    flushSync(() => reviewRoot!.render(ReviewView, props))
   }
 
   function renderPageEditor(): void {
@@ -807,7 +839,7 @@ function mount(): void {
   }
 
   async function save(): Promise<void> {
-    if (busy || !preview) return
+    if (busy || view !== 'preview' || !preview) return
     const turn = generation
     busy = true
     message = ''
@@ -934,6 +966,8 @@ function mount(): void {
   // Clean up if an app's DOM ownership removes the mount during HMR or navigation.
   const observer = new MutationObserver(() => {
     if (host.isConnected) return
+    reviewRoot?.unmount()
+    reviewRoot = undefined
     pageRoot?.unmount()
     pageRoot = undefined
     tabsRoot?.unmount()
