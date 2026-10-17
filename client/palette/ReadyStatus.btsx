@@ -1,0 +1,26 @@
+import { useLayoutEffect, useRef, useState } from 'octane'
+import { animateReadyIndicator, readyHexes } from './ready.js'
+
+setup
+  const [hexes] = useState(readyHexes)
+  const rootRef = useRef<HTMLSpanElement | null>(null)
+  const indicatorRef = useRef<HTMLSpanElement | null>(null)
+  useLayoutEffect(() => {
+    if (!rootRef.current || !indicatorRef.current) return
+    return animateReadyIndicator(rootRef.current, indicatorRef.current)
+  }, [])
+
+span.ready-status.ready-status-enter(ref={rootRef})
+  span.ready-label
+    span.ready-indicator(ref={indicatorRef} aria-hidden="true")
+    | Builder ready
+  span.ready-hexes(aria-hidden="true")
+    each hex, index in hexes key index
+      svg.ready-hex(
+        ~ viewBox="0 0 24 24"
+        ~ fill="none"
+        ~ stroke="currentColor"
+        ~ stroke-width="1.5"
+        ~ style={hex.style}
+        ~ )
+        path(d="m12 2 8.7 5v10L12 22l-8.7-5V7Z")

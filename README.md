@@ -2,7 +2,7 @@
 
 A floating page builder for Beast projects. Press **⌘B** on macOS or **Ctrl+B** elsewhere: the widget transitions in, scans your project with a hexagonal sonar animation, and opens a searchable list of pages, components, navigation menus, tabs, and actions. Creating a page scaffolds its BTSX file, registers its URL in `src/router.ts`, and adds its navigation link in one reviewed change.
 
-The plugin runs on development servers only. The widget uses an isolated Shadow DOM and a small prebuilt browser bundle, so it requires no stylesheet rule or extra Octane runtime in the host app.
+The plugin runs on development servers only. The widget uses an isolated Shadow DOM and a prebuilt browser bundle with its own Octane runtime, so the host app needs no additional widget styles or runtime setup.
 
 ## Try it locally
 
@@ -14,6 +14,16 @@ bun run dev
 ```
 
 Open `http://127.0.0.1:5190` and press **⌘B**, or click **Builder** in the bottom-right corner. The playground is a real Beast/Octane app; its `.btsx` files appear in the scan.
+
+## Client development
+
+Track the remaining sections and their task checklists in the [BTSX migration plan](MIGRATION_PLAN.md).
+
+The search palette lives in `client/palette/*.btsx`, and the tabs editor lives in `client/tabs/*.btsx`. Palette action construction and filtering live in `client/palette/actions.ts`; the remaining views and the widget shell are TypeScript. `scripts/build.ts` stays plain TypeScript and compiles BTSX through Beast and Octane before esbuild bundles the client, including source-distributed Octane bindings. Consumers still receive a self-contained `dist/client.js` on Vite, Rspack, and Rsbuild.
+
+Shared headers, action footers, and status messages live in `client/ui/`. The tabs editor uses these components, and the palette shares the status message. New views should reuse them as they migrate.
+
+`bun run typecheck` checks the TypeScript shell and type-checks generated TSRX for the client components in a temporary directory. Edit the authored BTSX files; the check removes its generated files afterward. The tabs form uses `@octanejs/tanstack-form`, while the shell handles API requests, draft persistence, navigation, dragging, and focus management.
 
 ## Add it to a Beast project
 

@@ -3,7 +3,7 @@ import ProjectCard from '../components/ProjectCard.btsx'
 import SectionTabs from '../components/SectionTabs.btsx'
 
 div.home
-  PageTabs(items={[{"href":"#account","id":"account","label":"Account","shortLabel":"Account","icon":"arrow-right"},{"href":"#projects","id":"projects","label":"Projects","shortLabel":"Projects","icon":"close"}]} activeId={"account"} label={"The tabs"})
+  PageTabs(items={[{"href":"#account","id":"account","label":"Accounts","shortLabel":"Account","icon":"arrow-right"},{"href":"#projects","id":"projects","label":"Projects","shortLabel":"Projects","icon":"close"},{"href":"#tab-3","id":"tab-3","label":"Kimpoi","shortLabel":"Kimpoi","icon":"menu"}]} activeId={"account"} label={"The tabs"})
   section.intro
     p.eyebrow YOUR WORKSPACE, REIMAGINED
     h1 A space for your

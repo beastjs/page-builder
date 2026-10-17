@@ -1,0 +1,69 @@
+import { useEffect, useRef, useState } from 'octane'
+import type { PageRoute } from '../../shared/types.js'
+
+props { pages, page, disabled, onChoose }: { pages: PageRoute[]; page?: PageRoute; disabled: boolean; onChoose: (page: PageRoute) => void }
+setup
+  const [query, setQuery] = useState<string | null>(null)
+  const [opened, setOpened] = useState(false)
+  const [selected, setSelected] = useState(0)
+  const inputRef = useRef<HTMLInputElement | null>(null)
+  const listRef = useRef<HTMLDivElement | null>(null)
+  const matches = pages.filter((item) => `${item.name} ${item.routePath} ${item.file}`.toLowerCase().includes((query ?? '').toLowerCase()))
+  const index = Math.min(selected, Math.max(0, matches.length - 1))
+  const choose = (next: PageRoute) => {
+    setQuery(null)
+    setOpened(false)
+    setSelected(0)
+    onChoose(next)
+  }
+  const keydown = (event: KeyboardEvent) => {
+    if (event.isComposing) return
+    const key = event.key.toLowerCase()
+    const control = event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey
+    const step = event.key === 'ArrowDown' || (control && key === 'n') ? 1
+      : event.key === 'ArrowUp' || (control && key === 'p') ? -1 : 0
+    if (!step && event.key !== 'Enter') return
+    event.preventDefault()
+    event.stopPropagation()
+    if (event.key === 'Enter') {
+      if (opened && matches[index]) choose(matches[index])
+      return
+    }
+    setOpened(true)
+    setSelected(Math.max(0, Math.min(matches.length - 1, index + step)))
+  }
+  useEffect(() => {
+    const input = inputRef.current
+    const close = () => setOpened(false)
+    input?.addEventListener('builder:close-picker', close)
+    return () => input?.removeEventListener('builder:close-picker', close)
+  }, [])
+  useEffect(() => {
+    if (opened) listRef.current?.querySelector(`[id="tabs-page-${index}"]`)?.scrollIntoView({ block: 'nearest' })
+  }, [index, opened])
+
+label.field-label(for="tabs-page") Page route
+.page-picker
+  input#tabs-page.text-field(
+    ~ ref={inputRef}
+    ~ disabled={disabled}
+    ~ role="combobox"
+    ~ aria-autocomplete="list"
+    ~ aria-controls="tabs-pages"
+    ~ aria-expanded={opened}
+    ~ aria-activedescendant={opened && matches.length ? `tabs-page-${index}` : undefined}
+    ~ placeholder="Search pages by name or URL"
+    ~ value={query ?? (page ? `${page.name} · ${page.routePath}` : '')}
+    ~ autocomplete="off"
+    ~ onFocus={() => { setOpened(true); if (!query) inputRef.current?.select() }}
+    ~ onInput={(event) => { setQuery(event.currentTarget.value); setSelected(0); setOpened(true) }}
+    ~ onBlur={(event) => { if (!listRef.current?.contains(event.relatedTarget as Node | null)) setOpened(false) }}
+    ~ onKeyDown={keydown}
+    ~ )
+  #tabs-pages.page-options(ref={listRef} role="listbox" aria-label="Page routes" hidden={!opened})
+    each item, position in matches key `${item.file}:${item.routePath}`
+      button(type="button" role="option" id={`tabs-page-${position}`} aria-selected={position === index} data-page={position} onClick={() => choose(item)})
+        span #{item.name}
+        span #{item.routePath}
+    empty
+      p.hint No matching page routes.

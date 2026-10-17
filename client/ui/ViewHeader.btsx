@@ -1,0 +1,27 @@
+import Icon from './Icon.btsx'
+
+module
+  export interface ViewHeaderProps {
+    title: string
+    subtitle?: string
+    onBack: () => void
+    onClose: () => void
+  }
+
+props { title, subtitle, onBack, onClose }: ViewHeaderProps
+
+header.topbar
+  button.icon-button.back(type="button" aria-label="Back to builder" onClick={onBack})
+    Icon(name="back")
+  .header-text
+    h2 #{title}
+    if subtitle
+      p #{subtitle}
+  button.icon-button.move(
+    ~ type="button"
+    ~ aria-label="Move builder"
+    ~ title="Drag to move. Arrow keys move; Home resets position."
+    ~ )
+    Icon(name="grip")
+  button.icon-button.close(type="button" aria-label="Close builder" onClick={onClose})
+    Icon(name="close")

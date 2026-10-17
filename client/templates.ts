@@ -44,8 +44,17 @@ style
 `,
 }
 
-export const sections: Record<string, string> = {
+export const sectionLibrary: Record<string, string> = {
+  Topbar: '\n  nav.topbar(aria-label="Main navigation")\n    a.brand(href="/") Studio\n    a(href="#about") About\n    a(href="#contact") Contact\n',
+  Sidebar: '\n  aside.sidebar\n    nav(aria-label="Sidebar navigation")\n      a(href="/") Overview\n      a(href="/projects") Projects\n      a(href="/settings") Settings\n',
   Hero: '\n  section.hero\n    p.eyebrow INTRODUCING\n    h1 Build something remarkable.\n    p.description Your idea, brought to life.\n',
+  Stats: '\n  section.stats(aria-label="At a glance")\n    dl\n      div\n        dt Projects launched\n        dd 120+\n      div\n        dt Happy customers\n        dd 2,000+\n      div\n        dt Years of experience\n        dd 10\n',
+  'Partners marquee': '\n  section.partners(aria-label="Our partners")\n    h2 Trusted by great teams\n    div.partners-marquee\n      span Acme\n      span Orbit\n      span Layers\n      span Studio\n',
+  Footer: '\n  footer.footer#contact\n    a.brand(href="/") Studio\n    p Built with care. Made to be shared.\n    a(href="mailto:hello@example.com") Get in touch\n',
+}
+
+export const sections: Record<string, string> = {
+  ...sectionLibrary,
   Features: '\n  section.features\n    article.feature\n      h2 Made for you\n      p Thoughtful details. Endless possibilities.\n',
   'Call to action': '\n  section\n    h2 Ready to get started?\n    a.page-button(href="/contact") Let’s talk →\n',
 }

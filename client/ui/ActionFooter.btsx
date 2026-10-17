@@ -1,0 +1,39 @@
+import type { OctaneNode } from 'octane'
+import Icon from './Icon.btsx'
+import ThemeToggle from './ThemeToggle.btsx'
+
+module
+  export type FooterAction = {
+    label: string
+    pendingLabel?: string
+    pending?: boolean
+    disabled?: boolean
+    icon?: string
+    className?: string
+  } & (
+    | { type: 'submit'; form: string; onClick?: never }
+    | { type?: 'button'; form?: never; onClick: () => void }
+  )
+
+  export interface ActionFooterProps {
+    description: OctaneNode
+    action: FooterAction
+    dark: boolean
+  }
+
+props { description, action, dark }: ActionFooterProps
+
+footer.action-footer
+  span #{description}
+  button.primary(
+    ~ type={action.type ?? 'button'}
+    ~ form={action.form}
+    ~ className={action.className}
+    ~ disabled={action.disabled || action.pending}
+    ~ aria-busy={action.pending || undefined}
+    ~ onClick={action.onClick}
+    ~ )
+    | #{action.pending ? (action.pendingLabel ?? action.label) : action.label}
+    if action.icon
+      Icon(name={action.icon})
+  ThemeToggle(dark={dark})

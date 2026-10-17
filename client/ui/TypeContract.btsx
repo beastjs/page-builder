@@ -1,0 +1,29 @@
+import type { ItemType } from '../../shared/types.js'
+
+props { type }: { type: ItemType }
+
+.type-contract
+  .type-title
+    code #{type.name}
+    span.type-badge #{type.origin === 'declared' ? 'Declared type' : 'Inferred shape'}
+  if type.fields.length
+    .fields-scroll
+      table.type-fields
+        thead
+          tr
+            th Field
+            th Type
+            th Presence
+        tbody
+          each field in type.fields key field.name
+            tr
+              td
+                code #{field.name}
+              td
+                code #{field.type}
+              td #{field.optional ? 'Optional' : 'Required'}
+  if type.variants?.length
+    details.type-variants
+      summary #{type.variants.length} item variants
+      each variant in type.variants
+        TypeContract(type={variant})

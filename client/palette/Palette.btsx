@@ -1,0 +1,93 @@
+import { useLayoutEffect, useRef } from 'octane'
+import type { PaletteProps } from './types.js'
+import { paletteTabs } from './types.js'
+import Icon from '../ui/Icon.btsx'
+import ThemeToggle from '../ui/ThemeToggle.btsx'
+import StatusMessage from '../ui/StatusMessage.btsx'
+import ReadyStatus from './ReadyStatus.btsx'
+
+props { actions, tab, query, selected, dark, projectName, message, onQueryChange, onTabChange, onSelect, onCreate, onClose }: PaletteProps
+setup
+  const searchRef = useRef<HTMLInputElement | null>(null)
+  const resultsRef = useRef<HTMLDivElement | null>(null)
+  const keydown = (event: KeyboardEvent) => {
+    if (!(event.target instanceof Element) || !event.target.closest('.search, .result')) return
+    if (event.isComposing) return
+    const key = event.key.toLowerCase()
+    const control = event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey
+    const step = event.key === 'ArrowDown' || (control && key === 'n') ? 1
+      : event.key === 'ArrowUp' || (control && key === 'p') ? -1 : 0
+    if (step) {
+      event.preventDefault()
+      if (!actions.length) return
+      const next = (selected + step + actions.length) % actions.length
+      onSelect(next)
+      resultsRef.current?.querySelector(`[data-index="${next}"]`)?.scrollIntoView({ block: 'nearest' })
+      searchRef.current?.focus()
+    } else if (event.key === 'Enter') {
+      event.preventDefault()
+      actions[selected]?.run()
+    }
+  }
+  useLayoutEffect(() => {
+    resultsRef.current?.querySelectorAll<HTMLElement>('.result, .empty-state').forEach((element, index) => {
+      element.classList.add('builder-enter')
+      element.style.setProperty('--enter-delay', `${48 + Math.min(index, 5) * 24}ms`)
+    })
+  }, [tab])
+
+header.searchbar
+  Icon(name="search")
+  input.search(
+    ~ ref={searchRef}
+    ~ aria-label="Search pages, components, sections, navigation, tabs, and actions"
+    ~ placeholder="What would you like to build?"
+    ~ value={query}
+    ~ autocomplete="off"
+    ~ spellcheck={false}
+    ~ onInput={(event) => onQueryChange(event.currentTarget.value)}
+    ~ onKeyDown={keydown}
+    ~ )
+  button.icon-button.close(type="button" aria-label="Close builder" onClick={onClose})
+    Icon(name="close")
+nav.tabs(aria-label="Filter builder results")
+  each name in paletteTabs key name
+    button.tab(type="button" className={tab === name ? 'active' : ''} aria-pressed={tab === name} onClick={() => onTabChange(name)}) #{name}
+  ReadyStatus
+.results(ref={resultsRef} onKeyDown={keydown})
+  each action, index in actions key action.id
+    fragment
+      if index === 0 || actions[index - 1]?.group !== action.group
+        h3.group-label #{action.group}
+      button.result(
+        ~ type="button"
+        ~ className={index === selected ? 'selected' : ''}
+        ~ data-index={index}
+        ~ data-action={action.id}
+        ~ onClick={action.run}
+        ~ )
+        Icon(name={action.icon})
+        span.result-name #{action.name}
+        span.result-detail #{action.detail}
+        span.result-enter
+          Icon(name="return")
+  empty
+    .empty-state
+      Icon(name="search")
+      h3 #{query ? 'Nothing here just yet' : 'A clean slate'}
+      p #{query ? 'Try another name, or create something new.' : `No ${tab.toLowerCase()} found in this project.`}
+      button.secondary.empty-create(type="button" onClick={onCreate})
+        | Create a page
+        Icon(name="plus")
+StatusMessage(message={message})
+footer.footer
+  span.project-chip
+    Icon(name="logo")
+    | #{projectName}
+  span
+    kbd ↑
+    kbd ↓
+    | #{' Navigate '}
+    kbd ↵
+    | #{' Select'}
+  ThemeToggle(dark={dark})

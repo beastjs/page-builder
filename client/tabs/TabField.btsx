@@ -1,0 +1,62 @@
+import { useField } from '@octanejs/tanstack-form'
+import type { ItemField, TabValue } from '../../shared/types.js'
+import type { TabsForm } from './form.js'
+
+props { field, index, form, itemKey, onChange }: { field: ItemField; index: number; form: TabsForm; itemKey?: string; onChange: () => void }
+setup
+  const binding = useField({ form, name: `items[${index}].${field.name}` })
+  const id = `tab-${index}-${field.name}`
+  const value = binding.state.value
+  const options = field.values ?? (field.scalar === 'boolean' ? [true, false] : undefined)
+  const selected = value === undefined ? '' : String(options?.indexOf(value) ?? '')
+  const change = (event: Event) => {
+    const input = event.currentTarget as HTMLInputElement | HTMLSelectElement
+    const next: TabValue | undefined = input.value === '' && field.optional ? undefined
+      : options ? options[Number(input.value)]
+      : field.scalar === 'number' ? (input.value === '' ? NaN : Number(input.value)) : input.value
+    const old = binding.state.value
+    if (next === undefined) {
+      // Optional fields are omitted from the API payload rather than serialized as blanks.
+      form.setFieldValue('items', (items) => items.map((item, position) => {
+        if (position !== index) return item
+        const copy = { ...item }
+        delete copy[field.name]
+        return copy
+      }))
+    }
+    else binding.handleChange(next)
+    if (field.name === itemKey && form.state.values.active === old) form.setFieldValue('active', next ?? '')
+    onChange()
+  }
+
+div
+  label.field-label(for={id})
+    | #{field.name + ' '}
+    span.muted · Tab #{index + 1}#{field.optional ? ' · Optional' : ''}
+  if options
+    select.text-field(
+      ~ id={id}
+      ~ data-item={index}
+      ~ data-field={field.name}
+      ~ required={!field.optional}
+      ~ value={selected}
+      ~ onInput={change}
+      ~ onBlur={binding.handleBlur}
+      ~ )
+      if field.optional
+        option(value="") Omit
+      each option, optionIndex in options key optionIndex
+        option(value={String(optionIndex)}) #{String(option)}
+  else
+    input.text-field(
+      ~ id={id}
+      ~ data-item={index}
+      ~ data-field={field.name}
+      ~ type={field.scalar === 'number' ? 'number' : 'text'}
+      ~ step={field.scalar === 'number' ? 'any' : undefined}
+      ~ maxLength={field.scalar === 'number' ? undefined : 1000}
+      ~ value={String(value ?? '')}
+      ~ required={!field.optional}
+      ~ onInput={change}
+      ~ onBlur={binding.handleBlur}
+      ~ )

@@ -1,0 +1,119 @@
+import { useSelector } from '@octanejs/tanstack-form'
+import { useRef } from 'octane'
+import type { TabsEditorProps } from './types.js'
+import { useTabsForm } from './form.js'
+import { newTab, tabKey } from './model.js'
+import Icon from '../ui/Icon.btsx'
+import ViewHeader from '../ui/ViewHeader.btsx'
+import ActionFooter from '../ui/ActionFooter.btsx'
+import StatusMessage from '../ui/StatusMessage.btsx'
+import TypeContract from '../ui/TypeContract.btsx'
+import PagePicker from './PagePicker.btsx'
+import TabField from './TabField.btsx'
+
+props { draft, pages, components, ready, dark, busy, message, onDraftChange, onChoosePage, onReview, onBack, onClose }: TabsEditorProps
+setup
+  const form = useTabsForm(draft, onDraftChange, onReview)
+  const values = useSelector(form.store, (state) => state.values)
+  const submitting = useSelector(form.store, (state) => state.isSubmitting)
+  const formRef = useRef<HTMLFormElement | null>(null)
+  const component = components.find((item) => item.id === values.component)
+  const page = pages.find((item) => item.file === draft.page && item.routePath === draft.routePath)
+  const itemKey = tabKey(component)
+  const editing = !!values.instance
+  const publish = () => onDraftChange(form.state.values)
+  const submit = (event: Event) => {
+    event.preventDefault()
+    if (!busy && !submitting && ready && formRef.current?.reportValidity()) void form.handleSubmit()
+  }
+  const selectComponent = (event: Event) => {
+    const next = components.find((item) => item.id === (event.currentTarget as HTMLSelectElement).value)
+    if (!next) return
+    const items = [newTab(next, [], 0), newTab(next, [], 1)]
+    const key = tabKey(next)
+    form.reset({ ...form.state.values, component: next.id, items, active: key ? items[0][key] ?? '' : '' })
+    publish()
+  }
+  const remove = (index: number) => {
+    const current = form.state.values
+    const items = current.items.filter((_, position) => position !== index)
+    const active = itemKey && current.items[index]?.[itemKey] === current.active ? items[0]?.[itemKey] ?? '' : current.active
+    form.setFieldValue('items', items)
+    form.setFieldValue('active', active)
+    publish()
+  }
+
+ViewHeader(
+  ~ title={editing ? 'Edit Tabs' : 'Add Tabs'}
+  ~ subtitle={editing ? 'Update the existing tab items' : 'Choose a page and define its tab items'}
+  ~ onBack={onBack}
+  ~ onClose={onClose}
+  ~ )
+form#builder-tabs-form.draft-body.tabs-form(ref={formRef} onSubmit={submit})
+  PagePicker(pages={pages} page={page} disabled={editing} onChoose={onChoosePage})
+  p.hint.route-status(role="status") #{page ? (ready ? `Ready to ${editing ? 'edit' : 'add'} Tabs ${editing ? 'on' : 'to'} ${page.routePath}.` : `Navigate to ${page.routePath} to ${editing ? 'edit' : 'add'} Tabs.`) : 'Select a registered page route to navigate there.'}
+  label.field-label(for="tabs-component") Tabs component
+  select#tabs-component.text-field(disabled={editing} value={values.component} onChange={selectComponent})
+    each item in components key item.id
+      option(value={item.id}) #{item.name} · #{item.file}
+    empty
+      option(value="") No Tabs component found
+  if component
+    fragment
+      p.hint
+        | Item type:
+        code #{component.itemType.name}
+        | #{component.reason ? ' · ' + component.reason : ''}
+      details.tabs-contract
+        summary View item type
+        TypeContract(type={component.itemType})
+  else
+    p.hint Add a Tabs.btsx component with a typed items prop in a scanned directory.
+  if component?.labelProp
+    fragment
+      label.field-label(for="tabs-label") Tabs label
+      input#tabs-label.text-field(
+        ~ value={values.label ?? 'Tabs'}
+        ~ maxLength={100}
+        ~ onInput={(event) => { form.setFieldValue('label', event.currentTarget.value); publish() }}
+        ~ )
+  .tab-items
+    if component && !component.reason
+      each item, index in values.items key index
+        fieldset.tab-item
+          legend Tab #{index + 1}
+          button.icon-button.remove-tab(
+            ~ type="button"
+            ~ data-remove={index}
+            ~ aria-label={`Remove Tab ${index + 1}`}
+            ~ disabled={values.items.length === 1}
+            ~ onClick={() => remove(index)}
+            ~ )
+            Icon(name="close")
+          .tab-item-fields
+            each field in component.itemType.fields key field.name
+              TabField(field={field} index={index} form={form} itemKey={itemKey} onChange={publish})
+  if component && !component.reason
+    fragment
+      button.secondary.add-tab(
+        ~ type="button"
+        ~ disabled={values.items.length >= 50}
+        ~ onClick={() => { form.setFieldValue('items', (items) => [...items, newTab(component, items, items.length)]); publish() }}
+        ~ )
+        Icon(name="plus")
+        | Add tab item
+      if component.activeProp && itemKey
+        fragment
+          label.field-label.active-tab-label(for="tabs-active") Active tab
+          select#tabs-active.text-field(
+            ~ value={String(values.items.findIndex((item) => item[itemKey] === values.active))}
+            ~ onChange={(event) => { form.setFieldValue('active', form.state.values.items[Number(event.currentTarget.value)][itemKey] ?? ''); publish() }}
+            ~ )
+            each item, index in values.items key index
+              option(value={String(index)}) #{String(item.label ?? item.title ?? item[itemKey] ?? `Tab ${index + 1}`)}
+  StatusMessage(message={message})
+ActionFooter(
+  ~ description={page ? page.routePath : 'Select a page route'}
+  ~ dark={dark}
+  ~ action={{ type: 'submit', form: 'builder-tabs-form', className: 'review-tabs', label: 'Review Tabs', pendingLabel: 'Checking…', pending: busy || submitting, disabled: !ready, icon: 'arrow' }}
+  ~ )

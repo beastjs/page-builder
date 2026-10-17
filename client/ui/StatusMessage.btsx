@@ -1,0 +1,8 @@
+module
+  export interface StatusMessageProps {
+    message: string
+  }
+
+props { message }: StatusMessageProps
+
+.message(role="status") #{message}

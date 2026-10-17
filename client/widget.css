@@ -30,6 +30,8 @@
   --text: #252527;
   --muted: #939397;
   --line: #ededee;
+  --line-2: #dedede;
+  --liner: #ededee;
   --hover: #f3f3f4;
   --blue: #419cff;
   --blue-soft: #edf3ff;
@@ -46,10 +48,12 @@
 }
 .widget[data-theme='dark'] {
   --surface: #202124;
-  --soft: #27292d;
+  --soft: oklch(0.301 0.006 271.23);
   --text: #eeeeef;
   --muted: #97999f;
   --line: #33353a;
+  --line-2: #33353a;
+  --liner: oklch(0.356 0.004 264.52);
   --hover: #2d3036;
   --blue: #8eafff;
   --blue-soft: #2b354c;
@@ -215,7 +219,7 @@ kbd {
   flex-direction: column;
   overflow: hidden;
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-2);
   border-radius: 14px;
   box-shadow:
     0 28px 100px #0000001c,
@@ -438,14 +442,15 @@ kbd {
 }
 .searchbar > svg {
   color: var(--muted);
+  scale: 0.7;
+  padding: 1px;
 }
 .project-chip {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: var(--soft);
-  border: 1px solid var(--line);
-  border-radius: 20px;
+  background: color-mix(in srgb, var(--surface) 45%, var(--surface));
+  border-radius: 10px;
   padding: 4px 8px;
   font-size: 12px;
   white-space: nowrap;
@@ -533,7 +538,7 @@ kbd {
 .ready-hexes {
   position: absolute;
   inset: 0 0 0 auto;
-  width: 180px;
+  width: 140px;
   pointer-events: none;
   color: var(--blue);
 }
@@ -608,7 +613,11 @@ kbd {
   color: var(--muted);
   font-size: 16px;
   width: 12px;
+  height: 16px;
   visibility: hidden;
+}
+.result-enter > svg {
+  scale: 0.6;
 }
 .result.selected .result-enter {
   visibility: visible;
@@ -618,11 +627,11 @@ kbd {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 10px 16px;
-  border-top: 1px solid var(--line);
+  padding: 10px 10px;
+  border-top: 1px solid var(--liner);
   color: var(--muted);
   font-size: 11px;
-  background: color-mix(in srgb, var(--soft) 45%, var(--surface));
+  background: color-mix(in srgb, var(--soft) 45%, var(--soft));
 }
 .footer span {
   display: flex;

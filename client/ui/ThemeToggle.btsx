@@ -1,0 +1,11 @@
+import Icon from './Icon.btsx'
+
+props { dark }: { dark: boolean }
+
+button.icon-button-small.theme-toggle(
+  ~ type="button"
+  ~ aria-label="Dark mode"
+  ~ aria-pressed={dark}
+  ~ title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+  ~ )
+  Icon(name={dark ? 'sun' : 'moon'})
