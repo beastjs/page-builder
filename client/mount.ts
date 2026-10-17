@@ -15,6 +15,7 @@ import {
   type TabsPreview,
   type TabValue
 } from '../shared/types.js'
+import Atom from '../src/components/loaders/Atom'
 import HexTrace from '../src/components/loaders/HexTrace'
 import { sections, templates } from './templates.js'
 import css from './widget.css'
@@ -347,7 +348,33 @@ function mount(): void {
           return `<svg class="ready-hex" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="--hex-size:${size}px;--hex-x:${distance}px;--hex-y:${y}px;--hex-opacity:${0.38 - index * 0.035};--hex-duration:${duration}ms"><path d="m12 2 8.7 5v10L12 22l-8.7-5V7Z"/></svg>`
         }).join('')}</span>`
       : ''
-    return `<span class="ready-status${animate ? ' ready-status-enter' : ''}"><span class="ready-label"><i></i> Builder ready</span>${hexes}</span>`
+    return `<span class="ready-status${animate ? ' ready-status-enter' : ''}"><span class="ready-label"><span class="ready-indicator" aria-hidden="true"><i></i></span> Builder ready</span>${hexes}</span>`
+  }
+
+  function startReadyIndicator(): void {
+    const indicator = panel.querySelector<HTMLElement>('.ready-indicator')!
+    const fades = [...panel.querySelectorAll<SVGElement>('.ready-hex')].flatMap((hex) =>
+      hex.getAnimations().filter((animation) => animation instanceof CSSAnimation && animation.animationName === 'ready-hex-fade')
+    )
+    // Reduced motion has no hex animations, so keep the regular indicator.
+    if (!fades.length) return
+    const loader = Atom({ size: 12 }, shadow)
+    indicator.replaceChildren(loader)
+    void Promise.allSettled(fades.map((animation) => animation.finished)).then(async () => {
+      if (!indicator.isConnected) return
+      const dot = document.createElement('i')
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        indicator.replaceChildren(dot)
+        return
+      }
+      loader.classList.add('ready-loader-out')
+      dot.classList.add('ready-dot-in')
+      indicator.append(dot)
+      const zooms = [...loader.getAnimations(), ...dot.getAnimations()]
+      await Promise.allSettled(zooms.map((animation) => animation.finished))
+      loader.remove()
+      dot.classList.remove('ready-dot-in')
+    })
   }
 
   function render(): void {
@@ -358,6 +385,7 @@ function mount(): void {
       panel.querySelector('.sonar-core')!.append(HexTrace({ size: 32 }, shadow))
     } else if (view === 'palette') {
       panel.innerHTML = `<header class="searchbar">${moveHandle()}${icon('search')}<input class="search" aria-label="Search pages, components, navigation, tabs, and actions" placeholder="What would you like to build?" value="${escape(query)}" autocomplete="off" spellcheck="false">${closeButton()}</header><nav class="tabs" aria-label="Filter builder results">${['All', 'Pages', 'Components', 'Navs', 'Tabs'].map((name) => `<button class="tab ${tab === name ? 'active' : ''}" aria-pressed="${tab === name}">${name}</button>`).join('')}${readyStatus(entering)}</nav><div class="results"></div><div class="message" role="status"></div>${footer()}`
+      if (entering) startReadyIndicator()
       renderResults(true)
       panel.querySelector<HTMLInputElement>('.search')!.addEventListener('input', (event) => {
         query = (event.target as HTMLInputElement).value
@@ -702,7 +730,8 @@ function mount(): void {
       }
     })
     search.addEventListener('keydown', (event) => {
-      if (['ArrowDown', 'ArrowUp', 'Enter'].includes(event.key)) {
+      const step = navigationStep(event)
+      if (step || event.key === 'Enter') {
         event.preventDefault()
         event.stopPropagation()
         const pages = matchingPages()
@@ -711,7 +740,7 @@ function mount(): void {
           return
         }
         pickerOpen = true
-        pickerIndex = Math.max(0, Math.min(pages.length - 1, pickerIndex + (event.key === 'ArrowDown' ? 1 : -1)))
+        pickerIndex = Math.max(0, Math.min(pages.length - 1, pickerIndex + step))
         renderPagePicker()
         panel.querySelector(`#tabs-page-${pickerIndex}`)?.scrollIntoView({ block: 'nearest' })
       }
@@ -1100,6 +1129,16 @@ function mount(): void {
   launcher.setAttribute('aria-expanded', 'false')
   launcher.addEventListener('click', open)
   backdrop.addEventListener('click', close)
+  function navigationStep(event: KeyboardEvent): number {
+    if (event.isComposing) return 0
+    if (event.key === 'ArrowDown') return 1
+    if (event.key === 'ArrowUp') return -1
+    if (event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey) {
+      if (event.key.toLowerCase() === 'n') return 1
+      if (event.key.toLowerCase() === 'p') return -1
+    }
+    return 0
+  }
   function keydown(event: KeyboardEvent): void {
     const [modifier, ...parts] = config.shortcut.split('+')
     const key = parts.at(-1)!.toLowerCase()
@@ -1149,10 +1188,11 @@ function mount(): void {
       }
     }
     if (view !== 'palette' || !shadow.activeElement?.matches('.search, .result')) return
-    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+    const step = navigationStep(event)
+    if (step) {
       event.preventDefault()
       if (!actions.length) return
-      selected = (selected + (event.key === 'ArrowDown' ? 1 : -1) + actions.length) % actions.length
+      selected = (selected + step + actions.length) % actions.length
       renderResults()
       panel.querySelector<HTMLElement>(`[data-index="${selected}"]`)?.scrollIntoView({ block: 'nearest' })
       focusSearch()

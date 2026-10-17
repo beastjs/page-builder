@@ -277,7 +277,7 @@ kbd {
 .icon-button-small > svg {
   width: 20px;
   height: 20px;
-  scale: 0.8;
+  scale: 0.7;
 }
 .icon-button-small:hover {
   background: var(--hover);
@@ -286,8 +286,9 @@ kbd {
 .icon-button {
   width: 30px;
   height: 30px;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 50%;
   color: var(--muted);
   flex-shrink: 0;
@@ -298,6 +299,7 @@ kbd {
 }
 .close {
   background: var(--soft);
+  scale: 0.8;
 }
 .scan-header,
 .topbar {
@@ -508,6 +510,23 @@ kbd {
   align-items: center;
   gap: 6px;
 }
+.ready-indicator {
+  display: grid;
+  place-items: center;
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  color: var(--blue);
+}
+.ready-indicator > * {
+  grid-area: 1 / 1;
+}
+.ready-loader-out {
+  animation: ready-loader-out 0.18s ease-in both;
+}
+.ready-dot-in {
+  animation: ready-dot-in 0.24s cubic-bezier(0.16, 1, 0.3, 1) 0.06s both;
+}
 .ready-status-enter .ready-label {
   animation: ready-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) var(--ready-delay) backwards;
 }
@@ -535,7 +554,7 @@ kbd {
   height: 6px;
   background: var(--blue);
   border-radius: 50%;
-  box-shadow: 0 0 0 3px #83ad8a12;
+  box-shadow: 0 0 0 3px #419cff12;
 }
 .results {
   padding: 8px;
@@ -922,6 +941,26 @@ summary::-webkit-details-marker {
   to {
     opacity: 1;
     transform: translateX(0);
+  }
+}
+@keyframes ready-loader-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0);
+  }
+}
+@keyframes ready-dot-in {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 @keyframes ready-hex-slide {
