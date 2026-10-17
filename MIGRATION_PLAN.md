@@ -2,7 +2,7 @@
 
 Updated: October 18, 2026
 
-Next deliverable: migrate the source and collection inspectors, reusing the source viewer and type contract components.
+Next deliverable: migrate the scan, success, and error screens, preserving loader cleanup, reload receipts, and cancellation behavior.
 
 ## Progress board
 
@@ -14,8 +14,8 @@ Next deliverable: migrate the source and collection inspectors, reusing the sour
 | 3 | Shared view components | Done | 1, 2 |
 | 4 | Page creation and editing | Done | 3 |
 | 5 | Review and save screens | Done | 3, 4 |
-| 6 | Source and collection inspectors | Next | 3, 5 |
-| 7 | Scan, success, and error screens | Queued | 3 |
+| 6 | Source and collection inspectors | Done | 3, 5 |
+| 7 | Scan, success, and error screens | Next | 3 |
 | 8 | Builder shell and state cleanup | Queued | 4–7 |
 | 9 | Final verification and measurements | Queued | 8 |
 
@@ -92,24 +92,24 @@ Evidence (October 18, 2026): `bun run check` passed all 57 non-browser tests, in
 
 ## 6. Source and collection inspectors
 
-Status: **Next**
+Status: **Done**
 
-Proposed files: `client/inspect/FileInspector.btsx`, `CollectionInspector.btsx`, and `DetectedItem.btsx`.
+Files: `client/inspect/FileInspector.btsx`, `CollectionInspector.btsx`, `DetectedItem.btsx`, and `types.ts`.
 
-- [ ] Migrate file details, source viewing, clipboard feedback, compiler errors, and edit-page actions.
-- [ ] Migrate the list of existing tab groups and its edit/source-only actions.
-- [ ] Migrate collection metadata, bindings, consumers, item kinds, and per-item details.
-- [ ] Reuse `SourceViewer.btsx` and the existing recursive `TypeContract.btsx`.
-- [ ] Preserve explanations for computed/read-only collections and empty item lists.
-- [ ] Verify source copying, navigation/tabs inspection, declared and union types, and opening the correct page or tab editor.
+- [x] Migrate file details, source viewing, clipboard feedback, compiler errors, and edit-page actions.
+- [x] Migrate the list of existing tab groups and its edit/source-only actions.
+- [x] Migrate collection metadata, bindings, consumers, item kinds, and per-item details.
+- [x] Reuse `SourceViewer.btsx` and the existing recursive `TypeContract.btsx`.
+- [x] Preserve explanations for computed/read-only collections and empty item lists.
+- [x] Verify source copying, navigation/tabs inspection, declared and union types, and opening the correct page or tab editor.
 
 Complete when: file and collection inspection use BTSX and their legacy HTML-rendering helpers are no longer needed.
 
-Evidence: pending.
+Evidence (October 18, 2026): `bun run check` passed production build, type checking, and all 57 non-browser tests, including 6 bundler integration tests. All 46 widget browser tests passed: the previous 39 workflows plus 7 new read-only inspector tests. Coverage includes exact source copying, compiler diagnostics and literal text, clipboard failure/retry and obsolete feedback, correct page and tab-group editor actions, source-only tab groups, collection bindings and consumers, nested union contracts, optional fields, item metadata, inferred types, computed/read-only and empty collections, retained disclosure state, theme changes, focus, and real page/tabs workflows. Desktop and mobile screenshots were inspected, including source and type-table overflow. The legacy `renderFileTabs` and `renderType` HTML helpers were removed. The client bundle is 445,616 bytes minified and 138,437 bytes gzipped (Node zlib defaults): increases of 6,797 and 2,026 bytes over section 5. Dependencies, server behavior, and the plain TypeScript build script are unchanged.
 
 ## 7. Scan, success, and error screens
 
-Status: **Queued**
+Status: **Next**
 
 Proposed files: `client/status/ScanView.btsx`, `SuccessView.btsx`, and `ErrorView.btsx`.
 

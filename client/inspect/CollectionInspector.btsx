@@ -1,0 +1,37 @@
+import type { CollectionInspectorProps } from './types.js'
+import ViewHeader from '../ui/ViewHeader.btsx'
+import TypeContract from '../ui/TypeContract.btsx'
+import ThemeToggle from '../ui/ThemeToggle.btsx'
+import DetectedItem from './DetectedItem.btsx'
+
+props { collection, dark, onBack, onClose }: CollectionInspectorProps
+
+ViewHeader(title={collection.name} subtitle={`${collection.file}:${collection.line}`} onBack={onBack} onClose={onClose})
+.preview-body.collection-body
+  .collection-meta
+    span.type-badge #{collection.kind === 'tabs' ? 'Tabs' : 'Navigation'}
+    span #{collection.source === 'data' ? 'Shared data' : 'Rendered markup'} · #{collection.items.length} items
+  h3 Item type
+  TypeContract(type={collection.itemType})
+  if collection.bindings.length
+    p.hint
+      | #{'Data binding: '}
+      code #{collection.bindings.join(', ')}
+  if collection.reason
+    p.hint #{collection.reason}
+  if collection.consumers.length
+    fragment
+      h3 Used by
+      ul.consumer-list
+        each consumer, index in collection.consumers key index
+          li
+            code #{consumer.file}:#{consumer.line}
+            | #{` · ${consumer.name}`}
+  h3 Items
+  each item, index in collection.items key index
+    DetectedItem(item={item})
+  empty
+    p.hint No literal items found. The group may populate its items at runtime.
+footer.action-footer
+  span #{collection.editable && collection.kind === 'navigation' ? 'Available for new page links' : 'Inspect item types and source bindings'}
+  ThemeToggle(dark={dark})

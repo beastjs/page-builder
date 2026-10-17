@@ -2,7 +2,6 @@ import {
   BASE,
   type ClientConfig,
   type DetectedCollection,
-  type ItemType,
   type PageDraft,
   type PagePreview,
   type PageRoute,
@@ -19,6 +18,9 @@ import TabsEditor from './tabs/TabsEditor.btsx'
 import Palette from './palette/Palette.btsx'
 import PageEditor from './pages/PageEditor.btsx'
 import ReviewView from './review/ReviewView.btsx'
+import FileInspector from './inspect/FileInspector.btsx'
+import CollectionInspector from './inspect/CollectionInspector.btsx'
+import type { FileInspectorProps, CollectionInspectorProps } from './inspect/types.js'
 import type { ReviewViewProps } from './review/types.js'
 import type { PageEditorProps } from './pages/types.js'
 import { insertSection } from './pages/model.js'
@@ -204,6 +206,7 @@ function mount(): void {
   let paletteRoot: Root | undefined
   let pageRoot: Root | undefined
   let reviewRoot: Root | undefined
+  let inspectorRoot: Root | undefined
   let draftRevision = 0
   let resumeTabs = false
   const routePrefix = apiBase.slice(0, -BASE.length)
@@ -250,6 +253,10 @@ function mount(): void {
     (themeOverride ?? config.theme) === 'dark' || ((themeOverride ?? config.theme) === 'auto' && systemTheme.matches)
   function applyTheme(): void {
     widget.dataset.theme = themeOverride ?? config.theme
+    if ((view === 'file' || view === 'collection') && inspectorRoot) {
+      renderInspector()
+      return
+    }
     if ((view === 'preview' || view === 'tabs-preview') && reviewRoot) {
       renderReview()
       return
@@ -330,6 +337,10 @@ function mount(): void {
       renderPalette()
       return
     }
+    if ((view === 'file' || view === 'collection') && inspectorRoot) {
+      renderInspector()
+      return
+    }
     if ((view === 'preview' || view === 'tabs-preview') && reviewRoot) {
       renderReview()
       return
@@ -366,6 +377,10 @@ function mount(): void {
       reviewRoot.unmount()
       reviewRoot = undefined
     }
+    if (view !== 'file' && view !== 'collection' && inspectorRoot) {
+      inspectorRoot.unmount()
+      inspectorRoot = undefined
+    }
     const entering = panel.dataset.view !== view
     panel.dataset.view = view
     if (view === 'scan') {
@@ -379,25 +394,8 @@ function mount(): void {
       renderTabsForm()
     } else if (view === 'preview' || view === 'tabs-preview') {
       renderReview()
-    } else if (view === 'file') {
-      panel.innerHTML = `${header(escape(currentFile!.name), escape(currentFile!.path))}<div class="preview-body">${renderFileTabs()}${currentFile!.error ? `<p class="error-note">${escape(currentFile!.error)}</p>` : ''}<pre class="source-preview" tabindex="0"><code>${escape(currentSource)}</code></pre><div class="message" role="status"></div></div><footer class="action-footer"><span>${currentFile!.lines} lines · ${currentFile!.components.length} component${currentFile!.components.length === 1 ? '' : 's'}</span><div class="file-actions"><button class="secondary copy">Copy source</button>${currentFile!.kind === 'page' ? '<button class="primary edit-page">Edit page</button>' : ''}</div></footer>`
-      panel.querySelector('.copy')!.addEventListener('click', () => {
-        void navigator.clipboard
-          .writeText(currentSource)
-          .then(() => notify('Source copied.'))
-          .catch(() => notify('Could not access the clipboard. Select the source to copy it.'))
-      })
-      panel.querySelector('.edit-page')?.addEventListener('click', startPageEdit)
-      panel
-        .querySelectorAll<HTMLButtonElement>('[data-edit-tabs]')
-        .forEach((button) =>
-          button.addEventListener('click', () =>
-            startEditingTabs(report!.tabInstances.find((instance) => instance.id === button.dataset.editTabs)!)
-          )
-        )
-    } else if (view === 'collection') {
-      const collection = currentCollection!
-      panel.innerHTML = `${header(escape(collection.name), escape(collection.file) + ':' + collection.line)}<div class="preview-body collection-body"><div class="collection-meta"><span class="type-badge">${collection.kind === 'tabs' ? 'Tabs' : 'Navigation'}</span><span>${collection.source === 'data' ? 'Shared data' : 'Rendered markup'} · ${collection.items.length} items</span></div><h3>Item type</h3>${renderType(collection.itemType)}${collection.bindings.length ? `<p class="hint">Data binding: <code>${escape(collection.bindings.join(', '))}</code></p>` : ''}${collection.reason ? `<p class="hint">${escape(collection.reason)}</p>` : ''}${collection.consumers.length ? `<h3>Used by</h3><ul class="consumer-list">${collection.consumers.map((consumer) => `<li><code>${escape(consumer.file)}:${consumer.line}</code> · ${escape(consumer.name)}</li>`).join('')}</ul>` : ''}<h3>Items</h3>${collection.items.map((item) => `<details class="detected-item"><summary><span>${escape(item.label)}</span><span class="type-badge">${escape(item.kind.replaceAll('-', ' '))}</span></summary><div class="item-body"><p class="hint">${item.component ? `Component: <code>${escape(item.component)}</code> · ` : ''}Line ${item.line}${item.destination ? ` · Destination: <code>${escape(item.destination)}</code>` : ''}${item.value ? ` · Value: <code>${escape(item.value)}</code>` : ''}</p>${renderType(item.itemType)}</div></details>`).join('') || '<p class="hint">No literal items found. The group may populate its items at runtime.</p>'}</div><footer class="action-footer"><span>${collection.editable && collection.kind === 'navigation' ? 'Available for new page links' : 'Inspect item types and source bindings'}</span></footer>`
+    } else if (view === 'file' || view === 'collection') {
+      renderInspector()
     } else if (view === 'tabs-success') {
       panel.innerHTML = `${header(tabsDraft.instance ? 'Tabs updated' : 'Tabs added', escape(tabsPreview!.path))}<div class="success-body"><div class="success-icon">${icon('check')}</div><h2>Your tabs are ready.</h2><p>${tabsDraft.items.length} tabs ${tabsDraft.instance ? 'updated on' : 'added to'} <strong>${escape(tabsPreview!.routePath)}</strong>.</p><button class="secondary done">Back to builder ${icon('arrow')}</button></div>${footer()}`
       panel.querySelector('.done')!.addEventListener('click', () => {
@@ -435,7 +433,8 @@ function mount(): void {
       panel.innerHTML = `${header('Couldn’t connect to your project')}<div class="error-body">${icon('scan')}<h2>Let’s try that again.</h2><p class="error-note" role="alert">${escape(message)}</p><button class="primary retry">Scan project ${icon('scan')}</button></div>${footer()}`
       panel.querySelector('.retry')!.addEventListener('click', () => void scan())
     }
-    if (view !== 'tabs-draft' && view !== 'draft' && view !== 'page-edit' && view !== 'preview' && view !== 'tabs-preview') panel.querySelector('.action-footer')?.insertAdjacentHTML('beforeend', themeToggle())
+    const componentView = ['palette', 'tabs-draft', 'draft', 'page-edit', 'preview', 'tabs-preview', 'file', 'collection'].includes(view)
+    if (!componentView) panel.querySelector('.action-footer')?.insertAdjacentHTML('beforeend', themeToggle())
     if (entering) {
       enter(panel.querySelectorAll<HTMLElement>(':scope > header, :scope > nav, :scope > footer'))
       enter(
@@ -446,7 +445,7 @@ function mount(): void {
       )
     }
     positionPanel()
-    if (view === 'tabs-draft' || view === 'palette' || view === 'draft' || view === 'page-edit' || view === 'preview' || view === 'tabs-preview') return
+    if (componentView) return
     panel.querySelector('.close')?.addEventListener('click', close)
     panel.querySelector('.back')?.addEventListener('click', () => {
       message = ''
@@ -472,11 +471,6 @@ function mount(): void {
     render()
     panel.querySelector<HTMLTextAreaElement>('#edit-page-source')!.focus()
   }
-  function renderFileTabs(): string {
-    const instances = report?.tabInstances.filter((instance) => instance.page === currentFile!.path) ?? []
-    if (!instances.length) return ''
-    return `<div class="existing-tabs"><h3>Tabs on this page</h3>${instances.map((instance) => (instance.draft ? `<button class="secondary" data-edit-tabs="${escape(instance.id)}">Edit tabs · ${escape(instance.draft.label || 'Tabs')} · Line ${instance.line}</button>` : `<p class="hint">Line ${instance.line}: ${escape(instance.reason ?? 'Edit these tabs in the page source.')}</p>`)).join('')}</div>`
-  }
   function startEditingTabs(instance: TabInstance): void {
     if (!instance.draft) return
     tabsDraft = structuredClone(instance.draft)
@@ -490,10 +484,6 @@ function mount(): void {
     }
     render()
     panel.querySelector<HTMLInputElement>('[data-field]')?.focus()
-  }
-
-  function renderType(type: ItemType): string {
-    return `<div class="type-contract"><div class="type-title"><code>${escape(type.name)}</code><span class="type-badge">${type.origin === 'declared' ? 'Declared type' : 'Inferred shape'}</span></div>${type.fields.length ? `<div class="fields-scroll"><table class="type-fields"><thead><tr><th>Field</th><th>Type</th><th>Presence</th></tr></thead><tbody>${type.fields.map((field) => `<tr><td><code>${escape(field.name)}</code></td><td><code>${escape(field.type)}</code></td><td>${field.optional ? 'Optional' : 'Required'}</td></tr>`).join('')}</tbody></table></div>` : ''}${type.variants?.length ? `<details class="type-variants"><summary>${type.variants.length} item variants</summary>${type.variants.map((variant) => renderType(variant)).join('')}</details>` : ''}</div>`
   }
 
   function selectComponent(component: TabComponent): void {
@@ -618,6 +608,48 @@ function mount(): void {
         focusSearch()
       }
     }
+  }
+
+  function renderInspector(): void {
+    if (!inspectorRoot) {
+      panel.replaceChildren()
+      inspectorRoot = createRoot(panel)
+    }
+    const controls = {
+      dark: isDark(),
+      onBack() {
+        message = ''
+        view = 'palette'
+        render()
+        focusSearch()
+      },
+      onClose: close
+    }
+    if (view === 'file') {
+      const props: FileInspectorProps = {
+        ...controls, file: currentFile!, source: currentSource, message,
+        instances: report?.tabInstances.filter(instance => instance.page === currentFile!.path) ?? [],
+        onCopy: copySource, onEditPage: startPageEdit, onEditTabs: startEditingTabs
+      }
+      flushSync(() => inspectorRoot!.render(FileInspector, props))
+    } else {
+      const props: CollectionInspectorProps = { ...controls, collection: currentCollection! }
+      flushSync(() => inspectorRoot!.render(CollectionInspector, props))
+    }
+  }
+
+  async function copySource(): Promise<void> {
+    if (view !== 'file') return
+    const owner = inspectorRoot
+    const turn = generation
+    const source = currentSource
+    let result = 'Source copied.'
+    try {
+      await navigator.clipboard.writeText(source)
+    } catch {
+      result = 'Could not access the clipboard. Select the source to copy it.'
+    }
+    if (opened && turn === generation && view === 'file' && inspectorRoot === owner) notify(result)
   }
 
   function renderReview(): void {
@@ -802,6 +834,7 @@ function mount(): void {
       if (!opened || turn !== generation) return
       currentFile = file
       currentSource = result.source
+      message = ''
       view = 'file'
       render()
       focusSearch()
@@ -966,6 +999,8 @@ function mount(): void {
   // Clean up if an app's DOM ownership removes the mount during HMR or navigation.
   const observer = new MutationObserver(() => {
     if (host.isConnected) return
+    inspectorRoot?.unmount()
+    inspectorRoot = undefined
     reviewRoot?.unmount()
     reviewRoot = undefined
     pageRoot?.unmount()

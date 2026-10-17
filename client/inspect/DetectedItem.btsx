@@ -1,0 +1,18 @@
+import type { DetectedItem as Item } from '../../shared/types.js'
+import TypeContract from '../ui/TypeContract.btsx'
+
+props { item }: { item: Item }
+
+details.detected-item
+  summary
+    span #{item.label}
+    span.type-badge #{item.kind.replaceAll('-', ' ')}
+  .item-body
+    p.hint
+      if item.component
+        fragment
+          | #{'Component: '}
+          code #{item.component}
+          | #{' · '}
+      | #{`Line ${item.line}${item.destination ? ` · Destination: ${item.destination}` : ''}${item.value ? ` · Value: ${item.value}` : ''}`}
+    TypeContract(type={item.itemType})
