@@ -19,11 +19,11 @@ Open `http://127.0.0.1:5190` and press **⌘B**, or click **Builder** in the bot
 
 Track the remaining sections and their task checklists in the [BTSX migration plan](MIGRATION_PLAN.md).
 
-The search palette lives in `client/palette/*.btsx`, and the tabs editor lives in `client/tabs/*.btsx`. Palette action construction and filtering live in `client/palette/actions.ts`; the remaining views and the widget shell are TypeScript. `scripts/build.ts` stays plain TypeScript and compiles BTSX through Beast and Octane before esbuild bundles the client, including source-distributed Octane bindings. Consumers still receive a self-contained `dist/client.js` on Vite, Rspack, and Rsbuild.
+The search palette lives in `client/palette/*.btsx`, the tabs editor in `client/tabs/*.btsx`, and page creation/editing in `client/pages/*.btsx`. Palette action construction and filtering live in `client/palette/actions.ts`; page suggestions and section insertion live in `client/pages/model.ts`. The remaining views and the widget shell are TypeScript. `scripts/build.ts` stays plain TypeScript and compiles BTSX through Beast and Octane before esbuild bundles the client, including source-distributed Octane bindings. Consumers still receive a self-contained `dist/client.js` on Vite, Rspack, and Rsbuild.
 
-Shared headers, action footers, and status messages live in `client/ui/`. The tabs editor uses these components, and the palette shares the status message. New views should reuse them as they migrate.
+Shared headers, action footers, and status messages live in `client/ui/`. The tabs and page editors use these components, and the palette shares the status message. Both page modes share `SourceEditor.btsx`. New views should reuse them as they migrate.
 
-`bun run typecheck` checks the TypeScript shell and type-checks generated TSRX for the client components in a temporary directory. Edit the authored BTSX files; the check removes its generated files afterward. The tabs form uses `@octanejs/tanstack-form`, while the shell handles API requests, draft persistence, navigation, dragging, and focus management.
+`bun run typecheck` checks the TypeScript shell and type-checks generated TSRX for the client components in a temporary directory. Edit the authored BTSX files; the check removes its generated files afterward. The tabs and page forms use `@octanejs/tanstack-form`, while the shell handles API requests, draft persistence, navigation, dragging, and focus management.
 
 ## Add it to a Beast project
 

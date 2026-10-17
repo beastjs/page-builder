@@ -17,23 +17,18 @@ import HexTrace from '../src/components/loaders/HexTrace'
 import { createRoot, flushSync, type Root } from 'octane'
 import TabsEditor from './tabs/TabsEditor.btsx'
 import Palette from './palette/Palette.btsx'
+import PageEditor from './pages/PageEditor.btsx'
+import type { PageEditorProps } from './pages/types.js'
+import { insertSection } from './pages/model.js'
 import { paletteActions } from './palette/actions.js'
 import type { PaletteProps, PaletteTab } from './palette/types.js'
 import { icon } from './icons.js'
 import { newTab, tabKey } from './tabs/model.js'
 import type { TabsEditorProps } from './tabs/types.js'
-import { sectionLibrary, sections, templates } from './templates.js'
+import { sectionLibrary, templates } from './templates.js'
 import css from './widget.css'
 
 const HOST_ID = 'beast-page-builder'
-const suggestPath = (name: string) =>
-  '/' +
-  (name
-    .replace(/Page$/, '')
-    .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
-    .replace(/([A-Z])([A-Z][a-z])/g, '$1-$2')
-    .toLowerCase() || 'page')
-const suggestLabel = (name: string) => name.replace(/Page$/, '').replace(/([a-z0-9])([A-Z])/g, '$1 $2')
 const defaults: ClientConfig = {
   shortcut: 'Mod+B',
   position: 'center',
@@ -205,6 +200,8 @@ function mount(): void {
   let tabsPreview: TabsPreview | null = null
   let tabsRoot: Root | undefined
   let paletteRoot: Root | undefined
+  let pageRoot: Root | undefined
+  let draftRevision = 0
   let resumeTabs = false
   const routePrefix = apiBase.slice(0, -BASE.length)
   const normalizePath = (path: string) => path.replace(/\/+$/, '') || '/'
@@ -250,6 +247,10 @@ function mount(): void {
     (themeOverride ?? config.theme) === 'dark' || ((themeOverride ?? config.theme) === 'auto' && systemTheme.matches)
   function applyTheme(): void {
     widget.dataset.theme = themeOverride ?? config.theme
+    if ((view === 'draft' || view === 'page-edit') && pageRoot) {
+      renderPageEditor()
+      return
+    }
     if (view === 'tabs-draft' && tabsRoot) {
       renderTabsForm()
       return
@@ -322,6 +323,10 @@ function mount(): void {
       renderPalette()
       return
     }
+    if ((view === 'draft' || view === 'page-edit') && pageRoot) {
+      renderPageEditor()
+      return
+    }
     const target = panel.querySelector<HTMLElement>('.message')
     if (target) target.textContent = text
   }
@@ -342,6 +347,10 @@ function mount(): void {
       tabsRoot.unmount()
       tabsRoot = undefined
     }
+    if (view !== 'draft' && view !== 'page-edit' && pageRoot) {
+      pageRoot.unmount()
+      pageRoot = undefined
+    }
     const entering = panel.dataset.view !== view
     panel.dataset.view = view
     if (view === 'scan') {
@@ -349,62 +358,8 @@ function mount(): void {
       panel.querySelector('.sonar-core')!.append(HexTrace({ size: 32 }, shadow))
     } else if (view === 'palette') {
       renderPalette()
-    } else if (view === 'page-edit') {
-      panel.innerHTML = `${header('Edit page', escape(draft.path!))}<div class="draft-body"><label class="field-label" for="edit-page-source">BTSX page source</label><textarea id="edit-page-source" class="source-editor" spellcheck="false">${escape(draft.source)}</textarea><div class="message" role="status">${escape(message)}</div></div><footer class="action-footer"><span>Edit page content and styles.</span><button class="primary review" ${busy ? 'disabled' : ''}>${busy ? 'Checking…' : 'Review changes'} ${icon('arrow')}</button></footer>`
-      panel.querySelector<HTMLTextAreaElement>('#edit-page-source')!.addEventListener('input', (event) => {
-        draft.source = (event.target as HTMLTextAreaElement).value
-        preview = null
-      })
-      panel.querySelector('.review')!.addEventListener('click', () => void review())
-    } else if (view === 'draft') {
-      panel.innerHTML = `${header('Make room for a new idea', 'Create a page in ' + escape(config.pagesDir))}<div class="draft-body"><label class="field-label" for="page-name">Page name</label><div class="name-field"><input id="page-name" value="${escape(draft.name)}" spellcheck="false" autocomplete="off" aria-describedby="name-hint"><span>.btsx</span></div><p class="hint" id="name-hint">PascalCase, like AboutPage or PricingPage.</p><div class="route-fields"><div><label class="field-label" for="route-path">Page URL</label><input id="route-path" class="text-field" value="${escape(draft.routePath ?? suggestPath(draft.name))}" placeholder="/pricing" spellcheck="false"></div><div><label class="field-label" for="nav-label">Navigation label</label><input id="nav-label" class="text-field" value="${escape(draft.navLabel ?? suggestLabel(draft.name))}" maxlength="100"></div></div><label class="field-label" for="nav-target">Add link to</label><select id="nav-target" class="text-field"><option value="">${report?.navigationTargets.length === 1 ? escape(report.navigationTargets[0]!.label) : 'Choose a navigation menu'}</option>${(report?.navigationTargets ?? []).map((target) => `<option value="${escape(target.id)}" ${draft.navigationTarget === target.id ? 'selected' : ''}>${escape(target.label)}</option>`).join('')}</select><p class="hint nav-contract"></p>${!report?.navigationTargets.length ? '<p class="hint">No editable menu found. Configure navigation.file for this project.</p>' : ''}<div class="editor-toolbar"><span class="field-label">Start with</span><button data-template="blank">Blank page</button><button data-template="landing">Landing page</button><details><summary>Add a section +</summary><div class="section-menu">${Object.keys(
-        sections
-      )
-        .map((name) => `<button data-section="${name}">${name}</button>`)
-        .join(
-          ''
-        )}</div></details></div><label class="sr-only" for="page-source">BTSX page source</label><textarea id="page-source" class="source-editor" spellcheck="false">${escape(draft.source)}</textarea><div class="message" role="status">${escape(message)}</div></div><footer class="action-footer"><span>${icon('page')} Page + route + navigation link.</span><button class="primary review" ${busy ? 'disabled' : ''}>${busy ? 'Checking…' : 'Review page'} ${icon('arrow')}</button></footer>`
-      panel.querySelector<HTMLInputElement>('#page-name')!.addEventListener('input', (event) => {
-        draft.name = (event.target as HTMLInputElement).value
-        preview = null
-        if (draft.routePath === undefined)
-          panel.querySelector<HTMLInputElement>('#route-path')!.value = suggestPath(draft.name)
-        if (draft.navLabel === undefined)
-          panel.querySelector<HTMLInputElement>('#nav-label')!.value = suggestLabel(draft.name)
-      })
-      panel.querySelector<HTMLInputElement>('#route-path')!.addEventListener('input', (event) => {
-        draft.routePath = (event.target as HTMLInputElement).value
-        preview = null
-      })
-      panel.querySelector<HTMLInputElement>('#nav-label')!.addEventListener('input', (event) => {
-        draft.navLabel = (event.target as HTMLInputElement).value
-        preview = null
-      })
-      panel.querySelector<HTMLSelectElement>('#nav-target')!.addEventListener('change', (event) => {
-        draft.navigationTarget = (event.target as HTMLSelectElement).value || undefined
-        preview = null
-        showNavContract()
-      })
-      showNavContract()
-      panel.querySelector<HTMLTextAreaElement>('#page-source')!.addEventListener('input', (event) => {
-        draft.source = (event.target as HTMLTextAreaElement).value
-        preview = null
-      })
-      panel.querySelectorAll<HTMLButtonElement>('[data-template]').forEach((button) =>
-        button.addEventListener('click', () => {
-          draft.source = templates[button.dataset.template as keyof typeof templates]
-          preview = null
-          message = ''
-          render()
-        })
-      )
-      panel.querySelectorAll<HTMLButtonElement>('[data-section]').forEach((button) =>
-        button.addEventListener('click', () => {
-          appendSection(sections[button.dataset.section!]!)
-          render()
-        })
-      )
-      panel.querySelector('.review')!.addEventListener('click', () => void review())
+    } else if (view === 'draft' || view === 'page-edit') {
+      renderPageEditor()
     } else if (view === 'tabs-draft') {
       renderTabsForm()
     } else if (view === 'preview' || view === 'tabs-preview') {
@@ -468,7 +423,7 @@ function mount(): void {
       panel.innerHTML = `${header('Couldn’t connect to your project')}<div class="error-body">${icon('scan')}<h2>Let’s try that again.</h2><p class="error-note" role="alert">${escape(message)}</p><button class="primary retry">Scan project ${icon('scan')}</button></div>${footer()}`
       panel.querySelector('.retry')!.addEventListener('click', () => void scan())
     }
-    if (view !== 'tabs-draft') panel.querySelector('.action-footer')?.insertAdjacentHTML('beforeend', themeToggle())
+    if (view !== 'tabs-draft' && view !== 'draft' && view !== 'page-edit') panel.querySelector('.action-footer')?.insertAdjacentHTML('beforeend', themeToggle())
     if (entering) {
       enter(panel.querySelectorAll<HTMLElement>(':scope > header, :scope > nav, :scope > footer'))
       enter(
@@ -479,7 +434,7 @@ function mount(): void {
       )
     }
     positionPanel()
-    if (view === 'tabs-draft' || view === 'palette') return
+    if (view === 'tabs-draft' || view === 'palette' || view === 'draft' || view === 'page-edit') return
     panel.querySelector('.close')?.addEventListener('click', close)
     panel.querySelector('.back')?.addEventListener('click', () => {
       message = ''
@@ -496,7 +451,10 @@ function mount(): void {
   }
 
   function startPageEdit(): void {
-    draft = { name: currentFile!.name, path: currentFile!.path, source: currentSource }
+    if (draft.path !== currentFile!.path) {
+      draft = { name: currentFile!.name, path: currentFile!.path, source: currentSource }
+      draftRevision++
+    }
     preview = null
     message = ''
     view = 'page-edit'
@@ -521,17 +479,6 @@ function mount(): void {
     }
     render()
     panel.querySelector<HTMLInputElement>('[data-field]')?.focus()
-  }
-
-  function showNavContract(): void {
-    const target =
-      report?.navigationTargets.find((target) => target.id === draft.navigationTarget) ??
-      (report?.navigationTargets.length === 1 ? report.navigationTargets[0] : undefined)
-    const hint = panel.querySelector<HTMLElement>('.nav-contract')
-    if (hint)
-      hint.textContent = target?.itemType
-        ? `Item type: ${target.itemType.name} · ${target.itemType.origin === 'declared' ? 'Declared type' : 'Inferred shape'}`
-        : ''
   }
 
   function renderType(type: ItemType): string {
@@ -662,17 +609,46 @@ function mount(): void {
     }
   }
 
+  function renderPageEditor(): void {
+    if (!pageRoot) {
+      panel.replaceChildren()
+      pageRoot = createRoot(panel)
+    }
+    const props: PageEditorProps = {
+      draft, pagesDir: config.pagesDir, targets: report?.navigationTargets ?? [], dark: isDark(), busy, message,
+      onDraftChange(next) {
+        if (next === draft) return
+        draftRevision++
+        draft = next
+        preview = null
+        // Commit controlled values before native input restoration, even just after mounting.
+        renderPageEditor()
+      },
+      onReview: review,
+      onClearMessage() { message = ''; renderPageEditor() },
+      onBack() {
+        message = ''
+        view = 'palette'
+        render()
+        focusSearch()
+      },
+      onClose: close
+    }
+    flushSync(() => pageRoot!.render(PageEditor, props))
+  }
+
   function appendSection(snippet: string): void {
-    const split = draft.source.indexOf('\nstyle\n')
-    draft.source =
-      split < 0
-        ? draft.source.trimEnd() + snippet
-        : draft.source.slice(0, split).trimEnd() + snippet + draft.source.slice(split)
+    draft = { ...draft, source: insertSection(draft.source, snippet) }
+    draftRevision++
     preview = null
   }
 
   function createPage(): void {
-    if (draft.path) draft = { name: 'UntitledPage', source: templates.blank }
+    if (draft.path) {
+      draft = { name: 'UntitledPage', source: templates.blank }
+      draftRevision++
+      preview = null
+    }
     view = 'draft'
     message = ''
     render()
@@ -805,23 +781,27 @@ function mount(): void {
   }
 
   async function review(): Promise<void> {
-    if (busy) return
+    if (busy || (view !== 'draft' && view !== 'page-edit')) return
     const turn = generation
+    const revision = draftRevision
+    const editorView = view
+    const editorRoot = pageRoot
     busy = true
     message = ''
     render()
     try {
       const result = await request<PagePreview>('/preview', draft)
-      if (!opened || turn !== generation) return
+      if (!opened || turn !== generation || pageRoot !== editorRoot || view !== editorView || revision !== draftRevision) return
       preview = result
       view = 'preview'
     } catch (error) {
-      message = error instanceof Error ? error.message : String(error)
+      if (opened && turn === generation && pageRoot === editorRoot && view === editorView && revision === draftRevision)
+        message = error instanceof Error ? error.message : String(error)
     } finally {
       busy = false
       if (opened && turn === generation) {
         render()
-        focusSearch()
+        if (view === 'preview') focusSearch()
       }
     }
   }
@@ -954,6 +934,8 @@ function mount(): void {
   // Clean up if an app's DOM ownership removes the mount during HMR or navigation.
   const observer = new MutationObserver(() => {
     if (host.isConnected) return
+    pageRoot?.unmount()
+    pageRoot = undefined
     tabsRoot?.unmount()
     tabsRoot = undefined
     paletteRoot?.unmount()

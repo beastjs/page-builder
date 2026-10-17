@@ -1,0 +1,68 @@
+import { useSelector } from '@octanejs/tanstack-form'
+import { useRef } from 'octane'
+import type { PageEditorProps } from './types.js'
+import { usePageForm } from './form.js'
+import { insertSection, suggestLabel, suggestPath } from './model.js'
+import { sections, templates } from '../templates.js'
+import ViewHeader from '../ui/ViewHeader.btsx'
+import ActionFooter from '../ui/ActionFooter.btsx'
+import StatusMessage from '../ui/StatusMessage.btsx'
+import SourceEditor from './SourceEditor.btsx'
+
+props { draft, pagesDir, targets, dark, busy, message, onDraftChange, onReview, onBack, onClose, onClearMessage }: PageEditorProps
+setup
+  const form = usePageForm(draft, onDraftChange, onReview)
+  const values = useSelector(form.store, (state) => state.values)
+  const submitting = useSelector(form.store, (state) => state.isSubmitting)
+  const formRef = useRef<HTMLFormElement | null>(null)
+  const editing = !!values.path
+  const target = targets.find((item) => item.id === values.navigationTarget) ?? (targets.length === 1 ? targets[0] : undefined)
+  const publish = () => onDraftChange(form.state.values)
+  const changeSource = (source: string) => { form.setFieldValue('source', source); publish() }
+  const submit = (event: Event) => {
+    event.preventDefault()
+    if (!busy && !submitting && formRef.current?.reportValidity()) void form.handleSubmit()
+  }
+  const replaceTemplate = (name: keyof typeof templates) => { changeSource(templates[name]); onClearMessage() }
+
+ViewHeader(title={editing ? 'Edit page' : 'Make room for a new idea'} subtitle={editing ? values.path : `Create a page in ${pagesDir}`} onBack={onBack} onClose={onClose})
+form#builder-page-form.draft-body.page-form(ref={formRef} onSubmit={submit})
+  if !editing
+    fragment
+      label.field-label(for="page-name") Page name
+      .name-field
+        input#page-name(value={values.name} spellcheck={false} autoComplete="off" aria-describedby="name-hint" onInput={(event) => { form.setFieldValue('name', event.currentTarget.value); publish() }})
+        span .btsx
+      p#name-hint.hint PascalCase, like AboutPage or PricingPage.
+      .route-fields
+        div
+          label.field-label(for="route-path") Page URL
+          input#route-path.text-field(value={values.routePath ?? suggestPath(values.name)} placeholder="/pricing" spellcheck={false} onInput={(event) => { form.setFieldValue('routePath', event.currentTarget.value); publish() }})
+        div
+          label.field-label(for="nav-label") Navigation label
+          input#nav-label.text-field(value={values.navLabel ?? suggestLabel(values.name)} maxLength={100} onInput={(event) => { form.setFieldValue('navLabel', event.currentTarget.value); publish() }})
+      label.field-label(for="nav-target") Add link to
+      select#nav-target.text-field(value={values.navigationTarget ?? ''} onChange={(event) => { form.setFieldValue('navigationTarget', event.currentTarget.value || undefined); publish() }})
+        option(value="") #{targets.length === 1 ? targets[0].label : 'Choose a navigation menu'}
+        each item in targets key item.id
+          option(value={item.id}) #{item.label}
+      p.hint.nav-contract #{target?.itemType ? `Item type: ${target.itemType.name} · ${target.itemType.origin === 'declared' ? 'Declared type' : 'Inferred shape'}` : ''}
+      if !targets.length
+        p.hint No editable menu found. Configure navigation.file for this project.
+      .editor-toolbar
+        span.field-label Start with
+        button(type="button" data-template="blank" onClick={() => replaceTemplate('blank')}) Blank page
+        button(type="button" data-template="landing" onClick={() => replaceTemplate('landing')}) Landing page
+        details
+          summary Add a section +
+          .section-menu
+            each name in Object.keys(sections) key name
+              button(type="button" data-section={name} onClick={() => changeSource(insertSection(form.state.values.source, sections[name]))}) #{name}
+  SourceEditor(id={editing ? 'edit-page-source' : 'page-source'} value={values.source} visibleLabel={editing} onChange={changeSource})
+  StatusMessage(message={message})
+ActionFooter(
+  ~ description={editing ? 'Edit page content and styles.' : 'Page + route + navigation link.'}
+  ~ descriptionIcon={editing ? undefined : 'page'}
+  ~ dark={dark}
+  ~ action={{ type: 'submit', form: 'builder-page-form', className: 'review', label: editing ? 'Review changes' : 'Review page', pendingLabel: 'Checking…', pending: busy || submitting, icon: 'arrow' }}
+  ~ )

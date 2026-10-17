@@ -2,7 +2,7 @@
 
 Updated: October 18, 2026
 
-Next deliverable: migrate page creation and editing using the shared view components now in place.
+Next deliverable: migrate the shared review and save screen for page creation, page editing, and tabs.
 
 ## Progress board
 
@@ -12,8 +12,8 @@ Next deliverable: migrate page creation and editing using the shared view compon
 | 1 | Tabs editor | Done | 0 |
 | 2 | Search palette | Done | 0 |
 | 3 | Shared view components | Done | 1, 2 |
-| 4 | Page creation and editing | Next | 3 |
-| 5 | Review and save screens | Queued | 3, 4 |
+| 4 | Page creation and editing | Done | 3 |
+| 5 | Review and save screens | Next | 3, 4 |
 | 6 | Source and collection inspectors | Queued | 3, 5 |
 | 7 | Scan, success, and error screens | Queued | 3 |
 | 8 | Builder shell and state cleanup | Queued | 4–7 |
@@ -57,25 +57,25 @@ Evidence (October 18, 2026): build and type checking passed. All 5 focused brows
 
 ## 4. Page creation and editing
 
-Status: **Next**
+Status: **Done**
 
-Proposed files: `client/pages/PageEditor.btsx`, `SourceEditor.btsx`, `form.ts`, and `model.ts`.
+Files: `client/pages/PageEditor.btsx`, `SourceEditor.btsx`, `form.ts`, `model.ts`, and `types.ts`.
 
-- [ ] Move new-page and existing-page editing markup into typed BTSX views, sharing the source editor.
-- [ ] Connect form state and submission through the installed `@octanejs/tanstack-form` binding.
-- [ ] Extract name-to-route and name-to-label helpers; preserve automatic suggestions until the user supplies an override.
-- [ ] Preserve navigation selection, item-contract hints, missing-menu guidance, and create/edit mode differences.
-- [ ] Preserve template replacement and section insertion before the existing style block.
-- [ ] Invalidate the reviewed preview whenever its draft changes; preserve drafts through closing, navigation between views, and failed reviews.
-- [ ] Verify caret/focus retention, manual overrides, templates, sections, validation, pending state, and review retry behavior.
+- [x] Move new-page and existing-page editing markup into typed BTSX views, sharing the source editor.
+- [x] Connect form state and submission through the installed `@octanejs/tanstack-form` binding.
+- [x] Extract name-to-route and name-to-label helpers; preserve automatic suggestions until the user supplies an override.
+- [x] Preserve navigation selection, item-contract hints, missing-menu guidance, and create/edit mode differences.
+- [x] Preserve template replacement and section insertion before the existing style block.
+- [x] Invalidate the reviewed preview whenever its draft changes; preserve drafts through closing, navigation between views, and failed reviews.
+- [x] Verify caret/focus retention, manual overrides, templates, sections, validation, pending state, and review retry behavior.
 
 Complete when: both page workflows use BTSX without rebuilding their inputs during ordinary edits, and the existing page create/edit browser flows pass.
 
-Evidence: pending.
+Evidence (October 18, 2026): production build and type checking passed. `bun run check` passed all 57 non-browser tests, including 2 new model tests and 6 bundler integration tests. All 31 widget browser tests passed (22 existing workflows, 5 shared-component tests, and 4 page-editor tests); the 4 page-editor tests passed again after the final draft-reset and obsolete-review guards. The review-return regression also passed 6 consecutive runs after fixing controlled input updates. Coverage includes suggestions and manual overrides, caret/focus retention, literal source, navigation contracts and missing-menu guidance, templates, single section insertion before styles, create/edit mode transitions, draft persistence, pending/duplicate submission, errors/retry, stale responses, and real page creation/editing/saving. Desktop and mobile screenshots were inspected. The client bundle is 435,282 bytes minified and 135,311 bytes gzipped (Node zlib defaults): increases of 3,593 and 1,461 bytes over section 3. Dependencies and the plain TypeScript build script are unchanged.
 
 ## 5. Review and save screens
 
-Status: **Queued**
+Status: **Next**
 
 Proposed files: `client/review/ReviewView.btsx`, `PlannedFile.btsx`, and `client/ui/SourceViewer.btsx`.
 

@@ -17,14 +17,18 @@ module
 
   export interface ActionFooterProps {
     description: OctaneNode
+    descriptionIcon?: string
     action: FooterAction
     dark: boolean
   }
 
-props { description, action, dark }: ActionFooterProps
+props { description, descriptionIcon, action, dark }: ActionFooterProps
 
 footer.action-footer
-  span #{description}
+  span
+    if descriptionIcon
+      Icon(name={descriptionIcon})
+    | #{description}
   button.primary(
     ~ type={action.type ?? 'button'}
     ~ form={action.form}
