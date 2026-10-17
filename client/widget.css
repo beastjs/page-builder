@@ -474,11 +474,13 @@ kbd {
   outline: none;
 }
 .tabs {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 4px;
   padding: 8px 14px;
   border-bottom: 1px solid var(--line);
+  overflow: hidden;
 }
 .tab {
   padding: 5px 9px;
@@ -494,17 +496,44 @@ kbd {
   color: var(--text);
 }
 .ready-status {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  /* Results finish at 48ms + 120ms stagger + 260ms duration. */
+  --ready-delay: 440ms;
   margin-left: auto;
   color: var(--muted);
   font-size: 11px;
+  flex-shrink: 0;
+}
+.ready-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ready-status-enter .ready-label {
+  animation: ready-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) var(--ready-delay) backwards;
+}
+.ready-hexes {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 180px;
+  pointer-events: none;
+  color: var(--blue);
+}
+.ready-hex {
+  position: absolute;
+  right: 0;
+  top: calc(50% + var(--hex-y));
+  width: var(--hex-size);
+  height: var(--hex-size);
+  opacity: 0;
+  transform: translate(calc(-1 * var(--hex-x)), -50%);
+  animation:
+    ready-hex-slide var(--hex-duration) cubic-bezier(0.12, 0.8, 0.25, 1) var(--ready-delay) backwards,
+    ready-hex-fade var(--hex-duration) linear var(--ready-delay) backwards;
 }
 .ready-status i {
-  width: 5px;
-  height: 5px;
-  background: #83ad8a;
+  width: 6px;
+  height: 6px;
+  background: var(--blue);
   border-radius: 50%;
   box-shadow: 0 0 0 3px #83ad8a12;
 }
@@ -885,6 +914,36 @@ summary::-webkit-details-marker {
     transform: translateY(0);
   }
 }
+@keyframes ready-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes ready-hex-slide {
+  from {
+    transform: translate(100%, -25%);
+  }
+  to {
+    transform: translate(calc(-1 * var(--hex-x)), -50%);
+  }
+}
+@keyframes ready-hex-fade {
+  0% {
+    opacity: 0;
+  }
+  12%,
+  32% {
+    opacity: var(--hex-opacity);
+  }
+  100% {
+    opacity: 0;
+  }
+}
 @keyframes panel-in {
   from {
     opacity: 0;
@@ -1011,6 +1070,9 @@ summary::-webkit-details-marker {
   }
   .sonar > svg > polygon {
     opacity: 0.3;
+  }
+  .ready-hexes {
+    display: none;
   }
 }
 

@@ -336,6 +336,20 @@ function mount(): void {
     })
   }
 
+  function readyStatus(animate: boolean): string {
+    const duration = 850 + Math.round(Math.random() * 250)
+    const hexes = animate
+      ? `<span class="ready-hexes" aria-hidden="true">${Array.from({ length: 6 }, (_, index) => {
+          const size = Math.round(10 - index * 0.8 + Math.random())
+          // Increasing gaps toward the right form a loose tail behind the leading hex.
+          const distance = 176 - 4 * index * (index + 3)
+          const y = Math.round((Math.random() - 0.5) * (4 + index * 2))
+          return `<svg class="ready-hex" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="--hex-size:${size}px;--hex-x:${distance}px;--hex-y:${y}px;--hex-opacity:${0.38 - index * 0.035};--hex-duration:${duration}ms"><path d="m12 2 8.7 5v10L12 22l-8.7-5V7Z"/></svg>`
+        }).join('')}</span>`
+      : ''
+    return `<span class="ready-status${animate ? ' ready-status-enter' : ''}"><span class="ready-label"><i></i> Builder ready</span>${hexes}</span>`
+  }
+
   function render(): void {
     const entering = panel.dataset.view !== view
     panel.dataset.view = view
@@ -343,7 +357,7 @@ function mount(): void {
       panel.innerHTML = `<header class="scan-header"><span class="brand">${icon('hex')} Beast <span class="muted">/ Page builder</span></span>${moveHandle()}${closeButton()}</header><div class="scan-body">${sonar()}<span class="eyebrow">CONNECTING THE DOTS</span><h2>Getting to know your project</h2><p class="scan-label" role="status">Looking for pages, menus, and tabs…</p><div class="scan-progress"><i></i></div><span class="scan-note">A little scan. A lot of possibilities.</span></div>${footer()}`
       panel.querySelector('.sonar-core')!.append(HexTrace({ size: 32 }, shadow))
     } else if (view === 'palette') {
-      panel.innerHTML = `<header class="searchbar">${moveHandle()}${icon('search')}<input class="search" aria-label="Search pages, components, navigation, tabs, and actions" placeholder="What would you like to build?" value="${escape(query)}" autocomplete="off" spellcheck="false">${closeButton()}</header><nav class="tabs" aria-label="Filter builder results">${['All', 'Pages', 'Components', 'Navs', 'Tabs'].map((name) => `<button class="tab ${tab === name ? 'active' : ''}" aria-pressed="${tab === name}">${name}</button>`).join('')}<span class="ready-status"><i></i> Builder ready</span></nav><div class="results"></div><div class="message" role="status"></div>${footer()}`
+      panel.innerHTML = `<header class="searchbar">${moveHandle()}${icon('search')}<input class="search" aria-label="Search pages, components, navigation, tabs, and actions" placeholder="What would you like to build?" value="${escape(query)}" autocomplete="off" spellcheck="false">${closeButton()}</header><nav class="tabs" aria-label="Filter builder results">${['All', 'Pages', 'Components', 'Navs', 'Tabs'].map((name) => `<button class="tab ${tab === name ? 'active' : ''}" aria-pressed="${tab === name}">${name}</button>`).join('')}${readyStatus(entering)}</nav><div class="results"></div><div class="message" role="status"></div>${footer()}`
       renderResults(true)
       panel.querySelector<HTMLInputElement>('.search')!.addEventListener('input', (event) => {
         query = (event.target as HTMLInputElement).value
