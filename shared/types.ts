@@ -46,6 +46,7 @@ export interface ProjectScan {
   collections: DetectedCollection[]
   pageRoutes: PageRoute[]
   tabComponents: TabComponent[]
+  tabInstances: TabInstance[]
 }
 
 export interface ItemField { name: string; type: string; optional: boolean; scalar?: 'string' | 'number' | 'boolean'; values?: Array<string | number | boolean> }
@@ -78,7 +79,7 @@ export interface DetectedCollection {
   dataSources: string[]
 }
 export interface NavigationTarget { id: string; file: string; label: string; array?: string; group?: string; itemType?: ItemType }
-export interface PageDraft { name: string; source: string; routePath?: string; navLabel?: string; navigationTarget?: string }
+export interface PageDraft { name: string; source: string; routePath?: string; navLabel?: string; navigationTarget?: string; path?: string }
 export interface PlannedFile { path: string; action: 'create' | 'edit'; before: string | null; source: string }
 export interface PagePreview { path: string; source: string; hash: string; routePath: string; navLabel: string; files: PlannedFile[] }
 export interface PageRoute { file: string; name: string; routePath: string }
@@ -93,5 +94,6 @@ export interface TabComponent {
   reason?: string
 }
 export type TabValue = string | number | boolean
-export interface TabsDraft { page: string; routePath: string; component: string; items: Record<string, TabValue>[]; active: TabValue; label?: string }
+export interface TabsDraft { page: string; routePath: string; component: string; items: Record<string, TabValue>[]; active: TabValue; label?: string; instance?: string }
+export interface TabInstance { id: string; page: string; routePath: string; component: string; line: number; draft?: TabsDraft; reason?: string }
 export interface TabsPreview { path: string; source: string; hash: string; routePath: string; files: PlannedFile[] }

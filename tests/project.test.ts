@@ -95,3 +95,33 @@ describe('page creation', () => {
     expect(() => new BuilderProject(root, { pagesDir: '/tmp' })).toThrow('inside')
   })
 })
+
+describe('page editing', () => {
+  test('reviews and saves existing page content without touching router or navigation', async () => {
+    const { project, root } = await fixture()
+    const router = await readFile(join(root, 'src/router.ts'), 'utf8')
+    const header = await readFile(join(root, 'src/components/Header.btsx'), 'utf8')
+    const draft = { name: 'HomePage', path: 'src/pages/HomePage.btsx', source: 'main\n  h1 Updated page\n\nstyle\n  h1 { color: red; }\n' }
+    const preview = await project.preview(draft)
+    expect(preview.files).toEqual([{ path: draft.path, action: 'edit', before: 'main\n  h1 Hello\n', source: draft.source }])
+    expect(preview.routePath).toBe('/')
+    await project.create(draft, preview.hash)
+    expect(await project.source(draft.path)).toBe(draft.source)
+    expect(await readFile(join(root, 'src/router.ts'), 'utf8')).toBe(router)
+    expect(await readFile(join(root, 'src/components/Header.btsx'), 'utf8')).toBe(header)
+    expect(await project.creation(preview.hash)).toEqual(preview)
+  })
+  test('rejects stale review, changed drafts, invalid source and non-page paths', async () => {
+    const { project, root } = await fixture()
+    const draft = { name: 'HomePage', path: 'src/pages/HomePage.btsx', source: 'main\n  h1 Updated\n' }
+    const preview = await project.preview(draft)
+    await expect(project.create({ ...draft, source: 'main Another edit' }, preview.hash)).rejects.toThrow('changed')
+    await writeFile(join(root, draft.path), 'main\n  h1 External edit\n')
+    await expect(project.create(draft, preview.hash)).rejects.toThrow('changed')
+    expect(await project.source(draft.path)).toContain('External edit')
+    await expect(project.preview({ ...draft, source: 'main\n   p Bad\n  p Indent' })).rejects.toThrow()
+    await expect(project.preview({ ...draft, path: 'src/components/Header.btsx' })).rejects.toThrow('page from')
+    await expect(project.preview({ ...draft, path: '../Outside.btsx' })).rejects.toThrow('outside')
+    await expect(project.create(draft, '')).rejects.toThrow('Review')
+  })
+})

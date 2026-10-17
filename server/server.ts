@@ -70,12 +70,12 @@ export function createBuilderServer(root: string, options: BeastPageBuilderOptio
       else if (req.method === 'GET' && route === '/tabs/creation') send(200, await project.tabCreation(url.searchParams.get('hash') ?? ''))
       else if (req.method === 'POST' && (route === '/tabs/preview' || route === '/tabs/create')) {
         const body = await jsonBody(req)
-        const draft = { page: body.page, routePath: body.routePath, component: body.component, items: body.items, active: body.active, label: body.label } as TabsDraft
+        const draft = { page: body.page, routePath: body.routePath, component: body.component, items: body.items, active: body.active, label: body.label, instance: body.instance } as TabsDraft
         send(route === '/tabs/create' ? 201 : 200, route === '/tabs/create' ? await project.createTabs(draft, body.hash as string) : await project.previewTabs(draft))
       }
       else if (req.method === 'POST' && (route === '/preview' || route === '/create')) {
         const body = await jsonBody(req)
-        const draft = { name: body.name, source: body.source, routePath: body.routePath, navLabel: body.navLabel, navigationTarget: body.navigationTarget } as PageDraft
+        const draft = { name: body.name, source: body.source, routePath: body.routePath, navLabel: body.navLabel, navigationTarget: body.navigationTarget, path: body.path } as PageDraft
         send(route === '/create' ? 201 : 200, route === '/create' ? await project.create(draft, body.hash as string) : await project.preview(draft))
       } else send(404, { error: 'Unknown page-builder endpoint.' })
     })().catch(error => {

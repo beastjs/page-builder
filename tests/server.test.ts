@@ -72,3 +72,29 @@ test('Tabs API validates, reviews and updates a registered page with a reload re
   expect(await readFile(join(root, draft.page), 'utf8')).toBe(preview.source)
   expect(await (await fetch(base + '/tabs/creation?hash=' + preview.hash)).json()).toMatchObject({ routePath: '/', hash: preview.hash })
 })
+
+test('API reviews and saves page and tab edits with stale review protection', async () => {
+  const origin = await fixture(), base = origin + '/__beast-page-builder'
+  const root = roots.at(-1)!
+  await mkdir(join(root, 'src/pages'), { recursive: true })
+  await writeFile(join(root, 'src/router.ts'), ROUTER)
+  await writeFile(join(root, 'src/pages/HomePage.btsx'), 'main\n  h1 Home\n')
+  await writeFile(join(root, 'src/Tabs.btsx'), 'module\n  interface Item { id: string; label: string }\nprops { items, activeId }: { items: Item[]; activeId: string }\nnav\n  each item in items\n    a #{item.label}\n')
+  const post = (route: string, body: unknown) => fetch(base + route, { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: origin }, body: JSON.stringify(body) })
+  const page = { name: 'HomePage', path: 'src/pages/HomePage.btsx', source: 'main\n  h1 Edited page\n' }
+  expect((await post('/create', page)).status).toBe(400)
+  const reviewed = await (await post('/preview', page)).json() as { hash: string }
+  expect((await post('/create', { ...page, hash: reviewed.hash })).status).toBe(201)
+  const tabs = { page: page.path, routePath: '/', component: 'src/Tabs.btsx', items: [{ id: 'one', label: 'First' }], active: 'one' }
+  const preview = await (await post('/tabs/preview', tabs)).json() as { hash: string }
+  expect((await post('/tabs/create', { ...tabs, hash: preview.hash })).status).toBe(201)
+  const scan = await (await fetch(base + '/scan')).json() as { tabInstances: { draft: typeof tabs & { instance: string } }[] }
+  const editing = { ...scan.tabInstances[0]!.draft, items: [{ id: 'one', label: 'Updated tab' }] }
+  const update = await (await post('/tabs/preview', editing)).json() as { hash: string }
+  expect((await post('/tabs/create', { ...editing, hash: update.hash })).status).toBe(201)
+  const source = await readFile(join(root, page.path), 'utf8')
+  expect(source).toContain('Updated tab')
+  expect(source).toContain('h1 Edited page')
+  expect(source.match(/PageTabs\(/g)).toHaveLength(1)
+  expect((await post('/tabs/create', { ...editing, hash: update.hash })).status).toBe(409)
+})

@@ -6,7 +6,7 @@ import { createOctaneCompiler } from 'octane/compiler/bundler'
 import type { BeastPageBuilderOptions, NavigationTarget, PageDraft, PagePreview, PlannedFile, ProjectFile, ProjectScan, TabsDraft, TabsPreview } from '../shared/types.js'
 import { addNavigation, discoverNavigation, registerRoute } from './integration.js'
 import { discoverProjectItems, type DiscoverySource } from './discovery.js'
-import { addTabs, discoverPageRoutes } from './tabs.js'
+import { addTabs, discoverPageRoutes, discoverTabInstances } from './tabs.js'
 
 const IGNORED = new Set(['node_modules', '.git', '.beast', 'dist', 'build', 'coverage', '.next'])
 export class BuilderError extends Error {
@@ -112,7 +112,11 @@ export class BuilderProject {
     } else {
       navigationTargets = collections.filter(collection => collection.editable && collection.kind === 'navigation').map(collection => ({ id: collection.id, file: collection.file, label: `${collection.file} · ${collection.name}`, array: collection.array, group: collection.group, itemType: collection.itemType }))
     }
-    return { collections, tabComponents, pageRoutes, name: basename(this.root), files: files.sort((a, b) => a.path.localeCompare(b.path)), scannedAt: new Date().toISOString(), warnings, navigationTargets }
+    const tabInstances = pageRoutes.filter((page, index) => pageRoutes.findIndex(other => other.file === page.file) === index).flatMap(page => {
+      const source = sources.get(page.file)?.source
+      return source ? discoverTabInstances(source, page, tabComponents) : []
+    })
+    return { collections, tabComponents, tabInstances, pageRoutes, name: basename(this.root), files: files.sort((a, b) => a.path.localeCompare(b.path)), scannedAt: new Date().toISOString(), warnings, navigationTargets }
   }
 
   async source(path: string): Promise<string> {
@@ -124,6 +128,7 @@ export class BuilderProject {
   }
 
   async preview(draft: PageDraft): Promise<PagePreview> {
+    if (draft.path !== undefined) return this.previewPageEdit(draft)
     if (typeof draft.name !== 'string' || !/^[A-Z][A-Za-z0-9]{0,79}$/.test(draft.name)) throw new BuilderError('Use a PascalCase page name, such as PricingPage.')
     if (typeof draft.source !== 'string' || !draft.source.trim() || Buffer.byteLength(draft.source) > 60_000) throw new BuilderError('Page source must contain between 1 and 60,000 bytes.')
     const path = posix(relative(this.root, resolve(this.root, this.pagesDir, `${draft.name}.btsx`)))
@@ -171,6 +176,27 @@ export class BuilderProject {
     ]
     const hash = createHash('sha256').update(JSON.stringify({ routePath, navLabel: navLabel.trim(), files })).digest('hex')
     return { path, source, hash, routePath, navLabel: navLabel.trim(), files }
+  }
+
+  private async previewPageEdit(draft: PageDraft): Promise<PagePreview> {
+    if (typeof draft.path !== 'string') throw new BuilderError('Choose a page to edit.')
+    // Check the path before scanning, and limit edits to discovered page files.
+    const before = await this.source(draft.path)
+    const report = await this.scan()
+    const page = report.files.find(file => file.path === draft.path && file.kind === 'page')
+    if (!page) throw new BuilderError('Choose a page from the project scan.', 403)
+    if (typeof draft.source !== 'string' || !draft.source.trim() || Buffer.byteLength(draft.source) > 60_000) throw new BuilderError('Page source must contain between 1 and 60,000 bytes.')
+    const source = draft.source.replace(/\r\n/g, '\n').trimEnd() + '\n'
+    try {
+      const target = resolve(this.root, draft.path)
+      const result = compileBeastResult(source, { filename: target })
+      this.compiler ??= createOctaneCompiler({ root: this.root, environment: 'client', hmr: false, dev: true })
+      this.compiler.transform(result.code, target.replace(/\.btsx$/, '.tsrx'), { environment: 'client', dev: true })
+    } catch (cause) { throw new BuilderError(cause instanceof Error ? cause.message : String(cause), 422) }
+    const files: PlannedFile[] = [{ path: page.path, action: 'edit', before, source }]
+    const routePath = report.pageRoutes.find(route => route.file === page.path)?.routePath ?? ''
+    const hash = createHash('sha256').update(JSON.stringify({ files, routePath })).digest('hex')
+    return { path: page.path, source, routePath, navLabel: '', files, hash }
   }
 
   private async writeFiles(files: PlannedFile[]): Promise<void> {
@@ -230,7 +256,7 @@ export class BuilderProject {
     if (typeof hash !== 'string' || !/^[a-f0-9]{64}$/.test(hash)) throw new BuilderError('Review the page before saving.')
     const operation = this.mutation.then(async () => {
       const preview = await this.preview(draft)
-      if (hash !== preview.hash) throw new BuilderError('The draft, router, or navigation changed. Review again before saving.', 409)
+      if (hash !== preview.hash) throw new BuilderError('The draft or project files changed. Review again before saving.', 409)
       await this.writeFiles(preview.files)
       return preview
     })

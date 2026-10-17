@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { BuilderProject } from '../server/project.js'
-import { addTabs, discoverPageRoutes } from '../server/tabs.js'
+import { addTabs, discoverPageRoutes, discoverTabInstances } from '../server/tabs.js'
 import type { TabsDraft } from '../shared/types.js'
 import { ROUTER } from './fixtures.js'
 
@@ -101,4 +101,79 @@ test('rejects changed component contracts', async () => {
   const preview = await project.previewTabs(draft)
   await writeFile(join(root, draft.component), (await readFile(join(root, draft.component), 'utf8')) + '\n// changed\n')
   await expect(project.createTabs(draft, preview.hash)).rejects.toThrow('changed')
+})
+
+test('discovers saved tabs and updates the selected group without duplicating or changing other groups', async () => {
+  const { project, root, draft } = await fixture()
+  const component = (await project.scan()).tabComponents[0]!
+  const original = await project.source(draft.page)
+  let source = addTabs(original, component, draft)
+  source = addTabs(source, component, { ...draft, label: 'Other tabs' })
+  source = source.replace('label="Page sections"', 'label="Page sections" className="keep-me"')
+  await writeFile(join(root, draft.page), source)
+  const instances = (await project.scan()).tabInstances
+  expect(instances).toHaveLength(2)
+  const editing = instances.find(instance => instance.draft?.label === 'Page sections')!.draft!
+  expect(editing.items).toEqual(draft.items)
+  editing.items[0]!.label = 'Updated first'
+  editing.items.push({ href: '#three', id: 'three', label: 'Third', shortLabel: 'Three', icon: 'close' })
+  editing.active = 'three'
+  editing.label = 'Updated sections'
+  const preview = await project.previewTabs(editing)
+  expect(preview.source.match(/PageTabs\(items=/g)).toHaveLength(2)
+  expect(preview.source).toContain('className="keep-me"')
+  expect(preview.source).toContain('label="Other tabs"')
+  expect(preview.source).toContain('activeId={"three"}')
+  expect(preview.source).toContain('Updated first')
+  expect(preview.source).toContain('h1 Home\n\nstyle\n  main { padding: 20px; }')
+  await project.createTabs(editing, preview.hash)
+  expect(await readFile(join(root, draft.page), 'utf8')).toBe(preview.source)
+  await expect(project.previewTabs(editing)).rejects.toThrow('selected tabs changed')
+})
+
+test('tab edits reject changed source, invalid items and stale group identities', async () => {
+  const { project, root, draft } = await fixture()
+  await project.createTabs(draft, (await project.previewTabs(draft)).hash)
+  const editing = (await project.scan()).tabInstances[0]!.draft!
+  editing.items[0]!.label = 'Edited'
+  const preview = await project.previewTabs(editing)
+  await expect(project.createTabs({ ...editing, active: 'missing' }, preview.hash)).rejects.toThrow('active tab')
+  await expect(project.createTabs({ ...editing, label: 'Changed draft' }, preview.hash)).rejects.toThrow('changed')
+  const before = await project.source(draft.page)
+  await writeFile(join(root, draft.page), before + '\n// external edit\n')
+  await expect(project.createTabs(editing, preview.hash)).rejects.toThrow('changed')
+  expect(await project.source(draft.page)).toContain('// external edit')
+  await writeFile(join(root, draft.page), before.replace('label="Page sections"', 'label="External tabs"'))
+  await expect(project.previewTabs(editing)).rejects.toThrow('selected tabs changed')
+})
+
+test('tab editing handles multiline props, aliases, omitted labels and Windows newlines', async () => {
+  const { project, draft } = await fixture()
+  const component = (await project.scan()).tabComponents[0]!
+  for (const newline of ['\n', '\r\n']) {
+    const source = ['import Sections from "../ui/Tabs.btsx"', '', 'main', '  Sections(', `    ~ items={${JSON.stringify(draft.items)}}`, '    ~ activeId={"one"}', '    ~ className="preserved"', '    ~ )', '  h1 Keep this', ''].join(newline)
+    const instance = discoverTabInstances(source, { file: draft.page, name: 'Home', routePath: '/' }, [component])[0]!
+    expect(instance.draft).toBeDefined()
+    const updated = addTabs(source, component, { ...instance.draft!, label: 'Added label', active: 'two' })
+    expect(updated).toContain('className="preserved"')
+    expect(updated).toContain('label={"Added label"}')
+    expect(updated).toContain('activeId={"two"}')
+    expect(updated).toContain('  h1 Keep this')
+    expect(updated.split(newline)).toHaveLength(source.split(newline).length)
+    const next = discoverTabInstances(updated, { file: draft.page, name: 'Home', routePath: '/' }, [component])[0]!
+    expect(next.draft?.label).toBe('Added label')
+    expect(next.draft?.active).toBe('two')
+  }
+})
+
+test('computed tab props stay read-only in the form and cannot be replaced through the edit API', async () => {
+  const { project, draft } = await fixture()
+  const component = (await project.scan()).tabComponents[0]!
+  for (const props of ['items={getItems()} activeId="one"', `items={${JSON.stringify(draft.items)}} activeId={selected}`, `items={${JSON.stringify(draft.items)}} activeId="one" {...props}`]) {
+    const source = `import Sections from "../ui/Tabs.btsx"\nmain\n  Sections(${props})\n`
+    const instance = discoverTabInstances(source, { file: draft.page, name: 'Home', routePath: '/' }, [component])[0]!
+    expect(instance.draft).toBeUndefined()
+    expect(instance.reason).toContain('page source')
+    expect(() => addTabs(source, component, { ...draft, instance: instance.id })).toThrow('page source')
+  }
 })

@@ -111,13 +111,19 @@ beastPageBuilder({
 ## Build a page
 
 1. Open the widget. It requests a fresh inventory from the dev server.
-2. Search or filter **Pages** and **Components**. Open a result to inspect or copy its source. Use **Navs** and **Tabs** to inspect groups, item types, and data bindings. Compiler diagnostics stay visible for broken files.
+2. Search or filter **Pages** and **Components**. Open a result to inspect or copy its source. For a page, choose **Edit page** to update its BTSX content and styles, then **Review changes** and **Save page**. Use **Navs** and **Tabs** to inspect groups, item types, and data bindings. Compiler diagnostics stay visible for broken files.
 3. Choose **Create a new page**. Name it in PascalCase, such as `PricingPage`.
 4. Set the **Page URL** and **Navigation label**, and choose a menu if several are available. These default to `/pricing` and `Pricing` for `PricingPage`.
 5. Start with a blank page or landing page. Add sections and edit the BTSX source. Choose **Review page** to inspect all three proposed files: the new page, router, and navigation.
 6. Choose **Create page**. The server saves the reviewed files together. Use **Open page** or the new nav link to visit the URL.
 
 Use the arrow keys and Enter to navigate search results. Escape, the close button, the backdrop, or the shortcut closes the widget. Focus returns to the element that opened it. New-page drafts stay in memory when you close the widget; they reset on reload. Template buttons replace the current draft source. Tabs drafts also survive navigation through their page selector.
+
+Use the sun/moon button in the header to toggle dark mode. Your choice is remembered in this browser; until you choose, the builder follows its configured theme. Scrollbars stay thin in both themes.
+
+Choose **Hide launcher** under **All** to hide the floating Builder button. Open the builder with **⌘B** on macOS or **Ctrl+B** elsewhere (or your configured shortcut), then choose **Show launcher** to restore it. Your visibility choice is remembered across reloads.
+
+Drag the builder's header or grip to move it. Its position stays within the viewport and is kept when switching views or reopening the builder. You can also focus **Move builder** and use the arrow keys (Shift for larger steps); Home restores its configured position.
 
 Pages are classified by `pagesDir`, a `pages/` or `routes/` folder, or a component name ending in `Page`. Other Beast files appear as components. Dependency, generated, hidden, and symlinked entries are skipped. Use **Rescan project** after filesystem changes; there is no background file watcher in this version.
 
@@ -156,6 +162,14 @@ navigation: {
 
 Supported exported arrays are flat literal items or literal groups with `title`/`label` and `items`. New items follow the acquired contract and existing schema (`href` or `to`, `label` or `title`, and optional `icon`, `value`, `id`, `short`, `description`, `tags`, `disabled`). An icon defaults to the existing first item's icon; override it with a valid icon from your project. Supply `itemDefaults` for additional fields your menu requires. Existing items and other groups are preserved. Required fields from declared types are included even in empty typed arrays. Simple field types and literal unions are checked against the proposed values; optional fields are omitted unless present in the existing template or supplied in defaults. Computed arrays and spreads are inspectable but cannot be edited automatically.
 
+## Edit existing pages and tabs
+
+Open **Pages**, select a page, and choose **Edit page**. The editor loads its current BTSX source, including any tabs already added. Choose **Review changes** to compile and compare the proposed source with the current file, then **Save page**. You can also choose **Edit page** directly after creating or saving a page.
+
+Open **Tabs** and select an existing group under **Existing tabs**, or select **Edit tabs** in its page details. The form loads the saved items, active tab, and accessible label. Add or remove items and edit their fields, then choose **Review Tabs** and **Save tabs**. Saving updates the selected group in place and preserves other tab groups, page content, and component props. The page and component selectors stay fixed while editing.
+
+The tabs form supports literal item arrays and literal active/label props, including the tabs inserted by the builder. Groups with computed values or spread props link to their page source instead. A changed page, tab group, route, or item contract requires another review before saving.
+
 ## Navigation, tabs, and item types
 
 The scan detects BTSX `nav`, navigation/menu roles, tablist/tab roles, and common `Nav`, `Navigation`, `SidebarNav`, `MenuList`, `TabsList`, and `TabsTrigger` components, including named import aliases. It also discovers shared arrays by link fields, menu/tab naming, or use in an `each` loop or `items`/`tabs`/`links` binding. Loops connect rendered groups to their source arrays, including aliased imports and grouped menus. Custom components with these semantics can expose them using ARIA roles.
@@ -173,9 +187,9 @@ Detection is based on source semantics, not the browser DOM. Runtime-generated l
 
 ## Scope of this version
 
-This is a source-based page builder. Review shows BTSX source, not a rendered page. It creates pages and adds typed Tabs components to existing pages. It does not arrange arbitrary project components visually, generate content with AI, or generate new router infrastructure. Compilation validates Beast and Octane syntax; it does not type-check imports or props against the whole host project. Run the host app's normal checks after changes.
+This is a source-based page builder. Review shows BTSX source, not a rendered page. It creates and edits page source, and adds or edits typed Tabs components on existing pages. It does not arrange arbitrary project components visually, generate content with AI, or generate new router infrastructure. Compilation validates Beast and Octane syntax; it does not type-check imports or props against the whole host project. Run the host app's normal checks after changes.
 
-The API lives under `/__beast-page-builder`. Reads and writes reject cross-site requests. Writes require same-origin JSON, bounded request bodies, valid page names, and project-contained paths. The review hash includes every original and proposed file. Saving rechecks the reviewed source, stages all complete files, then commits them, with rollback on a write failure. Page creation never overwrites existing pages; Tabs insertion edits the selected existing page after review. A changed draft, router, menu, or Tabs contract requires another review; concurrent saves through one project instance are serialized. If an external edit prevents rollback, the error identifies the files to inspect.
+The API lives under `/__beast-page-builder`. Reads and writes reject cross-site requests. Writes require same-origin JSON, bounded request bodies, valid page names, and project-contained paths. The review hash includes every original and proposed file. Saving rechecks the reviewed source, stages all complete files, then commits them, with rollback on a write failure. Page creation never overwrites existing pages; explicit page and Tabs edits update the selected existing page after review. A changed draft, router, menu, or Tabs contract requires another review; concurrent saves through one project instance are serialized. If an external edit prevents rollback, the error identifies the files to inspect.
 
 ## Develop and verify
 

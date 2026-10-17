@@ -16,10 +16,4 @@ div.page-tabs
   PageTabs(activeId={activeId} items={items} label={label})
 
 style
-  .page-tabs { margin-bottom: 28px; }
-  .page-tabs nav { position: relative; display: flex; gap: 16px; border-bottom: 1px solid #deded9; }
-  .page-tabs nav > a { position: relative; display: flex; align-items: center; gap: 8px; padding: 12px 0; color: #969590; text-decoration: none; }
-  .page-tabs nav > a[aria-current='page'] { color: #33342e; }
-  .page-tabs nav > a > span:last-child { display: none; }
-  .page-tabs nav > a svg { width: 16px; height: 16px; }
-  .page-tabs nav > div { position: absolute; bottom: -1px; left: 0; height: 2px; background: #33342e; transition: width .18s, transform .18s; }
+  .page-tabs { margin-bottom: 36px; }
