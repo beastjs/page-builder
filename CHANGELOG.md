@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.0 — 2026-10-17
+
+- Edit existing page source with compiler validation, reviewed changes, and stale-source checks before saving.
+- Add and edit typed Tabs components on registered pages, with contract-driven fields, route selection, and drafts that survive navigation.
+- Discover existing tab instances and registered static page routes, including nested and lazy routes.
+- Move the builder with mouse, touch, or keyboard; keep its position within the viewport across views and reopening.
+- Toggle the builder theme and launcher visibility, with browser-persisted preferences and thin themed scrollbars. Theme controls remain available in every view's footer.
+- Refine the compact builder UI with staggered entrances, a comet-like hex trail, and an Atom loader that smoothly transitions to the blue ready indicator. Reduced-motion preferences are respected.
+- Support Ctrl+N and Ctrl+P alongside the existing result and page-selector navigation controls.
+- Include typed Tabs and icon utilities for the playground, with expanded project, API, and browser coverage.
+
 ## 0.1.0 — 2026-10-08
 
 Initial release of `@beastjs/page-builder`.

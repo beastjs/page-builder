@@ -119,7 +119,7 @@ beastPageBuilder({
 
 Use the arrow keys and Enter to navigate search results. Escape, the close button, the backdrop, or the shortcut closes the widget. Focus returns to the element that opened it. New-page drafts stay in memory when you close the widget; they reset on reload. Template buttons replace the current draft source. Tabs drafts also survive navigation through their page selector.
 
-Use the sun/moon button in the header to toggle dark mode. Your choice is remembered in this browser; until you choose, the builder follows its configured theme. Scrollbars stay thin in both themes.
+Use the sun/moon button in the footer to toggle dark mode. Your choice is remembered in this browser; until you choose, the builder follows its configured theme. Scrollbars stay thin in both themes.
 
 Choose **Hide launcher** under **All** to hide the floating Builder button. Open the builder with **⌘B** on macOS or **Ctrl+B** elsewhere (or your configured shortcut), then choose **Show launcher** to restore it. Your visibility choice is remembered across reloads.
 
@@ -217,7 +217,7 @@ Release artifacts are attached to the corresponding [GitHub release](https://git
 To publish the verified tarball from a release:
 
 ```sh
-npm publish ./releases/beastjs-page-builder-0.1.0.tgz --access public
+npm publish ./releases/beastjs-page-builder-0.2.0.tgz --access public
 ```
 
 For a future release, update the package version and changelog, run `bun run check` and `bun run test:browser`, then run `npm pack --pack-destination releases`. `prepack` builds the distribution so each tarball includes the adapters, declarations, and browser widget. Publishing from the repository also runs `prepublishOnly` checks. Check the packed file list with `bun run pack:check`.
