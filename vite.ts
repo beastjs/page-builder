@@ -1,7 +1,7 @@
 import type { Plugin } from 'vite'
 import { createBuilderServer } from './server/server.js'
 import { BASE, type BeastPageBuilderOptions } from './shared/types.js'
-export type { BeastPageBuilderOptions, ProjectScan, DetectedCollection, DetectedItem, ItemType, ItemField, NavigationTarget } from './shared/types.js'
+export type { BeastPageBuilderOptions, ProjectScan, DetectedCollection, DetectedItem, ItemType, ItemField, NavigationTarget, PageRoute, TabComponent, TabsDraft, TabsPreview } from './shared/types.js'
 
 export function beastPageBuilder(options: BeastPageBuilderOptions = {}): Plugin {
   let root = process.cwd()

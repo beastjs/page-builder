@@ -1,5 +1,5 @@
 import css from './widget.css'
-import { BASE, type DetectedCollection, type ItemType, type ClientConfig, type PageDraft, type PagePreview, type ProjectFile, type ProjectScan } from '../shared/types.js'
+import { BASE, type DetectedCollection, type ItemType, type ItemField, type ClientConfig, type PageDraft, type PagePreview, type ProjectFile, type ProjectScan, type PageRoute, type TabComponent, type TabsDraft, type TabsPreview, type TabValue } from '../shared/types.js'
 import { sections, templates } from './templates.js'
 
 const HOST_ID = 'beast-page-builder'
@@ -58,7 +58,7 @@ function mount(): void {
   let config = defaults
   let report: ProjectScan | null = null
   let opened = false
-  let view: 'scan' | 'palette' | 'draft' | 'file' | 'collection' | 'preview' | 'success' | 'error' = 'palette'
+  let view: 'scan' | 'palette' | 'draft' | 'file' | 'collection' | 'preview' | 'success' | 'tabs-draft' | 'tabs-preview' | 'tabs-success' | 'error' = 'palette'
   let tab = 'All'
   let query = ''
   let selected = 0
@@ -73,6 +73,27 @@ function mount(): void {
   let busy = false
   let message = ''
   let scanTimer: number | undefined
+  let routeTimer: number | undefined
+  let tabsDraft: TabsDraft = { page: '', routePath: '', component: '', items: [], active: '', label: 'Tabs' }
+  let tabsPreview: TabsPreview | null = null
+  let pageQuery = ''
+  let pickerOpen = false
+  let pickerIndex = 0
+  let resumeTabs = false
+  const routePrefix = apiBase.slice(0, -BASE.length)
+  const normalizePath = (path: string) => path.replace(/\/+$/, '') || '/'
+  const currentPath = () => normalizePath(location.pathname.slice(routePrefix.length))
+  const tabsComponent = () => report?.tabComponents.find(component => component.id === tabsDraft.component)
+  const tabsPage = () => report?.pageRoutes.find(page => page.file === tabsDraft.page && page.routePath === tabsDraft.routePath)
+  const tabsReady = () => !!tabsPage() && currentPath() === normalizePath(tabsDraft.routePath) && !!tabsComponent() && !tabsComponent()!.reason
+  const tabsReceiptKey = `beast-page-builder:tabs:${apiBase}`
+  function tabsReceipt(value?: { draft: TabsDraft; hash?: string } | null): { draft: TabsDraft; hash?: string } | null {
+    try {
+      if (value === null) sessionStorage.removeItem(tabsReceiptKey)
+      else if (value) sessionStorage.setItem(tabsReceiptKey, JSON.stringify(value))
+      return JSON.parse(sessionStorage.getItem(tabsReceiptKey) ?? 'null')
+    } catch { return null }
+  }
   const isMac = /Mac|iPhone|iPad/.test(navigator.platform)
   const shortcutLabel = () => config.shortcut.replace('Mod', isMac ? '⌘' : 'Ctrl').replace('Meta', '⌘').replaceAll('+', ' ')
 
@@ -125,15 +146,22 @@ function mount(): void {
         preview = null; render()
       }))
       panel.querySelector('.review')!.addEventListener('click', () => void review())
-    } else if (view === 'preview') {
-      panel.innerHTML = `${header('One last look', escape(preview!.path))}<div class="preview-body"><div class="validation">${icon('check')} Compiles with Beast and Octane</div>${preview!.files.map(file => `<details class="planned-file" open><summary>${icon(file.action === 'create' ? 'plus' : 'page')}<span>${escape(file.path)}</span><small>${file.action === 'create' ? 'New file' : 'Update'}</small></summary><pre class="source-preview" tabindex="0" aria-label="Proposed ${escape(file.path)}"><code>${escape(file.source)}</code></pre>${file.before !== null ? `<details class="original-file"><summary>Current source</summary><pre class="source-preview" tabindex="0"><code>${escape(file.before)}</code></pre></details>` : ''}</details>`).join('')}<div class="message" role="status">${escape(message)}</div><p class="hint">Creates the page and updates the route and navigation together.</p></div><footer class="action-footer"><span>${preview!.files.length} files · ${escape(preview!.routePath)}</span><button class="primary save" ${busy ? 'disabled' : ''}>${busy ? 'Creating…' : 'Create page'} ${icon('plus')}</button></footer>`
-      panel.querySelector('.save')!.addEventListener('click', () => void save())
+    } else if (view === 'tabs-draft') {
+      renderTabsForm()
+    } else if (view === 'preview' || view === 'tabs-preview') {
+      const isTabs = view === 'tabs-preview'
+      const proposed = isTabs ? tabsPreview! : preview!
+      panel.innerHTML = `${header('One last look', escape(proposed.path))}<div class="preview-body"><div class="validation">${icon('check')} Compiles with Beast and Octane</div>${proposed.files.map(file => `<details class="planned-file" open><summary>${icon(file.action === 'create' ? 'plus' : 'page')}<span>${escape(file.path)}</span><small>${file.action === 'create' ? 'New file' : 'Update'}</small></summary><pre class="source-preview" tabindex="0" aria-label="Proposed ${escape(file.path)}"><code>${escape(file.source)}</code></pre>${file.before !== null ? `<details class="original-file"><summary>Current source</summary><pre class="source-preview" tabindex="0"><code>${escape(file.before)}</code></pre></details>` : ''}</details>`).join('')}<div class="message" role="status">${escape(message)}</div><p class="hint">${isTabs ? 'Adds the Tabs component and its items to this page.' : 'Creates the page and updates the route and navigation together.'}</p></div><footer class="action-footer"><span>${proposed.files.length} files · ${escape(proposed.routePath)}</span><button class="primary save" ${busy || isTabs && !tabsReady() ? 'disabled' : ''}>${busy ? 'Saving…' : isTabs ? 'Add Tabs' : 'Create page'} ${icon('plus')}</button></footer>`
+      panel.querySelector('.save')!.addEventListener('click', () => void (isTabs ? saveTabs() : save()))
     } else if (view === 'file') {
       panel.innerHTML = `${header(escape(currentFile!.name), escape(currentFile!.path))}<div class="preview-body">${currentFile!.error ? `<p class="error-note">${escape(currentFile!.error)}</p>` : ''}<pre class="source-preview" tabindex="0"><code>${escape(currentSource)}</code></pre><div class="message" role="status"></div></div><footer class="action-footer"><span>${currentFile!.lines} lines · ${currentFile!.components.length} component${currentFile!.components.length === 1 ? '' : 's'}</span><button class="secondary copy">Copy source</button></footer>`
       panel.querySelector('.copy')!.addEventListener('click', () => { void navigator.clipboard.writeText(currentSource).then(() => notify('Source copied.')).catch(() => notify('Could not access the clipboard. Select the source to copy it.')) })
     } else if (view === 'collection') {
       const collection = currentCollection!
       panel.innerHTML = `${header(escape(collection.name), escape(collection.file) + ':' + collection.line)}<div class="preview-body collection-body"><div class="collection-meta"><span class="type-badge">${collection.kind === 'tabs' ? 'Tabs' : 'Navigation'}</span><span>${collection.source === 'data' ? 'Shared data' : 'Rendered markup'} · ${collection.items.length} items</span></div><h3>Item type</h3>${renderType(collection.itemType)}${collection.bindings.length ? `<p class="hint">Data binding: <code>${escape(collection.bindings.join(', '))}</code></p>` : ''}${collection.reason ? `<p class="hint">${escape(collection.reason)}</p>` : ''}${collection.consumers.length ? `<h3>Used by</h3><ul class="consumer-list">${collection.consumers.map(consumer => `<li><code>${escape(consumer.file)}:${consumer.line}</code> · ${escape(consumer.name)}</li>`).join('')}</ul>` : ''}<h3>Items</h3>${collection.items.map(item => `<details class="detected-item"><summary><span>${escape(item.label)}</span><span class="type-badge">${escape(item.kind.replaceAll('-', ' '))}</span></summary><div class="item-body"><p class="hint">${item.component ? `Component: <code>${escape(item.component)}</code> · ` : ''}Line ${item.line}${item.destination ? ` · Destination: <code>${escape(item.destination)}</code>` : ''}${item.value ? ` · Value: <code>${escape(item.value)}</code>` : ''}</p>${renderType(item.itemType)}</div></details>`).join('') || '<p class="hint">No literal items found. The group may populate its items at runtime.</p>'}</div><footer class="action-footer"><span>${collection.editable && collection.kind === 'navigation' ? 'Available for new page links' : 'Inspect item types and source bindings'}</span></footer>`
+    } else if (view === 'tabs-success') {
+      panel.innerHTML = `${header('Tabs added', escape(tabsPreview!.path))}<div class="success-body"><div class="success-icon">${icon('check')}</div><h2>Your tabs are ready.</h2><p>${tabsDraft.items.length} tabs added to <strong>${escape(tabsPreview!.routePath)}</strong>.</p><button class="secondary done">Back to builder ${icon('arrow')}</button></div>${footer()}`
+      panel.querySelector('.done')!.addEventListener('click', () => { tabsReceipt(null); tabsPreview = null; tabsDraft.items = []; void scan() })
     } else if (view === 'success') {
       panel.innerHTML = `${header('Your idea has a home', escape(preview!.path))}<div class="success-body"><div class="success-icon">${icon('check')}</div><span class="eyebrow">READY FOR WHAT’S NEXT</span><h2>${escape(draft.name)} is created.</h2><p>Your route and navigation link are ready.<br>Find it at <strong>${escape(preview!.routePath)}</strong>.</p><a class="primary visit" href="${escape(apiBase.slice(0, -BASE.length) + preview!.routePath)}">Open page ${icon('arrow')}</a><button class="secondary done">Back to builder ${icon('arrow')}</button></div>${footer()}`
       panel.querySelector('.visit')!.addEventListener('click', () => { receipt('') })
@@ -145,7 +173,8 @@ function mount(): void {
     panel.querySelector('.close')?.addEventListener('click', close)
     panel.querySelector('.back')?.addEventListener('click', () => {
       message = ''
-      view = view === 'preview' ? 'draft' : 'palette'
+      if (view === 'tabs-draft' || view === 'tabs-success') tabsReceipt(null)
+      view = view === 'preview' ? 'draft' : view === 'tabs-preview' ? 'tabs-draft' : 'palette'
       if (!report) { void scan(); return }
       render(); focusSearch()
     })
@@ -161,15 +190,142 @@ function mount(): void {
     return `<div class="type-contract"><div class="type-title"><code>${escape(type.name)}</code><span class="type-badge">${type.origin === 'declared' ? 'Declared type' : 'Inferred shape'}</span></div>${type.fields.length ? `<div class="fields-scroll"><table class="type-fields"><thead><tr><th>Field</th><th>Type</th><th>Presence</th></tr></thead><tbody>${type.fields.map(field => `<tr><td><code>${escape(field.name)}</code></td><td><code>${escape(field.type)}</code></td><td>${field.optional ? 'Optional' : 'Required'}</td></tr>`).join('')}</tbody></table></div>` : ''}${type.variants?.length ? `<details class="type-variants"><summary>${type.variants.length} item variants</summary>${type.variants.map(variant => renderType(variant)).join('')}</details>` : ''}</div>`
   }
 
+  const tabKey = (component: TabComponent | undefined) => component?.itemType.fields.find(field => field.name === 'id')?.name ?? component?.itemType.fields.find(field => field.name === 'value')?.name
+  function newTab(component: TabComponent, index: number): Record<string, TabValue> {
+    const key = tabKey(component)
+    if (key && !component.itemType.fields.find(field => field.name === key)?.values) {
+      while (tabsDraft.items.some(item => item[key] === `tab-${index + 1}`)) index++
+    }
+    return Object.fromEntries(component.itemType.fields.filter(field => !field.optional).map(field => [field.name,
+      field.values?.[index % field.values.length] ?? (field.scalar === 'boolean' ? false : field.scalar === 'number' ? index + 1 : ['label', 'shortLabel', 'title'].includes(field.name) ? `Tab ${index + 1}` : ['id', 'value'].includes(field.name) ? `tab-${index + 1}` : ['href', 'to'].includes(field.name) ? `#tab-${index + 1}` : ''),
+    ]))
+  }
+  function selectComponent(component: TabComponent): void {
+    tabsDraft.component = component.id
+    tabsDraft.items = []
+    tabsDraft.items.push(newTab(component, 0), newTab(component, 1))
+    const key = tabKey(component)
+    tabsDraft.active = key ? tabsDraft.items[0]![key]! : ''
+    tabsPreview = null
+  }
+  function startTabs(): void {
+    const page = report?.pageRoutes.find(page => normalizePath(page.routePath) === currentPath())
+    tabsDraft.page = page?.file ?? ''; tabsDraft.routePath = page?.routePath ?? ''
+    if (!tabsComponent() && report?.tabComponents.length) selectComponent(report.tabComponents.find(component => !component.reason) ?? report.tabComponents[0]!)
+    if (!tabsDraft.items.length && tabsComponent()) selectComponent(tabsComponent()!)
+    pageQuery = ''; pickerOpen = false; message = ''; tabsPreview = null; view = 'tabs-draft'; render()
+    panel.querySelector<HTMLInputElement>('#tabs-page')?.focus()
+  }
+  function choosePage(page: PageRoute): void {
+    tabsDraft.page = page.file; tabsDraft.routePath = page.routePath
+    pageQuery = ''; pickerOpen = false; pickerIndex = 0; tabsPreview = null
+    if (currentPath() === normalizePath(page.routePath)) { message = ''; render(); return }
+    // A real navigation lets every host router load the selected page before insertion is enabled.
+    tabsReceipt({ draft: tabsDraft })
+    message = `Opening ${page.routePath}…`; render()
+    location.assign(routePrefix + page.routePath)
+  }
+  const matchingPages = () => (report?.pageRoutes ?? []).filter(page => `${page.name} ${page.routePath} ${page.file}`.toLowerCase().includes(pageQuery.toLowerCase()))
+  function renderPagePicker(): void {
+    const list = panel.querySelector<HTMLElement>('#tabs-pages')!
+    const input = panel.querySelector<HTMLInputElement>('#tabs-page')!
+    const pages = matchingPages()
+    pickerIndex = Math.min(pickerIndex, Math.max(0, pages.length - 1))
+    list.hidden = !pickerOpen
+    input.setAttribute('aria-expanded', String(pickerOpen))
+    if (pickerOpen && pages.length) input.setAttribute('aria-activedescendant', `tabs-page-${pickerIndex}`)
+    else input.removeAttribute('aria-activedescendant')
+    list.innerHTML = pages.map((page, index) => `<button type="button" role="option" id="tabs-page-${index}" aria-selected="${index === pickerIndex}" data-page="${index}"><span>${escape(page.name)}</span><span>${escape(page.routePath)}</span></button>`).join('') || '<p class="hint">No matching page routes.</p>'
+    list.querySelectorAll<HTMLButtonElement>('[data-page]').forEach(button => button.addEventListener('click', () => choosePage(pages[Number(button.dataset.page)]!)))
+  }
+  function renderTabField(field: ItemField, item: Record<string, TabValue>, index: number): string {
+    const id = `tab-${index}-${field.name}`
+    const value = item[field.name]
+    const options = field.values ?? (field.scalar === 'boolean' ? [true, false] : undefined)
+    const control = options ? `<select id="${escape(id)}" class="text-field" data-item="${index}" data-field="${escape(field.name)}" ${field.optional ? '' : 'required'}>${field.optional ? `<option value="" ${value === undefined ? 'selected' : ''}>Omit</option>` : ''}${options.map((option, optionIndex) => `<option value="${optionIndex}" ${value === option ? 'selected' : ''}>${escape(String(option))}</option>`).join('')}</select>` : `<input id="${escape(id)}" class="text-field" data-item="${index}" data-field="${escape(field.name)}" type="${field.scalar === 'number' ? 'number' : 'text'}" ${field.scalar === 'number' ? 'step="any"' : 'maxlength="1000"'} value="${escape(String(value ?? ''))}" ${field.optional ? '' : 'required'}>`
+    return `<div><label class="field-label" for="${escape(id)}">${escape(field.name)} <span class="muted">· Tab ${index + 1}${field.optional ? ' · Optional' : ''}</span></label>${control}</div>`
+  }
+  function renderTabsForm(): void {
+    const component = tabsComponent()
+    const page = tabsPage()
+    const key = tabKey(component)
+    const ready = tabsReady()
+    panel.innerHTML = `${header('Add Tabs', 'Choose a page and define its tab items')}<form class="draft-body tabs-form"><label class="field-label" for="tabs-page">Page route</label><div class="page-picker"><input id="tabs-page" class="text-field" role="combobox" aria-autocomplete="list" aria-controls="tabs-pages" aria-expanded="false" placeholder="Search pages by name or URL" value="${escape(pageQuery || (page ? `${page.name} · ${page.routePath}` : ''))}" autocomplete="off"><div id="tabs-pages" class="page-options" role="listbox" aria-label="Page routes" hidden></div></div><p class="hint route-status" role="status">${page ? ready ? `Ready to add Tabs to ${escape(page.routePath)}.` : `Navigate to ${escape(page.routePath)} to add Tabs.` : 'Select a registered page route to navigate there.'}</p><label class="field-label" for="tabs-component">Tabs component</label><select id="tabs-component" class="text-field">${report?.tabComponents.length ? report.tabComponents.map(item => `<option value="${escape(item.id)}" ${component?.id === item.id ? 'selected' : ''}>${escape(item.name)} · ${escape(item.file)}</option>`).join('') : '<option value="">No Tabs component found</option>'}</select>${component ? `<p class="hint">Item type: <code>${escape(component.itemType.name)}</code>${component.reason ? ' · ' + escape(component.reason) : ''}</p><details class="tabs-contract"><summary>View item type</summary>${renderType(component.itemType)}</details>` : '<p class="hint">Add a Tabs.btsx component with a typed items prop in a scanned directory.</p>'}${component?.labelProp ? `<label class="field-label" for="tabs-label">Tabs label</label><input id="tabs-label" class="text-field" value="${escape(tabsDraft.label ?? 'Tabs')}" maxlength="100">` : ''}<div class="tab-items">${component && !component.reason ? tabsDraft.items.map((item, index) => `<fieldset class="tab-item"><legend>Tab ${index + 1}</legend><button type="button" class="icon-button remove-tab" data-remove="${index}" aria-label="Remove Tab ${index + 1}" ${tabsDraft.items.length === 1 ? 'disabled' : ''}>${icon('close')}</button><div class="tab-item-fields">${component.itemType.fields.map(field => renderTabField(field, item, index)).join('')}</div></fieldset>`).join('') : ''}</div>${component && !component.reason ? `<button type="button" class="secondary add-tab" ${tabsDraft.items.length >= 50 ? 'disabled' : ''}>${icon('plus')} Add tab item</button>${component.activeProp && key ? `<label class="field-label active-tab-label" for="tabs-active">Active tab</label><select id="tabs-active" class="text-field">${tabsDraft.items.map((item, index) => `<option value="${index}" ${item[key] === tabsDraft.active ? 'selected' : ''}>${escape(String(item.label ?? item.title ?? item[key] ?? `Tab ${index + 1}`))}</option>`).join('')}</select>` : ''}` : ''}<div class="message" role="status">${escape(message)}</div></form><footer class="action-footer"><span>${page ? escape(page.routePath) : 'Select a page route'}</span><button class="primary review-tabs" ${busy || !ready ? 'disabled' : ''}>${busy ? 'Checking…' : 'Review Tabs'} ${icon('arrow')}</button></footer>`
+    renderPagePicker()
+    const search = panel.querySelector<HTMLInputElement>('#tabs-page')!
+    search.addEventListener('focus', () => { pickerOpen = true; renderPagePicker(); if (!pageQuery) search.select() })
+    search.addEventListener('input', () => { pageQuery = search.value; pickerIndex = 0; pickerOpen = true; renderPagePicker() })
+    search.addEventListener('blur', event => { if (!panel.querySelector('#tabs-pages')!.contains(event.relatedTarget as Node | null)) { pickerOpen = false; renderPagePicker() } })
+    search.addEventListener('keydown', event => {
+      if (['ArrowDown', 'ArrowUp', 'Enter'].includes(event.key)) {
+        event.preventDefault(); event.stopPropagation()
+        const pages = matchingPages()
+        if (event.key === 'Enter') { if (pickerOpen && pages[pickerIndex]) choosePage(pages[pickerIndex]!); return }
+        pickerOpen = true; pickerIndex = Math.max(0, Math.min(pages.length - 1, pickerIndex + (event.key === 'ArrowDown' ? 1 : -1))); renderPagePicker()
+        panel.querySelector(`#tabs-page-${pickerIndex}`)?.scrollIntoView({ block: 'nearest' })
+      }
+    })
+    panel.querySelector('.tabs-form')!.addEventListener('submit', event => { event.preventDefault(); void reviewTabs() })
+    panel.querySelector('#tabs-component')!.addEventListener('change', event => {
+      const selected = report?.tabComponents.find(item => item.id === (event.target as HTMLSelectElement).value)
+      if (selected) { selectComponent(selected); message = ''; render() }
+    })
+    panel.querySelector('#tabs-label')?.addEventListener('input', event => { tabsDraft.label = (event.target as HTMLInputElement).value; tabsPreview = null })
+    panel.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-field]').forEach(input => input.addEventListener('input', () => {
+      const item = tabsDraft.items[Number(input.dataset.item)]!
+      const field = component!.itemType.fields.find(field => field.name === input.dataset.field)!
+      const old = item[field.name]
+      const options = field.values ?? (field.scalar === 'boolean' ? [true, false] : undefined)
+      if (input.value === '' && field.optional) delete item[field.name]
+      else item[field.name] = options ? options[Number(input.value)]! : field.scalar === 'number' ? input.value === '' ? NaN : Number(input.value) : input.value
+      if (field.name === key && tabsDraft.active === old) tabsDraft.active = item[field.name] ?? ''
+      tabsPreview = null
+      const active = panel.querySelector<HTMLSelectElement>('#tabs-active')
+      if (active) active.options[Number(input.dataset.item)]!.textContent = String(item.label ?? item.title ?? item[key!] ?? `Tab ${Number(input.dataset.item) + 1}`)
+    }))
+    panel.querySelectorAll<HTMLButtonElement>('[data-remove]').forEach(button => button.addEventListener('click', () => {
+      const [removed] = tabsDraft.items.splice(Number(button.dataset.remove), 1)
+      if (key && removed?.[key] === tabsDraft.active) tabsDraft.active = tabsDraft.items[0]?.[key] ?? ''
+      tabsPreview = null; render()
+    }))
+    panel.querySelector('.add-tab')?.addEventListener('click', () => { tabsDraft.items.push(newTab(component!, tabsDraft.items.length)); tabsPreview = null; render() })
+    panel.querySelector('#tabs-active')?.addEventListener('change', event => { tabsDraft.active = tabsDraft.items[Number((event.target as HTMLSelectElement).value)]![key!]!; tabsPreview = null })
+    panel.querySelector('.review-tabs')!.addEventListener('click', () => void reviewTabs())
+  }
+
+  async function reviewTabs(): Promise<void> {
+    if (busy || !tabsReady() || !panel.querySelector<HTMLFormElement>('.tabs-form')?.reportValidity()) return
+    const turn = generation
+    busy = true; message = ''; render()
+    try {
+      const result = await request<TabsPreview>('/tabs/preview', tabsDraft)
+      if (!opened || turn !== generation || !tabsReady()) return
+      tabsPreview = result; view = 'tabs-preview'
+    } catch (error) { message = error instanceof Error ? error.message : String(error) }
+    finally { busy = false; if (opened && turn === generation) { render(); focusSearch() } }
+  }
+  async function saveTabs(): Promise<void> {
+    if (busy || !tabsPreview || !tabsReady()) return
+    const turn = generation
+    busy = true; message = ''; render()
+    tabsReceipt({ draft: tabsDraft, hash: tabsPreview.hash })
+    try {
+      tabsPreview = await request<TabsPreview>('/tabs/create', { ...tabsDraft, hash: tabsPreview.hash })
+      if (opened && turn === generation) view = 'tabs-success'
+    } catch (error) { tabsReceipt(null); message = error instanceof Error ? error.message : String(error) }
+    finally { busy = false; if (opened && turn === generation) { render(); focusSearch() } }
+  }
+
   type Action = { name: string; detail: string; icon: string; group: string; run: () => void }
   let actions: Action[] = []
   function renderResults(): void {
     const needle = query.toLowerCase()
     const builtins: Action[] = [
       { name: 'Create a new page', detail: 'A fresh start', icon: 'plus', group: 'Actions', run: () => { view = 'draft'; message = ''; render(); panel.querySelector<HTMLInputElement>('#page-name')!.focus(); panel.querySelector<HTMLInputElement>('#page-name')!.select() } },
+      { name: 'Add Tabs to a page', detail: 'Choose a page and tab items', icon: 'component', group: 'Actions', run: startTabs },
       { name: 'Rescan project', detail: 'Find what’s new', icon: 'scan', group: 'Actions', run: () => void scan() },
     ]
-    actions = [...(tab === 'All' ? builtins : []), ...(report?.files ?? []).filter(file => tab === 'All' || tab === 'Pages' && file.kind === 'page' || tab === 'Components' && file.kind === 'component').map(file => ({
+    actions = [...(tab === 'All' ? builtins : tab === 'Tabs' ? builtins.filter(action => action.run === startTabs) : []), ...(report?.files ?? []).filter(file => tab === 'All' || tab === 'Pages' && file.kind === 'page' || tab === 'Components' && file.kind === 'component').map(file => ({
       name: file.name, detail: file.path, icon: file.kind === 'page' ? 'page' : 'component', group: file.kind === 'page' ? 'Pages' : 'Components', run: () => void openFile(file),
     })), ...(report?.collections ?? []).filter(collection => tab === 'All' || tab === 'Navs' && collection.kind === 'navigation' || tab === 'Tabs' && collection.kind === 'tabs').map(collection => ({ name: collection.name, detail: `${collection.items.length} items · ${collection.file}`, icon: collection.kind === 'tabs' ? 'component' : 'arrow', group: collection.kind === 'tabs' ? 'Tabs' : 'Navigation', run: () => { currentCollection = collection; view = 'collection'; render(); focusSearch() } }))].filter(action => `${action.name} ${action.detail}`.toLowerCase().includes(needle))
     selected = Math.min(selected, Math.max(0, actions.length - 1))
@@ -204,7 +360,9 @@ function mount(): void {
       const duration = reduced ? 0 : config.scanDuration
       await new Promise<void>(resolve => window.setTimeout(resolve, Math.max(0, duration - (performance.now() - start))))
       if (!opened || turn !== generation) return
-      report = next; view = 'palette'; selected = 0; render(); focusSearch()
+      report = next; view = 'palette'; selected = 0
+      if (resumeTabs) { resumeTabs = false; startTabs() }
+      else { render(); focusSearch() }
     } catch (error) {
       if (signal.aborted || !opened || turn !== generation) return
       message = error instanceof Error ? error.message : String(error); view = 'error'; render(); focusSearch()
@@ -253,11 +411,24 @@ function mount(): void {
     previousFocus = active instanceof HTMLElement ? active : null
     opened = true
     panel.hidden = false; backdrop.hidden = false; launcher.setAttribute('aria-expanded', 'true')
+    let path = currentPath()
+    window.clearInterval(routeTimer)
+    routeTimer = window.setInterval(() => {
+      const next = currentPath()
+      if (next === path) return
+      path = next
+      if (view !== 'tabs-draft' && view !== 'tabs-preview') return
+      const page = report?.pageRoutes.find(page => normalizePath(page.routePath) === next)
+      tabsDraft.page = page?.file ?? ''; tabsDraft.routePath = page?.routePath ?? ''
+      tabsPreview = null; pageQuery = ''; pickerOpen = false; message = ''; view = 'tabs-draft'; render()
+    }, 250)
     void scan(); panel.focus()
   }
   function close(): void {
     if (view === 'success') receipt('')
+    if (view.startsWith('tabs-') && !busy) tabsReceipt(null)
     opened = false; generation++; controller?.abort(); window.clearTimeout(scanTimer)
+    window.clearInterval(routeTimer)
     panel.hidden = true; backdrop.hidden = true; launcher.setAttribute('aria-expanded', 'false')
     previousFocus?.focus()
   }
@@ -273,6 +444,7 @@ function mount(): void {
       event.preventDefault(); event.stopImmediatePropagation(); if (!event.repeat) opened ? close() : open(); return
     }
     if (!opened) return
+    if (event.key === 'Escape' && view === 'tabs-draft' && pickerOpen) { event.preventDefault(); event.stopImmediatePropagation(); pickerOpen = false; renderPagePicker(); return }
     if (event.key === 'Escape') { event.preventDefault(); event.stopImmediatePropagation(); close(); return }
     if (event.key === 'Tab') {
       const focusable = [...panel.querySelectorAll<HTMLElement>('button:not(:disabled), input, textarea, select, a[href], summary, [tabindex="0"]')].filter(element => element.getClientRects().length)
@@ -293,10 +465,24 @@ function mount(): void {
   // Clean up if an app's DOM ownership removes the mount during HMR or navigation.
   const observer = new MutationObserver(() => {
     if (host.isConnected) return
-    controller?.abort(); generation++; window.clearTimeout(scanTimer)
+    controller?.abort(); generation++; window.clearTimeout(scanTimer); window.clearInterval(routeTimer)
     window.removeEventListener('keydown', keydown, true); observer.disconnect()
   })
   observer.observe(document.body, { childList: true })
+  const pendingTabs = tabsReceipt()
+  if (pendingTabs?.draft && Array.isArray(pendingTabs.draft.items)) {
+    tabsDraft = pendingTabs.draft
+    if (pendingTabs.hash && /^[a-f0-9]{64}$/.test(pendingTabs.hash)) {
+      void configuration.catch(() => {}).then(async () => {
+        try {
+          const result = await request<TabsPreview>(`/tabs/creation?hash=${pendingTabs.hash}`)
+          if (tabsReceipt()?.hash !== pendingTabs.hash || opened) return
+          tabsPreview = result; opened = true; view = 'tabs-success'; panel.hidden = false; backdrop.hidden = false
+          launcher.setAttribute('aria-expanded', 'true'); render(); focusSearch()
+        } catch { tabsReceipt(null) }
+      })
+    } else { resumeTabs = true; open() }
+  }
   const pendingHash = receipt()
   if (pendingHash && /^[a-f0-9]{64}$/.test(pendingHash)) {
     void configuration.catch(() => {}).then(async () => {

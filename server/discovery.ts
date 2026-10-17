@@ -1,7 +1,7 @@
 import ts from 'typescript'
 import { resolve } from 'node:path'
-import { compileBeastResult, type BeastDocument, type ElementNode } from 'beast-tsrx'
-import type { CollectionConsumer, DetectedCollection, DetectedItem, ItemField, ItemType } from '../shared/types.js'
+import { compileBeastResult, componentNameFromPath, type BeastDocument, type ElementNode } from 'beast-tsrx'
+import type { CollectionConsumer, DetectedCollection, DetectedItem, ItemField, ItemType, TabComponent } from '../shared/types.js'
 
 export interface DiscoverySource { file: string; source: string; page: boolean }
 interface Input extends DiscoverySource { virtual: string; text: string; lines?: number[]; document?: BeastDocument }
@@ -38,12 +38,17 @@ function virtualBeast(input: DiscoverySource, root: string): Input {
 
 /** Inspect source and types without importing or executing the project's modules. */
 export function discoverCollections(root: string, sources: DiscoverySource[]): DetectedCollection[] {
+  return discoverProjectItems(root, sources).collections
+}
+
+export function discoverProjectItems(root: string, sources: DiscoverySource[]): { collections: DetectedCollection[]; tabComponents: TabComponent[] } {
   const inputs: Input[] = sources.flatMap(source => {
     try { return [source.file.endsWith('.btsx') ? virtualBeast(source, root) : { ...source, virtual: resolve(root, source.file), text: source.source }] }
     catch { return [] }
   })
   const collections: DetectedCollection[] = []
   const references: Reference[] = []
+  const tabComponents: TabComponent[] = []
   const byVirtual = new Map(inputs.map(input => [input.virtual, input]))
   let options: ts.CompilerOptions = { target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.ESNext, moduleResolution: ts.ModuleResolutionKind.Bundler, strict: true, skipLibCheck: true, noEmit: true }
   const configPath = ts.findConfigFile(root, ts.sys.fileExists)
@@ -71,10 +76,30 @@ export function discoverCollections(root: string, sources: DiscoverySource[]): D
       const properties = members.map(member => member.getProperty(name))
       const types = properties.flatMap(symbol => symbol ? [checker.getTypeOfSymbolAtLocation(symbol, at)] : [])
       const values = types.flatMap(type => (type.isUnion() ? type.types : [type]).flatMap<string | number | boolean>(value => value.isStringLiteral() || value.isNumberLiteral() ? [value.value] : value.flags & ts.TypeFlags.BooleanLiteral ? [checker.typeToString(value) === 'true'] : []))
-      return { name, type: [...new Set(types.map(type => typeName(type)))].join(' | '), optional: properties.some(symbol => !symbol || !!(symbol.flags & ts.SymbolFlags.Optional)), ...(values.length ? { values: [...new Set(values)] } : {}) }
+      const concrete = types.flatMap(type => type.isUnion() ? type.types : [type]).filter(type => !(type.flags & ts.TypeFlags.Undefined))
+      const scalar = concrete.every(type => type.flags & ts.TypeFlags.StringLike) ? 'string' : concrete.every(type => type.flags & ts.TypeFlags.NumberLike) ? 'number' : concrete.every(type => type.flags & ts.TypeFlags.BooleanLike) ? 'boolean' : undefined
+      const finite = concrete.every(type => type.isLiteral() || type.flags & ts.TypeFlags.BooleanLiteral)
+      return { name, type: [...new Set(types.map(type => typeName(type)))].join(' | '), optional: properties.some(symbol => !symbol || !!(symbol.flags & ts.SymbolFlags.Optional)), ...(scalar ? { scalar } : {}), ...(finite && values.length ? { values: [...new Set(values)] } : {}) }
     })
     const known = !(type.flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown)) && fields.length > 0
     return { name: typeName(type), origin: declared && known ? 'declared' : 'inferred', fields, ...(variants && type.isUnion() && type.types.every(type => type.getProperties().length) ? { variants: type.types.map(member => typeSchema(member, at, declared, false)) } : {}) }
+  }
+
+  for (const input of inputs) if (input.document && !input.page && /Tabs?$/.test(componentNameFromPath(input.file))) {
+    const file = program.getSourceFile(input.virtual)!
+    const component = checker.resolveName('__BeastComponent', file, ts.SymbolFlags.Value, false)
+    const parameter = component && checker.getTypeOfSymbolAtLocation(component, file).getCallSignatures()[0]?.parameters[0]
+    if (!parameter) continue
+    const props = checker.getTypeOfSymbolAtLocation(parameter, file)
+    const itemProp = ['items', 'tabs'].find(name => props.getProperty(name))
+    const property = itemProp && props.getProperty(itemProp)
+    const item = property && checker.getIndexTypeOfType(checker.getTypeOfSymbolAtLocation(property, file), ts.IndexKind.Number)
+    if (!item || !itemProp) continue
+    const itemType = typeSchema(item, file, true)
+    const activeProp = ['activeId', 'activeValue', 'value', 'defaultValue'].find(name => props.getProperty(name))
+    const unsupported = props.getProperties().find(prop => !(prop.flags & ts.SymbolFlags.Optional) && ![itemProp, activeProp].includes(prop.name))
+    const reason = unsupported ? `Required component prop ${unsupported.name} is not supported.` : !itemType.fields.length || itemType.variants?.length || itemType.fields.some(field => !field.scalar) ? 'The item type must have string, number, or boolean fields.' : undefined
+    tabComponents.push({ id: input.file, file: input.file, name: componentNameFromPath(input.file), itemProp, activeProp, ...(props.getProperty('label') ? { labelProp: 'label' } : {}), itemType, ...(reason ? { reason } : {}) })
   }
   function elementType(array: ts.ArrayLiteralExpression): ts.Type | undefined {
     const contextual = checker.getContextualType(array)
@@ -293,7 +318,7 @@ export function discoverCollections(root: string, sources: DiscoverySource[]): D
     }
   }
   function inputDocument(file: string): BeastDocument | undefined { return inputs.find(input => input.file === file)?.document }
-  return collections.sort((a, b) => a.file.localeCompare(b.file) || a.line - b.line || a.name.localeCompare(b.name))
+  return { collections: collections.sort((a, b) => a.file.localeCompare(b.file) || a.line - b.line || a.name.localeCompare(b.name)), tabComponents }
 }
 
 function labelOf(node: ElementNode): string {

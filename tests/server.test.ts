@@ -1,6 +1,6 @@
 import { afterEach, expect, test } from 'bun:test'
 import { createServer, type Server } from 'node:http'
-import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises'
+import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { clientConfig, createBuilderServer } from '../server/server.js'
@@ -53,4 +53,22 @@ test('API creates only the validated, reviewed draft and integrates its route an
   expect(await (await fetch(base + '/creation?hash=' + preview.hash)).json()).toMatchObject({ routePath: '/hello', files: expect.any(Array) })
   expect((await post('/create', { ...draft, hash: preview.hash })).status).toBe(409)
   expect(await (await fetch(base + '/source?path=src/pages/HelloPage.btsx')).json()).toEqual({ source: draft.source })
+})
+
+test('Tabs API validates, reviews and updates a registered page with a reload receipt', async () => {
+  const origin = await fixture(), base = origin + '/__beast-page-builder'
+  const root = roots.at(-1)!
+  await mkdir(join(root, 'src/pages'), { recursive: true })
+  await writeFile(join(root, 'src/router.ts'), ROUTER)
+  await writeFile(join(root, 'src/pages/HomePage.btsx'), 'main\n  h1 Home\n')
+  await writeFile(join(root, 'src/Tabs.btsx'), 'module\n  interface TabItem { id: string; label: string; href: string }\nprops { items, activeId }: { items: TabItem[]; activeId: string }\nnav(aria-label="Tabs")\n  each item in items key item.id\n    a(href={item.href} aria-current={activeId === item.id ? "page" : undefined}) #{item.label}\n')
+  const draft = { page: 'src/pages/HomePage.btsx', routePath: '/', component: 'src/Tabs.btsx', active: 'home', items: [{ id: 'home', label: 'Home', href: '/' }] }
+  const post = (route: string, body: unknown) => fetch(base + route, { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: origin }, body: JSON.stringify(body) })
+  expect((await post('/tabs/create', draft)).status).toBe(400)
+  const reviewed = await post('/tabs/preview', draft)
+  expect(reviewed.status).toBe(200)
+  const preview = await reviewed.json() as { hash: string; source: string }
+  expect((await post('/tabs/create', { ...draft, hash: preview.hash })).status).toBe(201)
+  expect(await readFile(join(root, draft.page), 'utf8')).toBe(preview.source)
+  expect(await (await fetch(base + '/tabs/creation?hash=' + preview.hash)).json()).toMatchObject({ routePath: '/', hash: preview.hash })
 })

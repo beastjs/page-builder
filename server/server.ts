@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
-import { BASE, type BeastPageBuilderOptions, type ClientConfig, type PageDraft } from '../shared/types.js'
+import { BASE, type BeastPageBuilderOptions, type ClientConfig, type PageDraft, type TabsDraft } from '../shared/types.js'
 import { BuilderError, BuilderProject } from './project.js'
 
 // The server modules are bundled into each public entrypoint in dist/.
@@ -67,6 +67,12 @@ export function createBuilderServer(root: string, options: BeastPageBuilderOptio
       else if (req.method === 'GET' && route === '/scan') send(200, await project.scan())
       else if (req.method === 'GET' && route === '/creation') send(200, await project.creation(url.searchParams.get('hash') ?? ''))
       else if (req.method === 'GET' && route === '/source') send(200, { source: await project.source(url.searchParams.get('path') ?? '') })
+      else if (req.method === 'GET' && route === '/tabs/creation') send(200, await project.tabCreation(url.searchParams.get('hash') ?? ''))
+      else if (req.method === 'POST' && (route === '/tabs/preview' || route === '/tabs/create')) {
+        const body = await jsonBody(req)
+        const draft = { page: body.page, routePath: body.routePath, component: body.component, items: body.items, active: body.active, label: body.label } as TabsDraft
+        send(route === '/tabs/create' ? 201 : 200, route === '/tabs/create' ? await project.createTabs(draft, body.hash as string) : await project.previewTabs(draft))
+      }
       else if (req.method === 'POST' && (route === '/preview' || route === '/create')) {
         const body = await jsonBody(req)
         const draft = { name: body.name, source: body.source, routePath: body.routePath, navLabel: body.navLabel, navigationTarget: body.navigationTarget } as PageDraft

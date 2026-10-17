@@ -3,9 +3,10 @@ import { lstat, mkdir, readdir, readFile, realpath, writeFile, unlink, link, ren
 import { basename, dirname, isAbsolute, relative, resolve, sep } from 'node:path'
 import { compileBeastResult, componentNameFromPath } from 'beast-tsrx'
 import { createOctaneCompiler } from 'octane/compiler/bundler'
-import type { BeastPageBuilderOptions, NavigationTarget, PageDraft, PagePreview, PlannedFile, ProjectFile, ProjectScan } from '../shared/types.js'
+import type { BeastPageBuilderOptions, NavigationTarget, PageDraft, PagePreview, PlannedFile, ProjectFile, ProjectScan, TabsDraft, TabsPreview } from '../shared/types.js'
 import { addNavigation, discoverNavigation, registerRoute } from './integration.js'
-import { discoverCollections, type DiscoverySource } from './discovery.js'
+import { discoverProjectItems, type DiscoverySource } from './discovery.js'
+import { addTabs, discoverPageRoutes } from './tabs.js'
 
 const IGNORED = new Set(['node_modules', '.git', '.beast', 'dist', 'build', 'coverage', '.next'])
 export class BuilderError extends Error {
@@ -22,6 +23,7 @@ export class BuilderProject {
   private compiler: ReturnType<typeof createOctaneCompiler> | undefined
   private mutation: Promise<void> = Promise.resolve()
   private creations = new Map<string, Promise<PagePreview>>()
+  private tabCreations = new Map<string, Promise<TabsPreview>>()
 
   constructor(root: string, private readonly options: BeastPageBuilderOptions = {}) {
     this.root = resolve(root)
@@ -99,13 +101,18 @@ export class BuilderProject {
         navigationTargets.push(...discoverNavigation(source, file, this.options.navigation))
       } catch (cause) { warnings.push(cause instanceof Error ? cause.message : String(cause)) }
     }
-    const collections = discoverCollections(this.root, [...sources.values()])
+    const { collections, tabComponents } = discoverProjectItems(this.root, [...sources.values()])
+    let pageRoutes: ProjectScan['pageRoutes'] = []
+    try {
+      await this.safe(resolve(this.root, this.routerFile))
+      pageRoutes = discoverPageRoutes(await readFile(resolve(this.root, this.routerFile), 'utf8'), this.routerFile, files)
+    } catch (cause) { if ((cause as NodeJS.ErrnoException).code !== 'ENOENT') warnings.push(cause instanceof Error ? cause.message : String(cause)) }
     if (this.options.navigation) {
       navigationTargets = navigationTargets.filter(target => collections.find(collection => collection.id === target.id)?.kind !== 'tabs').map(target => ({ ...target, itemType: collections.find(collection => collection.id === target.id)?.itemType }))
     } else {
       navigationTargets = collections.filter(collection => collection.editable && collection.kind === 'navigation').map(collection => ({ id: collection.id, file: collection.file, label: `${collection.file} · ${collection.name}`, array: collection.array, group: collection.group, itemType: collection.itemType }))
     }
-    return { collections, name: basename(this.root), files: files.sort((a, b) => a.path.localeCompare(b.path)), scannedAt: new Date().toISOString(), warnings, navigationTargets }
+    return { collections, tabComponents, pageRoutes, name: basename(this.root), files: files.sort((a, b) => a.path.localeCompare(b.path)), scannedAt: new Date().toISOString(), warnings, navigationTargets }
   }
 
   async source(path: string): Promise<string> {
@@ -166,61 +173,65 @@ export class BuilderProject {
     return { path, source, hash, routePath, navLabel: navLabel.trim(), files }
   }
 
+  private async writeFiles(files: PlannedFile[]): Promise<void> {
+    // Preflight every file before writing anything. Serialize saves through this project instance.
+    for (const file of files) {
+      const target = resolve(this.root, file.path)
+      await this.safe(target)
+      if (file.before !== null && await readFile(target, 'utf8') !== file.before) throw new BuilderError(`${file.path} changed. Review again.`, 409)
+    }
+    const written: PlannedFile[] = []
+    const staged: { file: PlannedFile; temporary: string; mode: number }[] = []
+    try {
+      // Stage every complete file before committing. Replacing edited files by rename
+      // avoids truncating them if writing fails, and retains their permission bits.
+      for (const file of files) {
+        const target = resolve(this.root, file.path)
+        await mkdir(dirname(target), { recursive: true })
+        await this.safe(target)
+        if (file.before !== null && (await lstat(target)).isSymbolicLink()) throw new BuilderError(`${file.path} is a symlink. Configure a regular source file.`, 403)
+        const mode = file.before === null ? 0o666 : (await stat(target)).mode & 0o777
+        const temporary = resolve(dirname(target), `.beast-page-builder-${randomUUID()}.tmp`)
+        staged.push({ file, temporary, mode })
+        await writeFile(temporary, file.source, { flag: 'wx', mode })
+        if (file.before !== null) await chmod(temporary, mode)
+      }
+      for (const { file, temporary } of staged) {
+        const target = resolve(this.root, file.path)
+        await this.safe(target)
+        if (file.before !== null && await readFile(target, 'utf8') !== file.before) throw new BuilderError(`${file.path} changed during save. Review again.`, 409)
+        if (file.before === null) await link(temporary, target)
+        else await rename(temporary, target)
+        written.push(file)
+      }
+    } catch (cause) {
+      const failures: string[] = []
+      for (const file of written.reverse()) {
+        const target = resolve(this.root, file.path)
+        try {
+          await this.safe(target)
+          const current = await readFile(target, 'utf8')
+          if (current !== file.source) { failures.push(file.path); continue }
+          if (file.before === null) await unlink(target)
+          else {
+            const stage = staged.find(item => item.file === file)!
+            await writeFile(stage.temporary, file.before, { flag: 'wx', mode: stage.mode })
+            await rename(stage.temporary, target)
+          }
+        } catch { failures.push(file.path) }
+      }
+      if (failures.length) throw new BuilderError(`Save failed; could not restore ${failures.join(', ')}. Inspect these files before retrying.`, 500)
+      if ((cause as NodeJS.ErrnoException).code === 'EEXIST') throw new BuilderError('A file with this name now exists. Review again.', 409)
+      throw cause
+    } finally { await Promise.all(staged.map(item => unlink(item.temporary).catch(() => {}))) }
+  }
+
   async create(draft: PageDraft, hash: string): Promise<PagePreview> {
     if (typeof hash !== 'string' || !/^[a-f0-9]{64}$/.test(hash)) throw new BuilderError('Review the page before saving.')
     const operation = this.mutation.then(async () => {
       const preview = await this.preview(draft)
       if (hash !== preview.hash) throw new BuilderError('The draft, router, or navigation changed. Review again before saving.', 409)
-      // Preflight every file before writing anything. Serialize saves through this project instance.
-      for (const file of preview.files) {
-        const target = resolve(this.root, file.path)
-        await this.safe(target)
-        if (file.before !== null && await readFile(target, 'utf8') !== file.before) throw new BuilderError(`${file.path} changed. Review again.`, 409)
-      }
-      const written: PlannedFile[] = []
-      const staged: { file: PlannedFile; temporary: string; mode: number }[] = []
-      try {
-        // Stage every complete file before committing. Replacing edited files by rename
-        // avoids truncating them if writing fails, and retains their permission bits.
-        for (const file of preview.files) {
-          const target = resolve(this.root, file.path)
-          await mkdir(dirname(target), { recursive: true })
-          await this.safe(target)
-          if (file.before !== null && (await lstat(target)).isSymbolicLink()) throw new BuilderError(`${file.path} is a symlink. Configure a regular source file.`, 403)
-          const mode = file.before === null ? 0o666 : (await stat(target)).mode & 0o777
-          const temporary = resolve(dirname(target), `.beast-page-builder-${randomUUID()}.tmp`)
-          staged.push({ file, temporary, mode })
-          await writeFile(temporary, file.source, { flag: 'wx', mode })
-          if (file.before !== null) await chmod(temporary, mode)
-        }
-        for (const { file, temporary } of staged) {
-          const target = resolve(this.root, file.path)
-          await this.safe(target)
-          if (file.before !== null && await readFile(target, 'utf8') !== file.before) throw new BuilderError(`${file.path} changed during save. Review again.`, 409)
-          if (file.before === null) await link(temporary, target)
-          else await rename(temporary, target)
-          written.push(file)
-        }
-      } catch (cause) {
-        const failures: string[] = []
-        for (const file of written.reverse()) {
-          const target = resolve(this.root, file.path)
-          try {
-            await this.safe(target)
-            const current = await readFile(target, 'utf8')
-            if (current !== file.source) { failures.push(file.path); continue }
-            if (file.before === null) await unlink(target)
-            else {
-              const stage = staged.find(item => item.file === file)!
-              await writeFile(stage.temporary, file.before, { flag: 'wx', mode: stage.mode })
-              await rename(stage.temporary, target)
-            }
-          } catch { failures.push(file.path) }
-        }
-        if (failures.length) throw new BuilderError(`Save failed; could not restore ${failures.join(', ')}. Inspect these files before retrying.`, 500)
-        if ((cause as NodeJS.ErrnoException).code === 'EEXIST') throw new BuilderError('A file with this name now exists. Review again.', 409)
-        throw cause
-      } finally { await Promise.all(staged.map(item => unlink(item.temporary).catch(() => {}))) }
+      await this.writeFiles(preview.files)
       return preview
     })
     this.mutation = operation.then(() => {}, () => {})
@@ -233,6 +244,48 @@ export class BuilderProject {
   async creation(hash: string): Promise<PagePreview> {
     const result = this.creations.get(hash)
     if (!result) throw new BuilderError('Save result is unavailable. Inspect the project before retrying.', 404)
+    return result
+  }
+
+  async previewTabs(draft: TabsDraft): Promise<TabsPreview> {
+    if (typeof draft.page !== 'string' || typeof draft.routePath !== 'string' || typeof draft.component !== 'string') throw new BuilderError('Choose a page route and a Tabs component.')
+    const report = await this.scan()
+    if (!report.pageRoutes.some(page => page.file === draft.page && page.routePath === draft.routePath)) throw new BuilderError('The selected page route changed. Rescan the project.', 409)
+    const component = report.tabComponents.find(component => component.id === draft.component)
+    if (!component) throw new BuilderError('The selected Tabs component changed. Rescan the project.', 409)
+    const before = await this.source(draft.page)
+    const source = addTabs(before, component, draft)
+    try {
+      const target = resolve(this.root, draft.page)
+      const result = compileBeastResult(source, { filename: target })
+      this.compiler ??= createOctaneCompiler({ root: this.root, environment: 'client', hmr: false, dev: true })
+      this.compiler.transform(result.code, target.replace(/\.btsx$/, '.tsrx'), { environment: 'client', dev: true })
+    } catch (cause) { throw new BuilderError(cause instanceof Error ? cause.message : String(cause), 422) }
+    const files: PlannedFile[] = [{ path: draft.page, action: 'edit', before, source }]
+    // Include the contract and router snapshot so changed types/routes require a fresh review.
+    const router = await readFile(resolve(this.root, this.routerFile), 'utf8')
+    const contract = await this.source(component.file)
+    const hash = createHash('sha256').update(JSON.stringify({ draft, files, router, contract, itemType: component.itemType })).digest('hex')
+    return { path: draft.page, source, routePath: draft.routePath, files, hash }
+  }
+
+  async createTabs(draft: TabsDraft, hash: string): Promise<TabsPreview> {
+    if (typeof hash !== 'string' || !/^[a-f0-9]{64}$/.test(hash)) throw new BuilderError('Review the tabs before saving.')
+    const operation = this.mutation.then(async () => {
+      const preview = await this.previewTabs(draft)
+      if (preview.hash !== hash) throw new BuilderError('The page, tabs, route, or item type changed. Review again before saving.', 409)
+      await this.writeFiles(preview.files)
+      return preview
+    })
+    this.mutation = operation.then(() => {}, () => {})
+    this.tabCreations.set(hash, operation)
+    if (this.tabCreations.size > 20) this.tabCreations.delete(this.tabCreations.keys().next().value!)
+    return operation
+  }
+
+  async tabCreation(hash: string): Promise<TabsPreview> {
+    const result = this.tabCreations.get(hash)
+    if (!result) throw new BuilderError('Save result is unavailable. Inspect the page before retrying.', 404)
     return result
   }
 }

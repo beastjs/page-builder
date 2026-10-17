@@ -117,9 +117,17 @@ beastPageBuilder({
 5. Start with a blank page or landing page. Add sections and edit the BTSX source. Choose **Review page** to inspect all three proposed files: the new page, router, and navigation.
 6. Choose **Create page**. The server saves the reviewed files together. Use **Open page** or the new nav link to visit the URL.
 
-Use the arrow keys and Enter to navigate search results. Escape, the close button, the backdrop, or the shortcut closes the widget. Focus returns to the element that opened it. Drafts stay in memory when you close the widget; they reset on reload. Template buttons replace the current draft source.
+Use the arrow keys and Enter to navigate search results. Escape, the close button, the backdrop, or the shortcut closes the widget. Focus returns to the element that opened it. New-page drafts stay in memory when you close the widget; they reset on reload. Template buttons replace the current draft source. Tabs drafts also survive navigation through their page selector.
 
 Pages are classified by `pagesDir`, a `pages/` or `routes/` folder, or a component name ending in `Page`. Other Beast files appear as components. Dependency, generated, hidden, and symlinked entries are skipped. Use **Rescan project** after filesystem changes; there is no background file watcher in this version.
+
+## Add Tabs to a page
+
+Choose **Add Tabs to a page** in **All** or **Tabs**. The page route defaults to the current URL. Search by page name, URL, or source file to choose another page; selecting it navigates there and restores the form. **Review Tabs** becomes available once the selected page is loaded.
+
+The scanner finds BTSX components named `Tabs` (or ending in `Tabs`) with a typed `items` or `tabs` prop. The form follows the component's item contract, including required and optional string, number, and boolean fields. Literal unions become dropdowns, so `IconName` offers the project's actual icons. For the included Tabs component, fill in `href`, `id`, `label`, `shortLabel`, and `icon`, then select the active tab and an accessible label. Add or remove items as needed.
+
+Review the proposed page source, then choose **Add Tabs**. The builder imports the component and inserts it into the page's first native container, or before a component/conditional root. Existing content and styles are preserved. IDs must be unique, values must match the item type, and changes to the page, route, or contract require another review. Components with complex item fields or additional required props show why insertion is unavailable. Route selection supports registered static routes, including nested paths and direct or lazy BTSX page imports; parameterized routes require a concrete URL and are currently excluded.
 
 ## Router and navigation integration
 
@@ -165,9 +173,9 @@ Detection is based on source semantics, not the browser DOM. Runtime-generated l
 
 ## Scope of this version
 
-This is a source-based page scaffolder. Review shows BTSX source, not a rendered page. It does not modify existing pages, arrange arbitrary project components visually, generate content with AI, or generate new router infrastructure. Compilation validates Beast and Octane syntax; it does not type-check imports or props against the whole host project. Run the host app's normal checks after creating a page.
+This is a source-based page builder. Review shows BTSX source, not a rendered page. It creates pages and adds typed Tabs components to existing pages. It does not arrange arbitrary project components visually, generate content with AI, or generate new router infrastructure. Compilation validates Beast and Octane syntax; it does not type-check imports or props against the whole host project. Run the host app's normal checks after changes.
 
-The API lives under `/__beast-page-builder`. Reads and writes reject cross-site requests. Writes require same-origin JSON, bounded request bodies, valid page names, and project-contained paths. The review hash includes every original and proposed file. Saving rechecks the router and menu, stages all complete files, then commits them, with rollback on a write failure. Existing page files are never overwritten. A changed draft, router, or menu requires another review; concurrent saves through one project instance are serialized. If an external edit prevents rollback, the error identifies the files to inspect.
+The API lives under `/__beast-page-builder`. Reads and writes reject cross-site requests. Writes require same-origin JSON, bounded request bodies, valid page names, and project-contained paths. The review hash includes every original and proposed file. Saving rechecks the reviewed source, stages all complete files, then commits them, with rollback on a write failure. Page creation never overwrites existing pages; Tabs insertion edits the selected existing page after review. A changed draft, router, menu, or Tabs contract requires another review; concurrent saves through one project instance are serialized. If an external edit prevents rollback, the error identifies the files to inspect.
 
 ## Develop and verify
 

@@ -1,7 +1,7 @@
 import type { Compiler, RspackPluginInstance } from '@rspack/core'
 import { createBuilderServer } from './server/server.js'
 import type { BeastPageBuilderOptions } from './shared/types.js'
-export type { BeastPageBuilderOptions, ProjectScan, DetectedCollection, DetectedItem, ItemType, ItemField, NavigationTarget } from './shared/types.js'
+export type { BeastPageBuilderOptions, ProjectScan, DetectedCollection, DetectedItem, ItemType, ItemField, NavigationTarget, PageRoute, TabComponent, TabsDraft, TabsPreview } from './shared/types.js'
 
 export class BeastPageBuilderRspackPlugin implements RspackPluginInstance {
   constructor(readonly options: BeastPageBuilderOptions = {}) {}

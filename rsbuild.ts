@@ -1,7 +1,7 @@
 import type { RsbuildPlugin } from '@rsbuild/core'
 import { createBuilderServer, CLIENT_ENTRY } from './server/server.js'
 import type { BeastPageBuilderOptions } from './shared/types.js'
-export type { BeastPageBuilderOptions, ProjectScan, DetectedCollection, DetectedItem, ItemType, ItemField, NavigationTarget } from './shared/types.js'
+export type { BeastPageBuilderOptions, ProjectScan, DetectedCollection, DetectedItem, ItemType, ItemField, NavigationTarget, PageRoute, TabComponent, TabsDraft, TabsPreview } from './shared/types.js'
 
 export function beastPageBuilder(options: BeastPageBuilderOptions = {}): RsbuildPlugin {
   return {
