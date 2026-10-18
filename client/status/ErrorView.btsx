@@ -1,0 +1,13 @@
+import ViewHeader from '../ui/ViewHeader.btsx'
+import Icon from '../ui/Icon.btsx'
+
+props { message, onRetry, onBack, onClose }: { message: string; onRetry: () => void; onBack: () => void; onClose: () => void }
+
+ViewHeader(title="Couldn’t connect to your project" onBack={onBack} onClose={onClose})
+.error-body
+  Icon(name="scan")
+  h2 Let’s try that again.
+  p.error-note(role="alert") #{message}
+  button.primary.retry(type="button" onClick={onRetry})
+    | Scan project
+    Icon(name="scan")

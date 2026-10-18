@@ -1,0 +1,40 @@
+import type { SuccessScreen } from './types.js'
+import ViewHeader from '../ui/ViewHeader.btsx'
+import Icon from '../ui/Icon.btsx'
+
+props { screen, onBack, onClose }: { screen: SuccessScreen; onBack: () => void; onClose: () => void }
+setup
+  const tabs = screen.type === 'tabs-success'
+  const title = tabs ? (screen.editing ? 'Tabs updated' : 'Tabs added') : screen.editing ? 'Page updated' : 'Your idea has a home'
+
+ViewHeader(title={title} subtitle={screen.preview.path} onBack={onBack} onClose={onClose})
+.success-body
+  .success-icon
+    Icon(name="check")
+  if screen.type === 'tabs-success'
+    fragment
+      h2 Your tabs are ready.
+      p
+        | #{`${screen.count} tabs ${screen.editing ? 'updated on' : 'added to'} `}
+        strong #{screen.preview.routePath}
+        | .
+  else
+    fragment
+      span.eyebrow READY FOR WHAT’S NEXT
+      h2 #{screen.name} is #{screen.editing ? 'updated' : 'created'}.
+      p
+        | #{screen.editing ? 'Your page changes are saved.' : 'Your route and navigation link are ready.'}
+        if screen.preview.routePath
+          fragment
+            br
+            | #{'Find it at '}
+            strong #{screen.preview.routePath}
+            | .
+      if screen.preview.routePath
+        a.primary.visit(href={screen.href} onClick={screen.onVisit})
+          | Open page
+          Icon(name="arrow")
+      button.secondary.edit-saved-page(type="button" onClick={screen.onEdit}) Edit page
+  button.secondary.done(type="button" onClick={screen.onDone})
+    | Back to builder
+    Icon(name="arrow")

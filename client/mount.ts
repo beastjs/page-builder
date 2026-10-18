@@ -12,12 +12,13 @@ import {
   type TabsDraft,
   type TabsPreview,
 } from '../shared/types.js'
-import HexTrace from '../src/components/loaders/HexTrace'
 import { createRoot, flushSync, type Root } from 'octane'
 import TabsEditor from './tabs/TabsEditor.btsx'
 import Palette from './palette/Palette.btsx'
 import PageEditor from './pages/PageEditor.btsx'
 import ReviewView from './review/ReviewView.btsx'
+import StatusView from './status/StatusView.btsx'
+import type { StatusScreen, StatusViewProps } from './status/types.js'
 import FileInspector from './inspect/FileInspector.btsx'
 import CollectionInspector from './inspect/CollectionInspector.btsx'
 import type { FileInspectorProps, CollectionInspectorProps } from './inspect/types.js'
@@ -42,24 +43,6 @@ const defaults: ClientConfig = {
   pagesDir: 'src/pages',
   routerFile: 'src/router.ts'
 }
-const escape = (text: string) =>
-  text.replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]!)
-
-function sonar(): string {
-  const cells: string[] = []
-  for (let row = 0; row < 9; row++)
-    for (let col = 0; col < 15; col++) {
-      const x = 12 + col * 22 + (row % 2) * 11
-      const y = 12 + row * 19
-      const distance = Math.hypot(x - 171, y - 88)
-      const opacity = Math.max(0.12, 0.85 - distance / 210)
-      cells.push(
-        `<polygon points="${x},${y - 12} ${x + 10},${y - 6} ${x + 10},${y + 6} ${x},${y + 12} ${x - 10},${y + 6} ${x - 10},${y - 6}" style="--delay:${Math.round(distance * 5)}ms;--cell-opacity:${opacity}"/>`
-      )
-    }
-  return `<div class="sonar"> <svg viewBox="0 0 344 180" aria-hidden="true">${cells.join('')}</svg><div class="sonar-core hex-frame"></div></div>`
-}
-
 function mount(): void {
   if (document.getElementById(HOST_ID)) return
   const host = document.createElement('div')
@@ -199,6 +182,7 @@ function mount(): void {
   let busy = false
   let message = ''
   let scanTimer: number | undefined
+  let scanLabel = 'Looking for pages, menus, and tabs…'
   let routeTimer: number | undefined
   let tabsDraft: TabsDraft = { page: '', routePath: '', component: '', items: [], active: '', label: 'Tabs' }
   let tabsPreview: TabsPreview | null = null
@@ -207,6 +191,7 @@ function mount(): void {
   let pageRoot: Root | undefined
   let reviewRoot: Root | undefined
   let inspectorRoot: Root | undefined
+  let statusRoot: Root | undefined
   let draftRevision = 0
   let resumeTabs = false
   const routePrefix = apiBase.slice(0, -BASE.length)
@@ -273,12 +258,7 @@ function mount(): void {
       renderPalette()
       return
     }
-    const button = panel.querySelector<HTMLButtonElement>('.theme-toggle')
-    if (button) {
-      button.setAttribute('aria-pressed', String(isDark()))
-      button.title = isDark() ? 'Switch to light mode' : 'Switch to dark mode'
-      button.innerHTML = icon(isDark() ? 'sun' : 'moon')
-    }
+    if (statusRoot) renderStatus()
   }
   panel.addEventListener('click', (event) => {
     if (!(event.target instanceof Element) || !event.target.closest('.theme-toggle')) return
@@ -314,23 +294,15 @@ function mount(): void {
     launcher.querySelector('kbd')!.textContent = shortcutLabel()
   }
   const configuration = request<ClientConfig>('/config').then((value) => {
-    config = value
-    applyConfig()
+    if (generation === 0) {
+      config = value
+      applyConfig()
+    }
   })
   // Keep the shortcut and launcher usable if the development server is temporarily restarting.
   void configuration.catch(() => {})
   applyConfig()
 
-  const projectName = () => escape(report?.name ?? 'initializing')
-  const closeButton = () => `<button class="icon-button close" aria-label="Close builder">${icon('close')}</button>`
-  const moveHandle = () =>
-    `<button class="icon-button move" aria-label="Move builder" title="Drag to move. Arrow keys move; Home resets position.">${icon('grip')}</button>`
-  const header = (title: string, subtitle = '') =>
-    `<header class="topbar"><button class="icon-button back" aria-label="Back to builder">${icon('back')}</button><div class="header-text"><h2>${title}</h2>${subtitle ? `<p>${subtitle}</p>` : ''}</div>${moveHandle()}${closeButton()}</header>`
-  const themeToggle = () =>
-    `<button type="button" class="icon-button-small theme-toggle" aria-label="Dark mode" aria-pressed="${isDark()}" title="${isDark() ? 'Switch to light mode' : 'Switch to dark mode'}">${icon(isDark() ? 'sun' : 'moon')}</button>`
-  const footer = () =>
-    `<footer class="footer"><span class="project-chip">${icon('logo')}${projectName()}</span><span><kbd>↑</kbd><kbd>↓</kbd> Navigate <kbd>↵</kbd> Select</span>${themeToggle()}</footer>`
   const notify = (text: string) => {
     message = text
     if (view === 'palette' && paletteRoot) {
@@ -349,8 +321,8 @@ function mount(): void {
       renderPageEditor()
       return
     }
-    const target = panel.querySelector<HTMLElement>('.message')
-    if (target) target.textContent = text
+    if (view === 'tabs-draft' && tabsRoot) renderTabsForm()
+    else if (statusRoot) renderStatus()
   }
 
   function enter(elements: NodeListOf<HTMLElement>, delay = 0): void {
@@ -381,11 +353,14 @@ function mount(): void {
       inspectorRoot.unmount()
       inspectorRoot = undefined
     }
+    if (!['scan', 'success', 'tabs-success', 'error'].includes(view) && statusRoot) {
+      statusRoot.unmount()
+      statusRoot = undefined
+    }
     const entering = panel.dataset.view !== view
     panel.dataset.view = view
     if (view === 'scan') {
-      panel.innerHTML = `<header class="scan-header"><span class="brand">${icon('hex')} Beast <span class="muted">/ Page builder</span></span>${moveHandle()}${closeButton()}</header><div class="scan-body">${sonar()}<span class="eyebrow">CONNECTING THE DOTS</span><h2>Getting to know your project</h2><p class="scan-label" role="status">Looking for pages, menus, and tabs…</p><div class="scan-progress"><i></i></div><span class="scan-note">A little scan. A lot of possibilities.</span></div>${footer()}`
-      panel.querySelector('.sonar-core')!.append(HexTrace({ size: 32 }, shadow))
+      renderStatus()
     } else if (view === 'palette') {
       renderPalette()
     } else if (view === 'draft' || view === 'page-edit') {
@@ -396,45 +371,9 @@ function mount(): void {
       renderReview()
     } else if (view === 'file' || view === 'collection') {
       renderInspector()
-    } else if (view === 'tabs-success') {
-      panel.innerHTML = `${header(tabsDraft.instance ? 'Tabs updated' : 'Tabs added', escape(tabsPreview!.path))}<div class="success-body"><div class="success-icon">${icon('check')}</div><h2>Your tabs are ready.</h2><p>${tabsDraft.items.length} tabs ${tabsDraft.instance ? 'updated on' : 'added to'} <strong>${escape(tabsPreview!.routePath)}</strong>.</p><button class="secondary done">Back to builder ${icon('arrow')}</button></div>${footer()}`
-      panel.querySelector('.done')!.addEventListener('click', () => {
-        tabsReceipt(null)
-        tabsPreview = null
-        tabsDraft.items = []
-        delete tabsDraft.instance
-        void scan()
-      })
-    } else if (view === 'success') {
-      panel.innerHTML = `${header(draft.path ? 'Page updated' : 'Your idea has a home', escape(preview!.path))}<div class="success-body"><div class="success-icon">${icon('check')}</div><span class="eyebrow">READY FOR WHAT’S NEXT</span><h2>${escape(draft.name)} is ${draft.path ? 'updated' : 'created'}.</h2><p>${draft.path ? 'Your page changes are saved.' : 'Your route and navigation link are ready.'}${preview!.routePath ? '<br>Find it at <strong>' + escape(preview!.routePath) + '</strong>.' : ''}</p>${preview!.routePath ? `<a class="primary visit" href="${escape(apiBase.slice(0, -BASE.length) + preview!.routePath)}">Open page ${icon('arrow')}</a>` : ''}<button class="secondary edit-saved-page">Edit page</button><button class="secondary done">Back to builder ${icon('arrow')}</button></div>${footer()}`
-      panel.querySelector('.visit')?.addEventListener('click', () => {
-        receipt('')
-      })
-      panel.querySelector('.edit-saved-page')!.addEventListener('click', () => {
-        receipt('')
-        currentFile = {
-          path: preview!.path,
-          name: draft.name,
-          kind: 'page',
-          lines: preview!.source.split('\n').length,
-          components: [draft.name],
-          error: null
-        }
-        currentSource = preview!.source
-        startPageEdit()
-      })
-      panel.querySelector('.done')!.addEventListener('click', () => {
-        receipt('')
-        draft = { name: 'UntitledPage', source: templates.blank }
-        preview = null
-        void scan()
-      })
     } else {
-      panel.innerHTML = `${header('Couldn’t connect to your project')}<div class="error-body">${icon('scan')}<h2>Let’s try that again.</h2><p class="error-note" role="alert">${escape(message)}</p><button class="primary retry">Scan project ${icon('scan')}</button></div>${footer()}`
-      panel.querySelector('.retry')!.addEventListener('click', () => void scan())
+      renderStatus()
     }
-    const componentView = ['palette', 'tabs-draft', 'draft', 'page-edit', 'preview', 'tabs-preview', 'file', 'collection'].includes(view)
-    if (!componentView) panel.querySelector('.action-footer')?.insertAdjacentHTML('beforeend', themeToggle())
     if (entering) {
       enter(panel.querySelectorAll<HTMLElement>(':scope > header, :scope > nav, :scope > footer'))
       enter(
@@ -445,19 +384,6 @@ function mount(): void {
       )
     }
     positionPanel()
-    if (componentView) return
-    panel.querySelector('.close')?.addEventListener('click', close)
-    panel.querySelector('.back')?.addEventListener('click', () => {
-      message = ''
-      if (view === 'tabs-draft' || view === 'tabs-success') tabsReceipt(null)
-      view = 'palette'
-      if (!report) {
-        void scan()
-        return
-      }
-      render()
-      focusSearch()
-    })
   }
 
   function startPageEdit(): void {
@@ -568,46 +494,103 @@ function mount(): void {
   }
 
   async function reviewTabs(): Promise<void> {
-    if (busy || !tabsReady() || !panel.querySelector<HTMLFormElement>('.tabs-form')?.reportValidity()) return
+    if (busy || view !== 'tabs-draft' || !tabsReady() || !panel.querySelector<HTMLFormElement>('.tabs-form')?.reportValidity()) return
     const turn = generation
+    const owner = tabsRoot
+    const submitted = structuredClone(tabsDraft)
+    const current = () => opened && turn === generation && view === 'tabs-draft' && tabsRoot === owner && tabsReady() && JSON.stringify(tabsDraft) === JSON.stringify(submitted)
     busy = true
     message = ''
     render()
     try {
-      const result = await request<TabsPreview>('/tabs/preview', tabsDraft)
-      if (!opened || turn !== generation || !tabsReady()) return
+      const result = await request<TabsPreview>('/tabs/preview', submitted)
+      if (!current()) return
       tabsPreview = result
       view = 'tabs-preview'
     } catch (error) {
-      message = error instanceof Error ? error.message : String(error)
+      if (current()) message = error instanceof Error ? error.message : String(error)
     } finally {
       busy = false
-      if (opened && turn === generation) {
+      if (opened) {
         render()
-        focusSearch()
+        if (turn === generation && view === 'tabs-preview') focusSearch()
       }
     }
   }
   async function saveTabs(): Promise<void> {
     if (busy || view !== 'tabs-preview' || !tabsPreview || !tabsReady()) return
     const turn = generation
+    const owner = reviewRoot
+    const proposed = tabsPreview
+    const current = () => opened && turn === generation && view === 'tabs-preview' && reviewRoot === owner && tabsPreview === proposed && tabsReady()
     busy = true
     message = ''
     render()
-    tabsReceipt({ draft: tabsDraft, hash: tabsPreview.hash })
+    tabsReceipt({ draft: tabsDraft, hash: proposed.hash })
     try {
-      tabsPreview = await request<TabsPreview>('/tabs/create', { ...tabsDraft, hash: tabsPreview.hash })
-      if (opened && turn === generation) view = 'tabs-success'
+      const result = await request<TabsPreview>('/tabs/create', { ...tabsDraft, hash: proposed.hash })
+      if (!current()) return
+      tabsPreview = result
+      view = 'tabs-success'
     } catch (error) {
-      tabsReceipt(null)
-      message = error instanceof Error ? error.message : String(error)
+      if (turn === generation && tabsReceipt()?.hash === proposed.hash) tabsReceipt(null)
+      if (current()) message = error instanceof Error ? error.message : String(error)
     } finally {
       busy = false
-      if (opened && turn === generation) {
+      if (opened) {
+        render()
+        if (turn === generation && view === 'tabs-success') focusSearch()
+      }
+    }
+  }
+
+  function renderStatus(): void {
+    if (!statusRoot) {
+      panel.replaceChildren()
+      statusRoot = createRoot(panel)
+    }
+    let screen: StatusScreen
+    if (view === 'scan') screen = { type: 'scan', label: scanLabel }
+    else if (view === 'error') screen = { type: 'error', message, onRetry: () => void scan() }
+    else if (view === 'tabs-success') screen = {
+      type: 'tabs-success', editing: !!tabsDraft.instance, preview: tabsPreview!, count: tabsDraft.items.length,
+      onDone() {
+        tabsReceipt(null)
+        tabsPreview = null
+        tabsDraft.items = []
+        delete tabsDraft.instance
+        void scan()
+      }
+    }
+    else screen = {
+      type: 'page-success', editing: !!draft.path, name: draft.name, preview: preview!, href: routePrefix + preview!.routePath,
+      onVisit: () => { receipt('') },
+      onEdit() {
+        receipt('')
+        currentFile = { path: preview!.path, name: draft.name, kind: 'page', lines: preview!.source.split('\n').length, components: [draft.name], error: null }
+        currentSource = preview!.source
+        startPageEdit()
+      },
+      onDone() {
+        receipt('')
+        draft = { name: 'UntitledPage', source: templates.blank }
+        preview = null
+        void scan()
+      }
+    }
+    const props: StatusViewProps = {
+      screen, projectName: report?.name ?? 'initializing', dark: isDark(), onClose: close,
+      onBack() {
+        message = ''
+        if (view === 'success') receipt('')
+        if (view === 'tabs-success') tabsReceipt(null)
+        if (!report) { void scan(); return }
+        view = 'palette'
         render()
         focusSearch()
       }
     }
+    flushSync(() => statusRoot!.render(StatusView, props))
   }
 
   function renderInspector(): void {
@@ -619,6 +602,7 @@ function mount(): void {
       dark: isDark(),
       onBack() {
         message = ''
+        if (!report) { void scan(); return }
         view = 'palette'
         render()
         focusSearch()
@@ -692,6 +676,7 @@ function mount(): void {
       onClearMessage() { message = ''; renderPageEditor() },
       onBack() {
         message = ''
+        if (!report) { void scan(); return }
         view = 'palette'
         render()
         focusSearch()
@@ -782,28 +767,37 @@ function mount(): void {
   }
   async function scan(): Promise<void> {
     controller?.abort()
+    window.clearTimeout(scanTimer)
     controller = new AbortController()
     const signal = controller.signal
     const turn = ++generation
     view = 'scan'
+    scanLabel = 'Looking for pages, menus, and tabs…'
     message = ''
     render()
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
     const start = performance.now()
     const timer = window.setTimeout(() => {
-      if (view === 'scan' && turn === generation)
-        panel.querySelector('.scan-label')!.textContent = 'Resolving menus, tabs, and item types…'
+      if (opened && view === 'scan' && turn === generation) {
+        scanLabel = 'Resolving menus, tabs, and item types…'
+        renderStatus()
+      }
     }, 650)
     scanTimer = timer
     try {
-      config = await request<ClientConfig>('/config', undefined, signal)
+      const nextConfig = await request<ClientConfig>('/config', undefined, signal)
+      if (signal.aborted || !opened || turn !== generation) return
+      config = nextConfig
       applyConfig()
       const next = await request<ProjectScan>('/scan', undefined, signal)
       const duration = reduced ? 0 : config.scanDuration
-      await new Promise<void>((resolve) =>
-        window.setTimeout(resolve, Math.max(0, duration - (performance.now() - start)))
-      )
-      if (!opened || turn !== generation) return
+      await new Promise<void>((resolve) => {
+        if (signal.aborted) { resolve(); return }
+        const finish = () => { window.clearTimeout(waitTimer); signal.removeEventListener('abort', finish); resolve() }
+        const waitTimer = window.setTimeout(finish, Math.max(0, duration - (performance.now() - start)))
+        signal.addEventListener('abort', finish, { once: true })
+      })
+      if (signal.aborted || !opened || turn !== generation) return
       report = next
       view = 'palette'
       selected = 0
@@ -839,9 +833,10 @@ function mount(): void {
       render()
       focusSearch()
     } catch (error) {
-      notify(error instanceof Error ? error.message : String(error))
+      if (opened && turn === generation) notify(error instanceof Error ? error.message : String(error))
     } finally {
       busy = false
+      if (opened && turn !== generation) render()
     }
   }
 
@@ -864,9 +859,9 @@ function mount(): void {
         message = error instanceof Error ? error.message : String(error)
     } finally {
       busy = false
-      if (opened && turn === generation) {
+      if (opened) {
         render()
-        if (view === 'preview') focusSearch()
+        if (turn === generation && view === 'preview') focusSearch()
       }
     }
   }
@@ -874,27 +869,31 @@ function mount(): void {
   async function save(): Promise<void> {
     if (busy || view !== 'preview' || !preview) return
     const turn = generation
+    const owner = reviewRoot
+    const proposed = preview
+    const current = () => opened && turn === generation && view === 'preview' && reviewRoot === owner && preview === proposed
     busy = true
     message = ''
     render()
-    receipt(preview.hash)
+    receipt(proposed.hash)
     try {
-      preview = await request<PagePreview>('/create', { ...draft, hash: preview.hash })
-      if (opened && turn === generation) view = 'success'
+      const result = await request<PagePreview>('/create', { ...draft, hash: proposed.hash })
+      if (!current()) return
+      preview = result
+      view = 'success'
     } catch (error) {
-      receipt('')
-      message = error instanceof Error ? error.message : String(error)
+      if (turn === generation && receipt() === proposed.hash) receipt('')
+      if (current()) message = error instanceof Error ? error.message : String(error)
     } finally {
       busy = false
-      if (opened && turn === generation) {
+      if (opened) {
         render()
-        focusSearch()
+        if (turn === generation && view === 'success') focusSearch()
       }
     }
   }
 
-  function open(): void {
-    if (opened) return
+  function showPanel(): void {
     const active = shadow.activeElement ?? document.activeElement
     previousFocus = active instanceof HTMLElement ? active : null
     opened = true
@@ -923,6 +922,10 @@ function mount(): void {
       view = 'tabs-draft'
       render()
     }, 250)
+  }
+  function open(): void {
+    if (opened) return
+    showPanel()
     void scan()
     panel.focus()
   }
@@ -935,6 +938,8 @@ function mount(): void {
     controller?.abort()
     window.clearTimeout(scanTimer)
     window.clearInterval(routeTimer)
+    statusRoot?.unmount()
+    statusRoot = undefined
     panel.hidden = true
     backdrop.hidden = true
     launcher.setAttribute('aria-expanded', 'false')
@@ -999,6 +1004,8 @@ function mount(): void {
   // Clean up if an app's DOM ownership removes the mount during HMR or navigation.
   const observer = new MutationObserver(() => {
     if (host.isConnected) return
+    statusRoot?.unmount()
+    statusRoot = undefined
     inspectorRoot?.unmount()
     inspectorRoot = undefined
     reviewRoot?.unmount()
@@ -1021,6 +1028,7 @@ function mount(): void {
     observer.disconnect()
   })
   observer.observe(document.body, { childList: true })
+  const recoveryTurn = generation
   const pendingTabs = tabsReceipt()
   if (pendingTabs?.draft && Array.isArray(pendingTabs.draft.items)) {
     tabsDraft = pendingTabs.draft
@@ -1028,19 +1036,17 @@ function mount(): void {
       void configuration
         .catch(() => {})
         .then(async () => {
+          if (generation !== recoveryTurn || opened || !host.isConnected) return
           try {
             const result = await request<TabsPreview>(`/tabs/creation?hash=${pendingTabs.hash}`)
-            if (tabsReceipt()?.hash !== pendingTabs.hash || opened) return
+            if (tabsReceipt()?.hash !== pendingTabs.hash || opened || generation !== recoveryTurn || !host.isConnected) return
             tabsPreview = result
-            opened = true
             view = 'tabs-success'
-            panel.hidden = false
-            backdrop.hidden = false
-            launcher.setAttribute('aria-expanded', 'true')
+            showPanel()
             render()
             focusSearch()
           } catch {
-            tabsReceipt(null)
+            if (generation === recoveryTurn && tabsReceipt()?.hash === pendingTabs.hash) tabsReceipt(null)
           }
         })
     } else {
@@ -1053,9 +1059,10 @@ function mount(): void {
     void configuration
       .catch(() => {})
       .then(async () => {
+        if (generation !== recoveryTurn || opened || !host.isConnected) return
         try {
           const result = await request<PagePreview>(`/creation?hash=${pendingHash}`)
-          if (receipt() !== pendingHash || opened) return
+          if (receipt() !== pendingHash || opened || generation !== recoveryTurn || !host.isConnected) return
           preview = result
           draft = {
             name: result.path
@@ -1067,15 +1074,12 @@ function mount(): void {
             navLabel: result.navLabel,
             ...(result.files.length === 1 && result.files[0]?.action === 'edit' ? { path: result.path } : {})
           }
-          opened = true
           view = 'success'
-          panel.hidden = false
-          backdrop.hidden = false
-          launcher.setAttribute('aria-expanded', 'true')
+          showPanel()
           render()
           focusSearch()
         } catch {
-          receipt('')
+          if (generation === recoveryTurn && receipt() === pendingHash) receipt('')
         }
       })
   }

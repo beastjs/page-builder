@@ -1,0 +1,26 @@
+import type { StatusViewProps } from './types.js'
+import ScanView from './ScanView.btsx'
+import SuccessView from './SuccessView.btsx'
+import ErrorView from './ErrorView.btsx'
+import Icon from '../ui/Icon.btsx'
+import ThemeToggle from '../ui/ThemeToggle.btsx'
+
+props { screen, projectName, dark, onBack, onClose }: StatusViewProps
+
+if screen.type === 'scan'
+  ScanView(label={screen.label} onClose={onClose})
+elseif screen.type === 'error'
+  ErrorView(message={screen.message} onRetry={screen.onRetry} onBack={onBack} onClose={onClose})
+else
+  SuccessView(screen={screen} onBack={onBack} onClose={onClose})
+footer.footer
+  span.project-chip
+    Icon(name="logo")
+    | #{projectName}
+  span
+    kbd ↑
+    kbd ↓
+    | #{' Navigate '}
+    kbd ↵
+    | #{' Select'}
+  ThemeToggle(dark={dark})

@@ -21,7 +21,7 @@ Track the remaining sections and their task checklists in the [BTSX migration pl
 
 The search palette lives in `client/palette/*.btsx`, the tabs editor in `client/tabs/*.btsx`, and page creation/editing in `client/pages/*.btsx`. Palette action construction and filtering live in `client/palette/actions.ts`; page suggestions and section insertion live in `client/pages/model.ts`.
 
-The shared page/tabs review screens live in `client/review/*.btsx` and use `client/ui/SourceViewer.btsx` for proposed and original source. API requests and reviewed hashes remain in the TypeScript shell. The scan, success, and error screens and the widget shell remain TypeScript.
+The shared page/tabs review screens live in `client/review/*.btsx` and use `client/ui/SourceViewer.btsx` for proposed and original source. API requests and reviewed hashes remain in the TypeScript shell. Scan, success, and error screens live in `client/status/*.btsx`; the widget shell remains TypeScript. The scan view attaches its native HexTrace loader in an effect and removes it when the view unmounts.
 
 File and collection inspectors live in `client/inspect/*.btsx`. They share `SourceViewer.btsx` with review screens and reuse the recursive `TypeContract.btsx` for collection and item contracts. Clipboard access stays in TypeScript.
 

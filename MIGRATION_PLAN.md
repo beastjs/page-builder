@@ -2,7 +2,7 @@
 
 Updated: October 18, 2026
 
-Next deliverable: migrate the scan, success, and error screens, preserving loader cleanup, reload receipts, and cancellation behavior.
+Next deliverable: consolidate the builder shell behind one BTSX root and extract its TypeScript state, API, persistence, and browser utilities.
 
 ## Progress board
 
@@ -15,8 +15,8 @@ Next deliverable: migrate the scan, success, and error screens, preserving loade
 | 4 | Page creation and editing | Done | 3 |
 | 5 | Review and save screens | Done | 3, 4 |
 | 6 | Source and collection inspectors | Done | 3, 5 |
-| 7 | Scan, success, and error screens | Next | 3 |
-| 8 | Builder shell and state cleanup | Queued | 4–7 |
+| 7 | Scan, success, and error screens | Done | 3 |
+| 8 | Builder shell and state cleanup | Next | 4–7 |
 | 9 | Final verification and measurements | Queued | 8 |
 
 “Done” means implemented and verified in the current working tree. It does not mean committed or published. Proposed filenames below may change during implementation.
@@ -109,24 +109,24 @@ Evidence (October 18, 2026): `bun run check` passed production build, type check
 
 ## 7. Scan, success, and error screens
 
-Status: **Next**
+Status: **Done**
 
-Proposed files: `client/status/ScanView.btsx`, `SuccessView.btsx`, and `ErrorView.btsx`.
+Files: `client/status/StatusView.btsx`, `ScanView.btsx`, `SuccessView.btsx`, `ErrorView.btsx`, and `types.ts`.
 
-- [ ] Migrate scan markup and progress text while preserving the sonar and HexTrace appearance.
-- [ ] Keep loader integration in effects with cleanup; preserve reduced-motion behavior and configured scan duration.
-- [ ] Migrate page and tabs success screens, including open-page, edit-page, and return actions.
-- [ ] Migrate connection failures and retry actions with accessible error messages.
-- [ ] Preserve reload receipts and ensure a closed or superseded request cannot reopen the builder.
-- [ ] Verify scan cancellation, retry, reduced motion, successful saves across reloads, and all success actions.
+- [x] Migrate scan markup and progress text while preserving the sonar and HexTrace appearance.
+- [x] Keep loader integration in effects with cleanup; preserve reduced-motion behavior and configured scan duration.
+- [x] Migrate page and tabs success screens, including open-page, edit-page, and return actions.
+- [x] Migrate connection failures and retry actions with accessible error messages.
+- [x] Preserve reload receipts and ensure a closed or superseded request cannot reopen the builder.
+- [x] Verify scan cancellation, retry, reduced motion, successful saves across reloads, and all success actions.
 
 Complete when: these states render through BTSX and pending work cannot update an obsolete view.
 
-Evidence: pending.
+Evidence (October 18, 2026): `bun run check` passed production build, type checking, and all 57 non-browser tests, including 6 bundler integration tests. All 64 browser tests passed: 58 widget tests (including 12 new read-only status tests) and 6 native loader tests. Coverage includes configured scan duration, progress updates without loader replacement, reduced motion, loader/style deduplication and cleanup on transitions, close, and host removal; literal accessible errors, retry and back navigation; all four success modes across reloads, open/edit/return/close actions, receipt acknowledgement and expiry, restored route coordination, scan cancellation, and delayed recovery or save responses after reopening. Desktop/mobile screenshots and dark mode were inspected. Recovery now checks the panel generation so an old lookup cannot reopen a subsequently closed builder; pending saves cannot replace a newer draft or steal its focus. The client bundle is 452,075 bytes minified and 139,912 bytes gzipped (Node zlib defaults): increases of 6,459 and 1,475 bytes over section 6. Dependencies, server behavior, and the plain TypeScript build script are unchanged.
 
 ## 8. Builder shell and state cleanup
 
-Status: **Queued**
+Status: **Next**
 
 Proposed files: `client/Builder.btsx`, plus focused TypeScript modules for API, state, persistence, and browser behavior.
 

@@ -1,0 +1,48 @@
+import { useLayoutEffect, useRef, type CSSProperties } from 'octane'
+import HexTrace from '../../src/components/loaders/HexTrace'
+import Icon from '../ui/Icon.btsx'
+
+module
+  const cells = Array.from({ length: 135 }, (_, index) => {
+    const row = Math.floor(index / 15), col = index % 15
+    const x = 12 + col * 22 + (row % 2) * 11, y = 12 + row * 19
+    const distance = Math.hypot(x - 171, y - 88)
+    return {
+      points: `${x},${y - 12} ${x + 10},${y - 6} ${x + 10},${y + 6} ${x},${y + 12} ${x - 10},${y + 6} ${x - 10},${y - 6}`,
+      style: { '--delay': `${Math.round(distance * 5)}ms`, '--cell-opacity': String(Math.max(0.12, 0.85 - distance / 210)) } satisfies CSSProperties & Record<`--${string}`, string>
+    }
+  })
+
+props { label, onClose }: { label: string; onClose: () => void }
+setup
+  const coreRef = useRef<HTMLDivElement | null>(null)
+  useLayoutEffect(() => {
+    const core = coreRef.current
+    if (!core) return
+    const owner = core.getRootNode()
+    const loader = HexTrace({ size: 32 }, owner instanceof ShadowRoot ? owner : core.ownerDocument)
+    core.append(loader)
+    return () => loader.remove()
+  }, [])
+
+header.scan-header
+  span.brand
+    Icon(name="hex")
+    | Beast
+    span.muted / Page builder
+  button.icon-button.move(type="button" aria-label="Move builder" title="Drag to move. Arrow keys move; Home resets position.")
+    Icon(name="grip")
+  button.icon-button.close(type="button" aria-label="Close builder" onClick={onClose})
+    Icon(name="close")
+.scan-body
+  .sonar
+    svg(viewBox="0 0 344 180" aria-hidden={true})
+      each cell, index in cells key index
+        polygon(points={cell.points} style={cell.style})
+    .sonar-core.hex-frame(ref={coreRef})
+  span.eyebrow CONNECTING THE DOTS
+  h2 Getting to know your project
+  p.scan-label(role="status") #{label}
+  .scan-progress
+    i
+  span.scan-note A little scan. A lot of possibilities.
