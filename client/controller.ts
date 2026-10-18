@@ -2,6 +2,7 @@ import {
   BASE,
   type ClientConfig,
   type DetectedCollection,
+  type DetectedSection,
   type PageDraft,
   type PagePreview,
   type PageRoute,
@@ -87,7 +88,7 @@ export function createBuilderController({ host, shadow, panel, apiBase, commit }
   const preferences = createPreferences(storage, () => render())
   const isDark = () => preferences.dark(config)
   const behavior = createPanelBehavior({
-    shadow, panel, opened: () => opened, shortcut: () => config.shortcut,
+    shadow, panel, storage, opened: () => opened, shortcut: () => config.shortcut,
     onToggle: () => opened ? close() : open(), onClose: close
   })
   const focusSearch = () => behavior.focusSearch()
@@ -120,11 +121,11 @@ export function createBuilderController({ host, shadow, panel, apiBase, commit }
       : view === 'tabs-draft' ? tabsScreen()
       : view === 'preview' || view === 'tabs-preview' ? reviewScreen()
       : view === 'file' || view === 'collection' ? inspectorScreen() : statusScreen()
-    commit({
+    behavior.updateContent(() => commit({
       opened, screen, theme: preferences.mode(config), position: config.position,
       launcherVisible: preferences.launcher(config), shortcut: shortcutLabel(),
       onOpen: open, onClose: close, onThemeToggle
-    })
+    }))
     if (entering) animateScreen(panel)
     behavior.position()
   }
@@ -297,11 +298,11 @@ export function createBuilderController({ host, shadow, panel, apiBase, commit }
       }
     }
     else screen = {
-      type: 'page-success', editing: !!draft.path, name: draft.name, preview: preview!, href: routePrefix + preview!.routePath,
+      type: 'page-success', editing: !!draft.path, section: draft.section, name: draft.name, preview: preview!, href: routePrefix + preview!.routePath,
       onVisit: () => { receipt('') },
       onEdit() {
         receipt('')
-        currentFile = { path: preview!.path, name: draft.name, kind: 'page', lines: preview!.source.split('\n').length, components: [draft.name], error: null }
+        currentFile = report?.files.find(file => file.path === preview!.path) ?? { path: preview!.path, name: draft.name, kind: 'page', lines: preview!.source.split('\n').length, components: [draft.name], error: null }
         currentSource = preview!.source
         startPageEdit()
       },
@@ -379,7 +380,7 @@ export function createBuilderController({ host, shadow, panel, apiBase, commit }
     }
     const props: ReviewViewProps = view === 'tabs-preview'
       ? { ...controls, mode: tabsDraft.instance ? 'edit-tabs' : 'add-tabs', preview: tabsPreview!, ready: tabsReady(), onSave: saveTabs }
-      : { ...controls, mode: draft.path ? 'edit-page' : 'create-page', preview: preview!, onSave: save }
+      : { ...controls, mode: draft.section ? 'edit-section' : draft.path ? 'edit-page' : 'create-page', preview: preview!, onSave: save }
     return { type: 'review', key: screenVersion, view, props }
   }
 
@@ -439,6 +440,10 @@ export function createBuilderController({ host, shadow, panel, apiBase, commit }
         toggleLauncher,
         editTabs: startEditingTabs,
         openFile: (file) => void openFile(file),
+        editSection(section) {
+          const file = report?.files.find(file => file.path === section.file)
+          if (file) void openFile(file, section)
+        },
         addSection(snippet) {
           if (draft.path) draft = { name: 'UntitledPage', source: templates.blank }
           appendSection(snippet)
@@ -464,6 +469,7 @@ export function createBuilderController({ host, shadow, panel, apiBase, commit }
         render()
       },
       onTabChange(next) {
+        if (tab === next) return
         tab = next
         selected = 0
         render()
@@ -528,7 +534,7 @@ export function createBuilderController({ host, shadow, panel, apiBase, commit }
     }
   }
 
-  async function openFile(file: ProjectFile): Promise<void> {
+  async function openFile(file: ProjectFile, section?: DetectedSection): Promise<void> {
     if (busy) return
     const turn = generation
     const owner = screenVersion
@@ -539,6 +545,21 @@ export function createBuilderController({ host, shadow, panel, apiBase, commit }
       currentFile = file
       currentSource = result.source
       message = ''
+      if (section) {
+        if (draft.path !== file.path || draft.section !== section.elementId) {
+          draft = { name: file.name, path: file.path, source: result.source, section: section.elementId }
+          draftRevision++
+        }
+        startPageEdit()
+        const editor = panel.querySelector<HTMLTextAreaElement>('#edit-page-source')!
+        const offset = draft.source.split('\n').slice(0, section.line - 1).reduce((offset, line) => offset + line.length + 1, 0)
+        editor.setSelectionRange(offset, offset)
+        return
+      }
+      if (draft.path === file.path && draft.section) {
+        draft = { ...draft, section: undefined }
+        draftRevision++
+      }
       setView('file')
       render()
       focusSearch()
@@ -684,6 +705,7 @@ export function createBuilderController({ host, shadow, panel, apiBase, commit }
             source: result.source,
             routePath: result.routePath,
             navLabel: result.navLabel,
+            section: result.section,
             ...(result.files.length === 1 && result.files[0]?.action === 'edit' ? { path: result.path } : {})
           }
           setView('success')

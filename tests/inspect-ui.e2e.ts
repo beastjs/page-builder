@@ -56,6 +56,7 @@ const emptyTabs: DetectedCollection = {
   itemType: { name: 'InferredTab', origin: 'inferred', fields: [] }, bindings: [], consumers: []
 }
 const inventory: ProjectScan = {
+  sections: [],
   name: 'Inspector fixture', scannedAt: '', warnings: [], navigationTargets: [],
   files: [
     { name: 'FixturePage', path: pagePath, kind: 'page', lines: 6, components: ['FixturePage', 'LocalCard'], error: null },

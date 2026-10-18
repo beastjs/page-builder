@@ -97,6 +97,30 @@ describe('page creation', () => {
 })
 
 describe('page editing', () => {
+  test('discovers section IDs and reviews and saves their component file with stale review protection', async () => {
+    const { project, root } = await fixture()
+    const path = 'src/components/Header.btsx'
+    await writeFile(join(root, path), HEADER.replace('header\n', 'header#topbar\n'))
+    const router = await readFile(join(root, 'src/router.ts'), 'utf8')
+    const report = await project.scan()
+    expect(report.sections).toEqual([{ id: `${path}:2:topbar`, file: path, line: 2, elementId: 'topbar' }])
+    const source = (await project.source(path)).replace(' Home', ' Welcome')
+    const draft = { name: 'Header', path, section: 'topbar', source }
+    const preview = await project.preview(draft)
+    expect(preview.section).toBe('topbar')
+    expect(preview.files).toHaveLength(1)
+    expect(preview.files[0]).toMatchObject({ path, source, action: 'edit' })
+    await expect(project.preview({ ...draft, section: 'missing' })).rejects.toThrow('section changed')
+    await expect(project.create({ ...draft, source: source + '\n' + 'p Changed\n' }, preview.hash)).rejects.toThrow('changed')
+    await project.create(draft, preview.hash)
+    expect(await project.source(path)).toBe(source)
+    expect(await readFile(join(root, 'src/router.ts'), 'utf8')).toBe(router)
+    expect((await project.creation(preview.hash)).section).toBe('topbar')
+    const next = { ...draft, source: source.replace(' Welcome', ' Updated') }
+    const reviewed = await project.preview(next)
+    await writeFile(join(root, path), source.replace('#topbar', '#renamed'))
+    await expect(project.create(next, reviewed.hash)).rejects.toThrow('section changed')
+  })
   test('reviews and saves existing page content without touching router or navigation', async () => {
     const { project, root } = await fixture()
     const router = await readFile(join(root, 'src/router.ts'), 'utf8')

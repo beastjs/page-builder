@@ -1,6 +1,6 @@
 import type { PagePreview, TabsPreview } from '../../shared/types.js'
 
-export type ReviewMode = 'create-page' | 'edit-page' | 'add-tabs' | 'edit-tabs'
+export type ReviewMode = 'create-page' | 'edit-page' | 'edit-section' | 'add-tabs' | 'edit-tabs'
 
 interface ReviewControls {
   busy: boolean
@@ -12,6 +12,6 @@ interface ReviewControls {
 }
 
 export type ReviewViewProps = ReviewControls & (
-  | { mode: 'create-page' | 'edit-page'; preview: PagePreview; ready?: never }
+  | { mode: 'create-page' | 'edit-page' | 'edit-section'; preview: PagePreview; ready?: never }
   | { mode: 'add-tabs' | 'edit-tabs'; preview: TabsPreview; ready: boolean }
 )

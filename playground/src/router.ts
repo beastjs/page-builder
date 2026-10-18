@@ -2,12 +2,18 @@ import { createRootRoute, createRoute, createRouter, lazyRouteComponent } from '
 import App from './App.btsx'
 
 const rootRoute = createRootRoute({ component: App })
-const indexRoute = createRoute({ getParentRoute: () => rootRoute, path: '/', component: lazyRouteComponent(() => import('./pages/Home.btsx')) })
+const indexRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/',
+  component: lazyRouteComponent(() => import('./pages/Atomic.btsx'))
+})
 
 const routeTree = rootRoute.addChildren([indexRoute])
 
 export const router = createRouter({ routeTree, defaultPreload: 'intent' })
 
 declare module '@octanejs/tanstack-router' {
-  interface Register { router: typeof router }
+  interface Register {
+    router: typeof router
+  }
 }

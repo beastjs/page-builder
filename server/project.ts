@@ -7,6 +7,7 @@ import type { BeastPageBuilderOptions, NavigationTarget, PageDraft, PagePreview,
 import { addNavigation, discoverNavigation, registerRoute } from './integration.js'
 import { discoverProjectItems, type DiscoverySource } from './discovery.js'
 import { addTabs, discoverPageRoutes, discoverTabInstances } from './tabs.js'
+import { discoverSections } from './sections.js'
 
 const IGNORED = new Set(['node_modules', '.git', '.beast', 'dist', 'build', 'coverage', '.next'])
 export class BuilderError extends Error {
@@ -54,6 +55,7 @@ export class BuilderProject {
 
   async scan(): Promise<ProjectScan> {
     const files: ProjectFile[] = []
+    const sections: ProjectScan['sections'] = []
     const warnings: string[] = []
     let navigationTargets: NavigationTarget[] = []
     const sources = new Map<string, DiscoverySource>()
@@ -72,13 +74,14 @@ export class BuilderProject {
             if (sources.size >= 5000) throw new BuilderError('Scan limited to 5,000 files. Narrow the include directories.')
             const source = await readFile(path, 'utf8')
             const name = componentNameFromPath(path)
+            const filePath = posix(relative(this.root, path))
             let components = [name]
             let error: string | null = null
             try {
               const result = compileBeastResult(source, { filename: path })
               components = [name, ...result.ast.declarations.flatMap(d => d.kind === 'component' ? [d.name] : [])]
+              sections.push(...discoverSections(result.ast, filePath))
             } catch (cause) { error = cause instanceof Error ? cause.message : String(cause) }
-            const filePath = posix(relative(this.root, path))
             files.push({ path: filePath, name, kind: inside(resolve(this.root, this.pagesDir), path) || /(?:^|\/)(pages|routes)\//.test(filePath) || /Page$/.test(name) ? 'page' : 'component', lines: source.split('\n').length, components, error })
             sources.set(filePath, { file: filePath, source, page: files.at(-1)!.kind === 'page' })
           } else if (entry.isFile() && /\.tsx?$/.test(entry.name)) {
@@ -116,7 +119,7 @@ export class BuilderProject {
       const source = sources.get(page.file)?.source
       return source ? discoverTabInstances(source, page, tabComponents) : []
     })
-    return { collections, tabComponents, tabInstances, pageRoutes, name: basename(this.root), files: files.sort((a, b) => a.path.localeCompare(b.path)), scannedAt: new Date().toISOString(), warnings, navigationTargets }
+    return { sections, collections, tabComponents, tabInstances, pageRoutes, name: basename(this.root), files: files.sort((a, b) => a.path.localeCompare(b.path)), scannedAt: new Date().toISOString(), warnings, navigationTargets }
   }
 
   async source(path: string): Promise<string> {
@@ -180,10 +183,11 @@ export class BuilderProject {
 
   private async previewPageEdit(draft: PageDraft): Promise<PagePreview> {
     if (typeof draft.path !== 'string') throw new BuilderError('Choose a page to edit.')
-    // Check the path before scanning, and limit edits to discovered page files.
+    // Section edits may also target a component containing the detected ID.
     const before = await this.source(draft.path)
     const report = await this.scan()
-    const page = report.files.find(file => file.path === draft.path && file.kind === 'page')
+    if (draft.section !== undefined && (typeof draft.section !== 'string' || !report.sections.some(section => section.file === draft.path && section.elementId === draft.section))) throw new BuilderError('The selected section changed. Rescan the project.', 409)
+    const page = report.files.find(file => file.path === draft.path && (file.kind === 'page' || draft.section !== undefined))
     if (!page) throw new BuilderError('Choose a page from the project scan.', 403)
     if (typeof draft.source !== 'string' || !draft.source.trim() || Buffer.byteLength(draft.source) > 60_000) throw new BuilderError('Page source must contain between 1 and 60,000 bytes.')
     const source = draft.source.replace(/\r\n/g, '\n').trimEnd() + '\n'
@@ -195,8 +199,9 @@ export class BuilderProject {
     } catch (cause) { throw new BuilderError(cause instanceof Error ? cause.message : String(cause), 422) }
     const files: PlannedFile[] = [{ path: page.path, action: 'edit', before, source }]
     const routePath = report.pageRoutes.find(route => route.file === page.path)?.routePath ?? ''
-    const hash = createHash('sha256').update(JSON.stringify({ files, routePath })).digest('hex')
-    return { path: page.path, source, routePath, navLabel: '', files, hash }
+    const section = draft.section
+    const hash = createHash('sha256').update(JSON.stringify({ files, routePath, section })).digest('hex')
+    return { path: page.path, source, routePath, navLabel: '', files, hash, ...(section === undefined ? {} : { section }) }
   }
 
   private async writeFiles(files: PlannedFile[]): Promise<void> {

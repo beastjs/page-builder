@@ -4,8 +4,7 @@ import Icon from '../ui/Icon.btsx'
 
 props { screen, onBack, onClose }: { screen: SuccessScreen; onBack: () => void; onClose: () => void }
 setup
-  const tabs = screen.type === 'tabs-success'
-  const title = tabs ? (screen.editing ? 'Tabs updated' : 'Tabs added') : screen.editing ? 'Page updated' : 'Your idea has a home'
+  const title = screen.type === 'tabs-success' ? (screen.editing ? 'Tabs updated' : 'Tabs added') : screen.section ? 'Section updated' : screen.editing ? 'Page updated' : 'Your idea has a home'
 
 ViewHeader(title={title} subtitle={screen.preview.path} onBack={onBack} onClose={onClose})
 .success-body
@@ -21,9 +20,9 @@ ViewHeader(title={title} subtitle={screen.preview.path} onBack={onBack} onClose=
   else
     fragment
       span.eyebrow READY FOR WHAT’S NEXT
-      h2 #{screen.name} is #{screen.editing ? 'updated' : 'created'}.
+      h2 #{screen.section ? `#${screen.section}` : screen.name} is #{screen.editing ? 'updated' : 'created'}.
       p
-        | #{screen.editing ? 'Your page changes are saved.' : 'Your route and navigation link are ready.'}
+        | #{screen.section ? 'Your section changes are saved.' : screen.editing ? 'Your page changes are saved.' : 'Your route and navigation link are ready.'}
         if screen.preview.routePath
           fragment
             br
@@ -34,7 +33,7 @@ ViewHeader(title={title} subtitle={screen.preview.path} onBack={onBack} onClose=
         a.primary.visit(href={screen.href} onClick={screen.onVisit})
           | Open page
           Icon(name="arrow")
-      button.secondary.edit-saved-page(type="button" onClick={screen.onEdit}) Edit page
+      button.secondary.edit-saved-page(type="button" onClick={screen.onEdit}) #{screen.section ? 'Edit section' : 'Edit page'}
   button.secondary.done(type="button" onClick={screen.onDone})
     | Back to builder
     Icon(name="arrow")

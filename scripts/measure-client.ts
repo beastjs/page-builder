@@ -54,6 +54,7 @@ function summarize(values: number[]) {
 try {
   for (const count of counts) {
     inventory = {
+      sections: [],
       name: `${count} file fixture`, scannedAt: '', warnings: [], collections: [], pageRoutes: [], tabComponents: [], tabInstances: [],
       navigationTargets: [{ id: 'main', file: 'src/Header.btsx', label: 'Main menu' }],
       files: Array.from({ length: count }, (_, index) => ({

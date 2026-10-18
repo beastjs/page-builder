@@ -1,15 +1,26 @@
 import type { TabsDraft } from '../shared/types.js'
 
 type TabsReceipt = { draft: TabsDraft; hash?: string }
+export interface PanelPosition { x: number; y: number }
 export function createPersistence(base: string) {
   const key = (name: string) => `beast-page-builder:${name}:${base}`
   const read = (name: string) => {
     try { return localStorage.getItem(key(name)) } catch { return null }
   }
-  const write = (name: string, value: string) => {
-    try { localStorage.setItem(key(name), value) } catch { /* Keep the in-memory preference. */ }
+  const write = (name: string, value: string | null) => {
+    try {
+      if (value === null) localStorage.removeItem(key(name))
+      else localStorage.setItem(key(name), value)
+    } catch { /* Keep the in-memory preference. */ }
   }
   return {
+    position(): PanelPosition | null {
+      try {
+        const value = JSON.parse(read('position') ?? 'null')
+        return value && Number.isFinite(value.x) && Number.isFinite(value.y) ? { x: value.x, y: value.y } : null
+      } catch { return null }
+    },
+    setPosition: (value: PanelPosition | null) => write('position', value ? JSON.stringify(value) : null),
     theme(): 'light' | 'dark' | null {
       const value = read('theme')
       return value === 'light' || value === 'dark' ? value : null

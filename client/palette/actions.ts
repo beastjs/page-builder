@@ -1,4 +1,5 @@
-import type { DetectedCollection, ProjectFile, ProjectScan, TabInstance } from '../../shared/types.js'
+import type { DetectedCollection, DetectedSection, ProjectFile, ProjectScan, TabInstance } from '../../shared/types.js'
+import { sectionKey } from '../../shared/sections.js'
 import type { PaletteAction, PaletteTab } from './types.js'
 
 interface PaletteHandlers {
@@ -9,6 +10,7 @@ interface PaletteHandlers {
   editTabs: (instance: TabInstance) => void
   openFile: (file: ProjectFile) => void
   addSection: (snippet: string) => void
+  editSection: (section: DetectedSection) => void
   openCollection: (collection: DetectedCollection) => void
 }
 
@@ -71,14 +73,23 @@ export function paletteActions({ report, tab, query, launcherHidden, shortcut, s
     ...(tab === 'All' ? builtins : tab === 'Tabs' ? builtins.filter((action) => action.id === 'action:add-tabs') : []),
     ...existingTabs,
     ...(tab === 'All' || tab === 'Sections'
-      ? Object.entries(sections).map(([name, snippet]) => ({
+      ? [
+        ...(report?.sections ?? []).map(section => ({
+          id: `section:edit:${section.id}`,
+          name: `Edit ${Object.keys(sections).find(name => sectionKey(name) === sectionKey(section.elementId)) ?? section.elementId}`,
+          detail: `#${section.elementId} · ${section.file}:${section.line}`,
+          icon: 'component',
+          group: 'Existing sections',
+          run: () => handlers.editSection(section)
+        })),
+        ...Object.entries(sections).filter(([name]) => !(report?.sections ?? []).some(section => sectionKey(section.elementId) === sectionKey(name))).map(([name, snippet]) => ({
           id: `section:${name}`,
-          name,
+          name: `Create ${name}`,
           detail: 'Add to a page draft',
           icon: 'component',
-          group: 'Sections',
+          group: 'Create sections',
           run: () => handlers.addSection(snippet)
-        }))
+        }))]
       : []),
     ...(report?.files ?? [])
       .filter(

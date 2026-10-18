@@ -3,9 +3,11 @@ import Builder from './Builder.btsx'
 import { apiPath, defaultConfig } from './api.js'
 import { createBuilderController } from './controller.js'
 import { shortcutLabel } from './browser/preferences.js'
+import { registerBuilderFonts } from './browser/fonts.js'
 
 function mount(): void {
   if (document.getElementById('beast-page-builder')) return
+  registerBuilderFonts(document)
   const host = document.createElement('div')
   host.id = 'beast-page-builder'
   const shadow = host.attachShadow({ mode: 'open' })

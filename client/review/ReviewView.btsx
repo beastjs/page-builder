@@ -9,6 +9,7 @@ module
   const modes = {
     'create-page': { label: 'Create page', hint: 'Creates the page and updates the route and navigation together.' },
     'edit-page': { label: 'Save page', hint: 'Updates the existing page source.' },
+    'edit-section': { label: 'Save section', hint: 'Updates the source file containing this section.' },
     'add-tabs': { label: 'Add Tabs', hint: 'Adds the Tabs component and its items to this page.' },
     'edit-tabs': { label: 'Save tabs', hint: 'Updates this tab group in place.' }
   } satisfies Record<ReviewMode, { label: string; hint: string }>

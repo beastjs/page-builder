@@ -2,10 +2,10 @@ import PageTabs from "../components/Tabs.btsx"
 import ProjectCard from '../components/ProjectCard.btsx'
 import SectionTabs from '../components/SectionTabs.btsx'
 
-div.home
+div.home#hero
   PageTabs(items={[{"href":"#account","id":"account","label":"Accounts","shortLabel":"Account","icon":"arrow-right"},{"href":"#projects","id":"projects","label":"Projects","shortLabel":"Projects","icon":"close"},{"href":"#tab-3","id":"tab-3","label":"Kimpoi","shortLabel":"Kimpoi","icon":"menu"}]} activeId={"account"} label={"The tabs"})
   section.intro
-    p.eyebrow YOUR WORKSPACE, REIMAGINED
+    p.eyebrow YOUR WORKSPACE, REIMAGINATED
     h1 A space for your
       br
       | next big thing.
@@ -15,7 +15,7 @@ div.home
       | Your page builder is a shortcut away.
       kbd ⌘ B
   SectionTabs
-  section.projects
+  section.projects#features
     div.section-heading
       h2 A few starting points
       span 03 / IDEAS
@@ -23,6 +23,6 @@ div.home
       ProjectCard(number="01" title="The everyday" description="A quiet home for the things you’re making." kind="Portfolio")
       ProjectCard(number="02" title="Something new" description="Give your next big idea its own little corner." kind="Landing page")
       ProjectCard(number="03" title="In good company" description="Bring people, projects, and possibilities together." kind="Dashboard")
-  footer.workspace-footer
+  footer.workspace-footer#footer
     span Built with Beast. Made by you.
     span A LITTLE STRUCTURE. A LOT OF POSSIBILITY.

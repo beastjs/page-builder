@@ -3,10 +3,11 @@ module
     id: string
     value: string
     visibleLabel: boolean
+    label?: string
     onChange: (source: string) => void
   }
 
-props { id, value, visibleLabel, onChange }: SourceEditorProps
+props { id, value, visibleLabel, label = 'BTSX page source', onChange }: SourceEditorProps
 
-label(className={visibleLabel ? 'field-label' : 'sr-only'} for={id}) BTSX page source
+label(className={visibleLabel ? 'field-label' : 'sr-only'} for={id}) #{label}
 textarea.source-editor(id={id} value={value} spellcheck={false} onInput={(event) => onChange(event.currentTarget.value)})

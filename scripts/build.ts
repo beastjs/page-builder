@@ -12,7 +12,7 @@ await build({
 const compiler = createOctaneCompiler({ root: process.cwd(), environment: 'client', dev: false, hmr: false })
 await build({
   entryPoints: ['client/mount.ts'], outfile: 'dist/client.js', bundle: true,
-  format: 'esm', target: 'es2022', minify: true, loader: { '.css': 'text' },
+  format: 'esm', target: 'es2022', minify: true, loader: { '.css': 'text', '.woff2': 'dataurl' },
   define: { 'process.env.NODE_ENV': '"production"' },
   plugins: [{
     name: 'beast-octane',

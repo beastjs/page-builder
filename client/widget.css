@@ -1,6 +1,8 @@
 :host {
   all: initial;
   color-scheme: light;
+  --font-sans: 'OKX', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'BMR', 'SFMono-Regular', Consolas, monospace;
 }
 *,
 *::before,
@@ -38,11 +40,7 @@
   --scrollbar-thumb: #c7c7cc;
   --scrollbar-hover: #a0a0a8;
   color-scheme: light;
-  font:
-    14px/1.5 -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
+  font: 14px/1.5 var(--font-sans);
   color: var(--text);
   letter-spacing: -0.02em;
 }
@@ -167,7 +165,7 @@ kbd {
   padding: 2px 5px;
   border-radius: 5px;
   background: var(--soft);
-  font: 12px/1.5 inherit;
+  font: 12px/1.5 var(--font-mono);
   color: var(--muted);
 }
 .launcher {
@@ -213,7 +211,8 @@ kbd {
   top: min(12vh, 96px);
   left: 50%;
   width: min(600px, calc(100vw - 32px));
-  max-height: min(640px, calc(100dvh - min(12vh, 96px) - 24px));
+  height: var(--builder-editor-height, auto);
+  max-height: min(var(--builder-max-height, 640px), calc(100dvh - min(12vh, 96px) - 24px));
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
@@ -233,7 +232,7 @@ kbd {
   left: auto;
   right: 24px;
   transform: none;
-  max-height: min(640px, calc(100dvh - 48px));
+  max-height: min(var(--builder-max-height, 640px), calc(100dvh - 48px));
   animation-name: corner-in;
 }
 .widget[data-position] .panel[data-moved] {
@@ -434,6 +433,7 @@ kbd {
 }
 .searchbar {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 10px;
   padding: 12px 16px;
@@ -483,6 +483,7 @@ kbd {
 .tabs {
   position: relative;
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 4px;
   padding: 8px 14px;
@@ -562,13 +563,35 @@ kbd {
   box-shadow: 0 0 0 3px #419cff12;
 }
 .results {
+  position: relative;
+  isolation: isolate;
+  flex-grow: 1;
   padding: 8px;
   min-height: 180px;
   max-height: min(300px, 40vh);
   overflow-y: auto;
   overscroll-behavior: contain;
+  mask-image:
+    linear-gradient(to bottom, transparent, #000 var(--scroll-fade-top, 0px), #000 calc(100% - var(--scroll-fade-bottom, 0px)), transparent),
+    linear-gradient(#000, #000);
+  /* Keep the scrollbar solid while fading the scrollable content. */
+  mask-size: calc(100% - 6px) 100%, 6px 100%;
+  mask-position: left top, right top;
+  mask-repeat: no-repeat;
+}
+.panel[data-resizing] .results {
+  visibility: hidden;
+}
+.panel[data-resizing][data-screen-changing] > * {
+  opacity: 0;
+  pointer-events: none;
+}
+.panel[data-resizing] .builder-enter {
+  animation-play-state: paused;
 }
 .group-label {
+  position: relative;
+  z-index: 1;
   font-size: 12px;
   font-weight: 400;
   color: var(--muted);
@@ -578,7 +601,13 @@ kbd {
 .group-label:not(:first-child) {
   margin-top: 14px;
 }
+.results > .empty-state {
+  position: relative;
+  z-index: 1;
+}
 .result {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   width: 100%;
@@ -593,9 +622,22 @@ kbd {
   width: 19px;
   height: 19px;
 }
-.result.selected,
-.result:hover {
+.result.selected {
   background: var(--hover);
+}
+.result-hover {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 8px;
+  background: var(--hover);
+  width: var(--hovered-result-width, 0px);
+  height: var(--hovered-result-height, 0px);
+  opacity: var(--hovered-result-opacity, 0);
+  transform: translate3d(var(--hovered-result-left, 0px), var(--hovered-result-top, 0px), 0);
+  transition: transform 200ms ease-out, width 200ms ease-out, height 200ms ease-out, opacity 200ms ease-out;
 }
 .result-name {
   font-size: 13px;
@@ -661,6 +703,20 @@ kbd {
   padding: 16px;
   min-height: 0;
   overflow-y: auto;
+}
+.draft-body {
+  flex: 1;
+}
+.page-form {
+  display: flex;
+  flex-direction: column;
+}
+.page-form > :not(.source-editor) {
+  flex-shrink: 0;
+}
+.page-form > .source-editor {
+  flex: 1 0 220px;
+  max-height: none;
 }
 .field-label {
   display: block;
@@ -755,10 +811,7 @@ summary::-webkit-details-marker {
 }
 .source-editor,
 .source-preview {
-  font:
-    12px/1.65 'SFMono-Regular',
-    Consolas,
-    monospace;
+  font: 12px/1.65 var(--font-mono);
   letter-spacing: 0;
   color: var(--text);
   background: var(--soft);
@@ -783,6 +836,9 @@ summary::-webkit-details-marker {
 }
 .source-preview code {
   font: inherit;
+}
+code {
+  font-family: var(--font-mono);
 }
 .action-footer {
   display: flex;

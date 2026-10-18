@@ -19,6 +19,7 @@ const tabsDraft: TabsDraft = {
   items: [{ id: 'one', label: 'First', href: '#one' }, { id: 'two', label: 'Second', href: '#two' }]
 }
 const inventory: ProjectScan = {
+  sections: [],
   name: 'Review fixture', scannedAt: '', warnings: [], collections: [],
   files: [{ name: 'ReviewPage', path: pagePath, kind: 'page', lines: 3, components: [], error: null }],
   navigationTargets: [{ id: 'menu', file: 'src/Header.btsx', label: 'Main menu' }],

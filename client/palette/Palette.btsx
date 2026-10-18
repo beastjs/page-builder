@@ -5,11 +5,20 @@ import Icon from '../ui/Icon.btsx'
 import ThemeToggle from '../ui/ThemeToggle.btsx'
 import StatusMessage from '../ui/StatusMessage.btsx'
 import ReadyStatus from './ReadyStatus.btsx'
+import { observeScrollFades } from '../browser/scroll.js'
+import { observeResultHover } from '../browser/hover.js'
 
 props { actions, tab, query, selected, dark, projectName, message, onQueryChange, onTabChange, onSelect, onCreate, onClose }: PaletteProps
 setup
   const searchRef = useRef<HTMLInputElement | null>(null)
   const resultsRef = useRef<HTMLDivElement | null>(null)
+  useLayoutEffect(() => {
+    const results = resultsRef.current
+    if (!results) return
+    const stopFades = observeScrollFades(results)
+    const stopHover = observeResultHover(results)
+    return () => { stopFades(); stopHover() }
+  }, [])
   const keydown = (event: KeyboardEvent) => {
     if (!(event.target instanceof Element) || !event.target.closest('.search, .result')) return
     if (event.isComposing) return
@@ -30,7 +39,13 @@ setup
     }
   }
   useLayoutEffect(() => {
-    resultsRef.current?.querySelectorAll<HTMLElement>('.result, .empty-state').forEach((element, index) => {
+    const results = resultsRef.current
+    if (!results) return
+    const items = results.querySelectorAll<HTMLElement>('.group-label, .result, .empty-state')
+    // Retained rows need a fresh entrance when switching between overlapping filters.
+    items.forEach(element => element.classList.remove('builder-enter'))
+    void results.offsetHeight
+    items.forEach((element, index) => {
       element.classList.add('builder-enter')
       element.style.setProperty('--enter-delay', `${48 + Math.min(index, 5) * 24}ms`)
     })
@@ -79,6 +94,7 @@ nav.tabs(aria-label="Filter builder results")
       button.secondary.empty-create(type="button" onClick={onCreate})
         | Create a page
         Icon(name="plus")
+  .result-hover(aria-hidden={true})
 StatusMessage(message={message})
 footer.footer
   span.project-chip

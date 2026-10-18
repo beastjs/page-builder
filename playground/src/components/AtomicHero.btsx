@@ -1,0 +1,291 @@
+section(style="background-color: #292929; display: flex; position: relative; width: 100% height: 1574.73px; min-height: 902px; padding: 140px 24px 80px; overflow: hidden; flex-direction: column; justify-content: center; align-items: center; color: rgb(229, 229, 229); line-height: 24px; text-align: center;")
+  canvas(
+    ~ width="1441"
+    ~ height="1575"
+    ~ style="box-sizing: border-box; position: absolute; top: 0px; bottom: 0px;"
+    ~ )
+  div(style="box-sizing: border-box; position: absolute; inset: 0px -179.5px 974.727px 720.5px; background-image: radial-gradient(circle farthest-side at 50% 0px, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0) 65%); transform: matrix(1, 0, 0, 1, -450, 0);")
+  div(style="display: flex; width: 353.078px; height: 50px; margin-bottom: 36px; justify-content: center; align-items: center; gap: 8px; transform: matrix(1, 0, 0, 1, 0, 0); transform-origin: 176.539px 25px;")
+    div(style="display: flex; width: 353.078px; height: 50px; justify-content: center; align-items: center; gap: 52px; transform-origin: 176.539px 25px;")
+      div(style="display: flex; width: 156.281px; height: 50px; flex-shrink: 0; align-items: center; gap: 18px; transform-origin: 78.1406px 25px;")
+        svg(
+          ~ aria-hidden="true"
+          ~ height="36"
+          ~ width="36"
+          ~ viewBox="0 0 24 24"
+          ~ style="box-sizing: border-box; flex-shrink: 0;"
+          ~ )
+          path(
+            ~ fill="#4285F4"
+            ~ d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+            ~ style="box-sizing: border-box;"
+            ~ )
+          path(
+            ~ fill="#34A853"
+            ~ d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+            ~ style="box-sizing: border-box;"
+            ~ )
+          path(
+            ~ fill="#FBBC05"
+            ~ d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
+            ~ style="box-sizing: border-box;"
+            ~ )
+          path(
+            ~ fill="#EA4335"
+            ~ d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+            ~ style="box-sizing: border-box;"
+            ~ )
+        span(style="box-sizing: border-box; width: 1px; height: 50px; flex-shrink: 0; background-color: rgba(255, 255, 255, 0.45);")
+        span(style="display: flex; width: 83.2812px; height: 41px; flex-direction: column; justify-content: center; color: rgb(242, 242, 242); font-size: 15.5px; font-weight: 500; line-height: 20.5px; letter-spacing: -0.155px; white-space: nowrap; transform: matrix(1, 0, 0, 1, 0, 2.8); transform-origin: 41.6406px 20.5px;")
+          span(style="box-sizing: border-box; width: 83.2812px; height: 20.5px; transform-origin: 41.6406px 10.25px;") Powered by
+          span(style="box-sizing: border-box; width: 83.2812px; height: 20.5px; transform-origin: 41.6406px 10.25px;") TurboQuant
+      svg(
+        ~ aria-label="NVIDIA Inception Program member"
+        ~ role="img"
+        ~ height="49.6"
+        ~ width="144.8"
+        ~ viewBox="23.7 16 233.6 80"
+        ~ style="box-sizing: border-box; flex-shrink: 0;"
+        ~ )
+        g(transform="translate(38,26.39) scale(0.3946)" style="box-sizing: border-box;")
+          path(
+            ~ fill="#76B900"
+            ~ d="M54.8,29L54.8,20.2C55.7,20.2 56.5,20.1 57.4,20.1C81.4,19.4 97.2,40.8 97.2,40.8C97.2,40.8 80.2,64.4 61.9,64.4C59.5,64.4 57.1,64 54.9,63.2L54.9,36.6C64.2,37.8 66.1,41.9 71.7,51.2L84.2,40.7C84.2,40.7 75,28.8 59.7,28.8C58,28.7 56.4,28.8 54.8,29M54.8,0L54.8,13.1L57.4,12.9C90.8,11.8 112.6,40.3 112.6,40.3C112.6,40.3 87.6,70.7 61.6,70.7C59.3,70.7 57.1,70.5 54.9,70.1L54.9,78.2C56.7,78.4 58.6,78.6 60.4,78.6C84.7,78.6 102.2,66.2 119.2,51.6C122,53.9 133.5,59.3 135.9,61.7C119.8,75.3 82.2,86.1 60.9,86.1C58.8,86.1 56.9,86 54.9,85.8L54.9,97.2L147,97.2L147,0L54.8,0L54.8,0ZM54.8,63.2L54.8,70.2C32.4,66.2 26.2,42.8 26.2,42.8C26.2,42.8 37,30.9 54.8,29L54.8,36.6L54.7,36.6C45.4,35.4 38,44.2 38,44.2C38,44.2 42.2,59 54.8,63.2M15,41.9C15,41.9 28.3,22.3 54.9,20.2L54.9,13.1C25.4,15.5 0,40.4 0,40.4C0,40.4 14.4,82 54.8,85.8L54.8,78.2C25.2,74.5 15,41.9 15,41.9Z"
+            ~ style="box-sizing: border-box;"
+            ~ )
+        g(transform="translate(24,69.39) scale(0.2522)" style="box-sizing: border-box;")
+          g(transform="translate(-171.1,-18.3)" style="box-sizing: border-box;")
+            path(
+              ~ fill="#FFFFFF"
+              ~ d="M312.8,18.4L312.8,82.2L330.8,82.2L330.8,18.4L312.8,18.4ZM171.1,18.3L171.1,82.2L189.2,82.2L189.2,32.6L203.4,32.6C208.1,32.6 211.3,33.8 213.5,36.1C216.4,39.2 217.5,44.1 217.5,53L217.5,82.2L235.2,82.2L235.2,46.9C235.2,21.7 219.1,18.3 203.4,18.3L171.1,18.3L171.1,18.3ZM341.9,18.4L341.9,82.2L371.1,82.2C386.7,82.2 391.7,79.6 397.2,73.8C401.1,69.8 403.6,60.8 403.6,51C403.6,42 401.5,34 397.7,29.1C391.1,20.1 381.5,18.4 367.1,18.4L341.9,18.4L341.9,18.4ZM359.7,32.2L367.4,32.2C378.7,32.2 385.9,37.3 385.9,50.4C385.9,63.5 378.7,68.5 367.4,68.5L359.7,68.5L359.7,32.2ZM286.8,18.4L271.8,69L257.4,18.4L237.9,18.4L258.5,82.2L284.5,82.2L305.2,18.4L286.8,18.4L286.8,18.4ZM412,82.2L430,82.2L430,18.4L412,18.4L412,82.2ZM462.6,18.4L437.4,82.2L455.1,82.2L459.1,70.9L488.9,70.9L492.7,82.1L512,82.1L486.6,18.4L462.6,18.4L462.6,18.4ZM474.2,30L485.2,59.9L463,59.9L474.2,30Z"
+              ~ style="box-sizing: border-box;"
+              ~ )
+        line(
+          ~ stroke-width="1.5"
+          ~ stroke="#FFFFFF73"
+          ~ y2="96"
+          ~ x2="134"
+          ~ y1="16"
+          ~ x1="134"
+          ~ style="box-sizing: border-box;"
+          ~ )
+        text(
+          ~ fill="#FFFFFF"
+          ~ font-size="25"
+          ~ font-family="Arial,Helvetica,sans-serif"
+          ~ y="52"
+          ~ x="158"
+          ~ style="box-sizing: border-box; line-height: 37.5px;"
+          ~ )
+          | Inception
+        text(
+          ~ fill="#FFFFFF"
+          ~ font-size="25"
+          ~ font-family="Arial,Helvetica,sans-serif"
+          ~ y="83"
+          ~ x="158"
+          ~ style="box-sizing: border-box; line-height: 37.5px;"
+          ~ )
+          | Program
+  h1(style="box-sizing: border-box; width: 964.906px; height: 110px; margin-top: 0px; margin-bottom: 20px; color: rgb(242, 242, 242); font-size: 110px; line-height: 110px; letter-spacing: -4.4px; transform: matrix(1, 0, 0, 1, 0, 0); transform-origin: 482.453px 55px;") Your private, local AI
+  p(style="box-sizing: border-box; width: 516.188px; height: 95px; max-width: 620px; margin-top: 0px; margin-bottom: 80px; font-size: 38px; font-weight: 500; line-height: 47.5px; transform: matrix(1, 0, 0, 1, 0, 0);")
+    | The simplest way to run
+    br(style="box-sizing: border-box;")
+    | open models on any hardware
+  div(style="display: grid; width: 619.641px; height: 70.3984px; flex-direction: column; justify-content: center; place-items: stretch; grid-template-columns: 301.82px 301.82px; grid-template-rows: 70.3984px; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px 16px; transform: matrix(1, 0, 0, 1, 0, 0); transform-origin: 309.82px 35.1992px;")
+    div(style="display: none; position: relative; padding: 16px 36px; overflow: hidden; justify-content: center; align-items: center; gap: 8px; color: rgb(13, 13, 13); font-size: 24px; font-weight: 600; line-height: 38.4px; background-color: rgb(255, 255, 255); border-radius: 9999px;")
+      a(
+        ~ aria-label="Download"
+        ~ href="https://atomic.chat/#download"
+        ~ style="display: block; position: absolute; inset: 0%; z-index: 2; max-width: 100%; text-decoration-line: underline;"
+        ~ )
+      div(style="box-sizing: border-box;") Download
+    div(style="display: none; flex-direction: column; justify-content: flex-start; align-items: stretch;")
+      div(style="display: inline-flex; position: relative; padding: 16px 36px; overflow: hidden; justify-content: center; align-items: center; gap: 8px; color: rgb(13, 13, 13); font-size: 24px; font-weight: 600; line-height: 38.4px; background-color: rgb(255, 255, 255); border-radius: 9999px;")
+        a(
+          ~ aria-label="Download for Windows"
+          ~ href="https://github.com/AtomicBot-ai/Atomic-Chat/releases/download/v2.2.14/Atomic.Chat_2.2.14_x64-setup.exe"
+          ~ style="box-sizing: border-box; position: absolute; inset: 0%; z-index: 2; max-width: 100%; text-decoration-line: underline;"
+          ~ )
+        div(style="display: flex; width: 20px; justify-content: center; align-items: center;")
+          svg(
+            ~ width="100%"
+            ~ height="100%"
+            ~ viewBox="0 0 24 24"
+            ~ fill="currentColor"
+            ~ style="box-sizing: border-box;"
+            ~ )
+            path(
+              ~ d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"
+              ~ style="box-sizing: border-box;"
+              ~ )
+        div(style="box-sizing: border-box;") Download for Windows
+    div(style="display: none; flex-direction: column; justify-content: flex-start; align-items: stretch;")
+      div(style="display: inline-flex; position: relative; padding: 16px 36px; overflow: hidden; justify-content: center; align-items: center; gap: 8px; color: rgb(13, 13, 13); font-size: 24px; font-weight: 600; line-height: 38.4px; background-color: rgb(255, 255, 255); border-radius: 9999px;")
+        a(
+          ~ aria-label="Download for Linux"
+          ~ href="https://github.com/AtomicBot-ai/Atomic-Chat/releases/download/v2.2.14/Atomic.Chat_2.2.14_amd64.AppImage"
+          ~ style="box-sizing: border-box; position: absolute; inset: 0%; z-index: 2; max-width: 100%; text-decoration-line: underline;"
+          ~ )
+        div(style="display: flex; width: 20px; justify-content: center; align-items: center;")
+          svg(
+            ~ xmlns="http://www.w3.org/2000/svg"
+            ~ viewBox="0 0 436 512"
+            ~ width="100%"
+            ~ height="100%"
+            ~ fill="currentColor"
+            ~ style="box-sizing: border-box;"
+            ~ )
+            path(
+              ~ d="M209.9876556,124.7488937c0,1.696701-1.696701,1.696701-1.696701,1.696701h-1.696701c-1.696701,0-1.696701-1.696701-3.3933868-3.3933945c0,0-1.696701-1.696701-1.696701-3.3934021c0-1.6966934,0-1.6966934,1.696701-1.6966934l3.3933868,1.6966934C208.2909546,121.3554993,209.9876556,123.0522003,209.9876556,124.7488937z M179.4471436,107.7819443c0-8.4834747-3.3933868-13.573555-8.4834747-13.573555c0,0,0,1.696701-1.696701,1.696701v3.3933868h5.0900879c0,3.3933868,1.696701,5.0900879,1.696701,8.4834671H179.4471436z M238.8314514,99.2984772c3.3933868,0,5.0900726,3.3933868,6.7867584,8.4834671h3.3934021c-1.6966858-1.696701-1.6966858-3.3933868-1.6966858-5.0900803c0-1.6966858,0-3.3933868-1.6966858-5.0900803c-1.6966858-1.6966858-3.3934021-3.3933868-5.0900726-3.3933868c0,0-1.6966858,1.6966934-3.3934021,1.6966934C237.1347656,97.6017838,238.8314514,97.6017838,238.8314514,99.2984772z M187.9306183,126.4455795c-1.696701,0-1.696701,0-1.696701-1.696701c0-1.6966934,0-3.3933945,1.696701-5.0900803c3.3934021,0,5.0900879-1.6966934,5.0900879-1.6966934c1.696701,0,1.696701,1.6966934,1.696701,1.6966934c0,1.696701-1.696701,3.3934021-5.0900879,6.7867813H187.9306183z M381.3205261,363.966217c1.6966858,0,1.6966858-0.6986694,1.6966858-2.2290039c0-3.7261047-1.6966858-8.1341553-6.7867737-13.0578918c-5.0900879-5.0900879-13.5735474-8.3171387-23.7537231-9.6644897c-1.6966858-0.1663513-5.0900879-0.499054-6.7867737-0.499054c-1.6966858-0.1663513-5.0900879-0.5156555-6.7867737-0.8483582c5.0900879-15.7858887,6.7868042-29.6921387,6.7868042-41.9016724c0-16.9669495-3.3934021-28.843811-10.1801758-39.0239868c-6.7867432-10.180191-13.5735474-15.2702637-22.0570374-16.9669647c-1.6966858,1.696701-1.6966858,1.696701-1.6966858,3.3934021c8.48349,3.3934021,16.96698,10.1801605,22.0570374,20.3603363c5.0900879,11.8768921,6.7867737,22.0570374,6.7867737,33.9339294c0,9.4981384-1.6966858,23.5873413-8.48349,41.5690002c-6.7867432,2.7113953-13.5735474,8.9825134-18.6636353,18.8299866c0,1.5303345,0,2.3786926,1.6966858,2.3786926c0,0,1.6966858-1.5303345,3.3934021-4.4080505c3.3934021-2.8777466,5.0900879-5.7720947,8.48349-8.6498413c5.0900574-2.8777161,8.4834595-4.4080505,13.5735474-4.4080505c8.4834595,0,16.9669495,1.1809998,22.0570374,3.5597229c6.7867737,2.2123413,10.1801453,4.5744324,11.8768616,7.3024292c1.6966858,2.5450439,3.3934021,4.9237366,5.0900879,7.1194763C379.6238708,362.9515381,381.3205261,363.966217,381.3205261,363.966217z M220.1678772,116.2654343c1.6966858,0,3.3934021,1.696701,5.0900116,1.6966858c-1.6966858-1.696701-1.6966858-5.0900803-1.6966858-8.4834747c0-6.7867813,0-10.1801682,3.3934021-15.270256c6.7822876-7.0099335,14.3192139-6.9786606,22.0570374,1.696701c1.6966705,5.0900803,3.3933868,8.4834747,3.3933868,13.573555c0,8.4834747-3.3933868,13.573555-10.1801605,15.2702484c0,0,1.6966858,1.696701,3.3934021,1.696701c3.3934021,0,5.0900879,1.6966934,8.4834747,3.3933945c1.6966858-10.1801529,3.3934021-16.9669418,3.3934021-25.4504089c0-10.1801682-1.6966858-16.9669495-5.0900726-22.0570297c-9.1297607-9.4876328-22.4522705-8.2992401-32.2371979-1.696701C210.9403839,91.9213104,215.874115,105.2812271,220.1678772,116.2654343z M245.6182404,145.1092224c-22.0570374,15.2702637-39.0239716,22.0570374-52.5975189,22.0570374c-11.8768616,0-23.7537384-5.0900726-33.9338989-13.5735474c1.696701,3.3933868,3.3934021,6.7867737,5.0900879,8.4834747l10.1801605,10.1801605c6.7867737,6.7867737,15.2702484,10.1801453,23.7537079,10.1801453c11.8768616,0,25.4504242-6.7867737,42.4173584-18.6636353l15.2702332-10.1801453c3.3934021-3.3934021,6.7868042-6.7867889,6.7868042-11.8768616c0-1.696701,0-3.3933868-1.6966858-3.3933868c-1.6966858-3.3933868-10.1801758-8.4834747-27.1471252-13.573555c-15.2702332-6.7867737-27.14711-10.1801605-33.9338837-10.1801605c-5.0900726,0-13.5735626,3.3933868-25.4504089,10.1801605c-10.1801605,6.7867813-16.9669495,13.573555-16.9669495,20.3603439c0,0,1.6966858,1.6966858,3.3933868,5.0900726c10.1801605,8.4834747,20.3603363,13.5735626,30.5405121,13.5735626c13.5735474,0,30.5405121-6.7867889,52.5975342-23.7537384v3.3934021C245.6182404,143.4125519,245.6182404,145.1092529,245.6182404,145.1092224z M174.1407776,179.4257355l-10.1801605-8.4834747c0,5.0900726-1.6966858,11.8768616-5.0900726,18.6636353l-10.6958313,20.3603363c-4.7574005,11.8768463-7.2857971,18.6636353-7.8014526,23.7537231c-0.6820221,3.3934021-1.1810455,6.7867737-1.530365,6.7867737c-17.2214966,34.4265594-38.987854,69.2026825-32.4035263,106.0267487c-7.6351166-5.2564392-11.3362427-12.5422363-11.3362427-22.0404053c0-11.7105103,3.0856552-24.5854187,9.3567734-39.8556519c6.1047668-15.2702637,12.209549-25.4504395,18.1479721-32.2371979c-0.332695-1.696701-4.241745-3.3934021-4.241745-3.3934021c-4.9237289,5.0900726-10.8621674,16.9669647-17.981636,33.9339142c-7.1194687,15.2702332-10.8621674,29.3428345-10.8621674,39.7059937c0,7.6351013,1.8630447,14.2555542,5.256424,20.0109863c3.7260742,5.6057434,12.7252121,13.7398987,26.9807663,24.0864258l17.981636,11.7105103c19.162674,16.6342468,29.3428345,28.1618042,29.3428345,34.9485779c0,3.5597534-1.696701,7.1194458-6.7867737,11.0285034c-3.3933868,4.0754089-7.9678192,6.1047974-11.8768616,6.1047974c-0.3326874,0-0.5156555,0.3327026-0.5156555,1.1809998c9.4950867,38.6125793,105.0669098,32.3578796,136.217926-21.2086792c0-8.4834595,0-13.7398682-1.6966858-15.95224v-6.2711182c0-11.0285034,1.6966858-19.3456421,5.0900879-24.7684326c4.8243103-8.336853,12.5982056-10.7731323,22.0570068-4.2416992c1.6966858-13.0578918,1.6967163-24.43573,1.6967163-34.6159058c0-15.4365845,0-28.1618042-3.3934021-40.0386353c-1.6966858-10.1801758-5.0900879-18.6636353-8.48349-25.4504395c-3.3934021-5.0900726-6.7867432-10.1801605-10.1801453-15.2702484s-5.0900879-10.1801758-8.48349-15.2702484c-1.6966858-6.7867889-3.3934021-11.8768616-3.3934021-20.3603363c-5.0900574-8.4834747-8.4834595-16.9669342-13.5735474-25.4504089c-3.3934021-8.48349-6.7867737-16.9669647-10.1801605-23.7537231l-15.2702332,11.8768616C213.9024963,190.8186951,183.8624115,192.6961975,174.1407776,179.4257355z M11.1005058,385.9797668c3.3972425-7.3984375,9.5354328-11.6212158,14.1470623-11.5339966H44.759552l7.4687805-2.8777466c5.0615921-11.9541626,4.1296616-13.0332336,8.1341515-17.9815979c-4.6200485-5.9594116-1.1285286-22.5778809,7.2858009-37.327301c13.3030014-22.1539001,20.9310608-39.208252,26.6314392-63.9753571c12.5805817-47.9035034,60.1163025-58.9117737,54.6175079-107.0913391c-4.4047546-41.1445618-13.3231506-95.177887,10.0398712-123.6591187c10.6650391-13.0014706,19.7271576-21.0562763,51.7324982-21.514946c29.6030884-0.4242438,61.6646271,6.3099031,77.2162933,40.1785851c16.2719421,35.4373016,7.8749084,97.0233841,23.7537231,123.858696c28.0192871,53.9180145,49.5029907,60.7745056,64.4743958,101.7850189c16.4461975,36.8427124,15.4021301,72.8796692,8.4834595,96.6949463c9.5506287-0.4367676,11.8465576,18.5052185,13.5735168,31.7215271c1.6967163,3.7261047,3.3934021,7.3024292,8.48349,10.3465271c8.5647583,8.3549805,28.0226746,10.9152527,28.843811,25.4337463c-0.1780701,12.3640137-8.259491,16.6808777-16.9669495,20.360321c-21.1923218,8.7867126-37.1672058,19.995636-45.81073,28.1950684c0,0-30.5405273,25.7997437-35.6305847,28.6940918c-22.181427,11.7764587-49.9830627-0.185791-57.6876526-17.482605c-51.200882-6.1308289-92.1929321-7.9174194-113.6951294,3.5764465c-18.1496887,21.3994751-38.3315201,17.2296448-70.2464752,5.7720642c-53.7477493-19.0717773-61.7450066-14.2038879-81.7573853-21.4248962c-19.0067139-5.4916992-14.5427237-17.618866-8.4834728-26.581543C22.9359035,426.9055176,2.5241749,408.9679565,11.1005058,385.9797668z M59.4975014,369.4555359c-1.3566589,10.366272-10.9928665,10.109314-20.8593636,9.9971924c-8.9991341,0-15.1039085,1.014679-18.3143177,2.7113953c-18.0421009,20.1148682,7.9774513,35.6265259-8.6664524,65.9714661c-4.2417336,7.3024292-6.4540925,12.7251892-6.4540925,16.5843506c1.6966944,6.5871582,12.919714,11.1234436,33.4265442,13.9810486c42.1028252,6.1164551,61.9879189,20.6834412,92.1288452,26.1906433c11.8768616,0,21.7243347-5.2564087,29.8585052-15.4199219c1.6966858-3.2936096,1.6966858-7.1527405,1.6966858-11.6107178c0-16.0354309-9.664505-36.3125916-29.0101624-60.8980103c-20.6409454-25.7959595-27.0266724-46.3638-40.2049866-57.171936c-4.4080887-3.9090576-9.4981689-6.437439-15.1039124-7.8014832C65.5286713,354.0437927,60.8964653,358.9416504,59.4975014,369.4555359z M284.6255798,487.4256287v0.2827759v0.0831909c11.1626587,23.8152771,44.176239,23.8360291,61.0809631,7.8014526c23.8092651-22.5837097,38.8624573-35.5206299,67.5523682-47.3100891c6.8417969-2.8114624,9.4192505-4.268219,12.1922913-6.302124c4.4733276-6.7485962,8.0434875-17.4164429-13.5735168-26.9807739c-15.8834534-7.7173157-18.552124-17.0576782-22.0570374-36.811615c-3.2687378-14.285553-5.4581909-12.1908875-11.8768616-6.1213684c-6.1304626,4.9291992-11.6790771,11.1361084-18.2073975,17.0725708c-9.3289185,8.4831848-26.7122192,7.3139648-35.0302429,1.3848572c-6.7546082-4.8147278-10.6359558-13.4342041-12.9334717-25.0778809c-3.3933716-2.8777466-5.0900879-4.4080811-8.4834595-4.4080811c-8.48349,0-11.8768921,8.8161621-11.8768921,26.6314392v52.7638855C286.0282898,460.8052063,289.7833252,463.5011292,284.6255798,487.4256287z M164.1769257,128.1422882c1.6966858-1.6966934,3.3933716-1.6966934,5.0900574-3.3933945c-6.7867737-3.3933792-8.4834747-8.4834747-8.4834747-16.9669418c0-5.0900879,0-8.4834671,3.3934021-11.8768616c1.696701-3.3933945,5.0900726-5.0900803,8.4834747-5.0900803s5.0900726,1.6966934,8.4834747,5.0900803c1.696701,5.0900726,3.3934021,10.1801605,3.3934021,15.2702484v3.3933945h1.696701v-1.6966934c1.6966858,0,1.6966858-3.3933868,1.6966858-10.1801682c0-5.0900879,0-10.1801682-3.3933868-15.2702484c-3.3934021-5.0900726-6.7867889-8.4834747-13.5735626-8.4834747c-5.0900726,0-10.1801453,3.3933945-11.8768616,8.4834747C151.2840729,104.2855682,155.0872345,120.3049774,164.1769257,128.1422882z"
+              ~ style="box-sizing: border-box;"
+              ~ )
+        div(style="box-sizing: border-box;") Download for Linux
+    div(style="display: flex; width: 301.82px; height: 70.3984px; flex-direction: column; justify-content: flex-start; align-items: stretch; transform-origin: 150.91px 35.1992px;")
+      div(style="display: flex; width: 301.82px; height: 70.3984px; flex-direction: column; justify-content: flex-start; align-items: stretch; gap: 8px; transform-origin: 150.91px 35.1992px;")
+        div(style="display: flex; position: relative; width: 301.82px; height: 70.3984px; padding: 16px 36px; overflow: hidden; justify-content: center; align-items: center; gap: 8px; color: rgb(13, 13, 13); font-size: 24px; font-weight: 600; line-height: 38.4px; background-color: rgb(255, 255, 255); border-radius: 9999px; transform-origin: 150.91px 35.1992px;")
+          a(
+            ~ aria-label="Download for Mac"
+            ~ href="https://github.com/AtomicBot-ai/Atomic-Chat/releases/download/v2.2.14/Atomic.Chat_2.2.14_universal.dmg"
+            ~ style="box-sizing: border-box; position: absolute; inset: 0px; z-index: 2; width: 301.82px; height: 70.3984px; max-width: 100%; text-decoration-line: underline; transform-origin: 150.91px 35.1992px;"
+            ~ )
+          div(style="display: flex; width: 20px; height: 20px; justify-content: center; align-items: center;")
+            svg(
+              ~ width="100%"
+              ~ height="100%"
+              ~ viewBox="0 0 22 22"
+              ~ fill="none"
+              ~ xmlns="http://www.w3.org/2000/svg"
+              ~ style="box-sizing: border-box;"
+              ~ )
+              path(
+                ~ d="M18.1686 17.4988C17.3387 18.7388 16.4587 19.9487 15.1188 19.9687C13.7789 19.9987 13.3489 19.1787 11.829 19.1787C10.2991 19.1787 9.82915 19.9487 8.55921 19.9987C7.2493 20.0487 6.25936 18.6788 5.41942 17.4688C3.70953 14.999 2.39962 10.4493 4.1595 7.38951C5.02944 5.86961 6.58934 4.90967 8.27923 4.87968C9.55917 4.85968 10.7791 5.74962 11.569 5.74962C12.349 5.74962 13.8289 4.67969 15.3788 4.83968C16.0287 4.86968 17.8486 5.09966 19.0185 6.81955C18.9286 6.87954 16.8487 8.09946 16.8687 10.6293C16.8987 13.6491 19.5185 14.659 19.5485 14.669C19.5185 14.739 19.1285 16.1089 18.1686 17.4988ZM12.459 1.4999C13.1889 0.669955 14.3989 0.0399973 15.3988 0C15.5288 1.16992 15.0588 2.34984 14.3589 3.18979C13.6689 4.03973 12.529 4.69969 11.409 4.60969C11.2591 3.45977 11.819 2.25985 12.459 1.4999Z"
+                ~ fill="currentColor"
+                ~ style="box-sizing: border-box;"
+                ~ )
+          div(style="box-sizing: border-box; width: 201.82px; height: 38.3984px; transform-origin: 100.91px 19.1992px;") Download for Mac
+    div(style="display: none; flex-direction: column; justify-content: flex-start; align-items: stretch;")
+      div(style="display: inline-flex; position: relative; padding: 16px 36px; overflow: hidden; justify-content: center; align-items: center; gap: 8px; color: rgb(13, 13, 13); font-size: 24px; font-weight: 600; line-height: 38.4px; background-color: rgb(255, 255, 255); border-radius: 9999px;")
+        a(
+          ~ aria-label="Get on App Store"
+          ~ href="https://apps.apple.com/us/app/atomic-chat-private-local-ai/id6761720226"
+          ~ style="box-sizing: border-box; position: absolute; inset: 0%; z-index: 2; max-width: 100%; text-decoration-line: underline;"
+          ~ )
+        div(style="display: flex; width: 20px; justify-content: center; align-items: center;")
+          svg(
+            ~ width="100%"
+            ~ height="100%"
+            ~ viewBox="0 0 22 22"
+            ~ fill="none"
+            ~ xmlns="http://www.w3.org/2000/svg"
+            ~ style="box-sizing: border-box;"
+            ~ )
+            path(
+              ~ d="M18.1686 17.4988C17.3387 18.7388 16.4587 19.9487 15.1188 19.9687C13.7789 19.9987 13.3489 19.1787 11.829 19.1787C10.2991 19.1787 9.82915 19.9487 8.55921 19.9987C7.2493 20.0487 6.25936 18.6788 5.41942 17.4688C3.70953 14.999 2.39962 10.4493 4.1595 7.38951C5.02944 5.86961 6.58934 4.90967 8.27923 4.87968C9.55917 4.85968 10.7791 5.74962 11.569 5.74962C12.349 5.74962 13.8289 4.67969 15.3788 4.83968C16.0287 4.86968 17.8486 5.09966 19.0185 6.81955C18.9286 6.87954 16.8487 8.09946 16.8687 10.6293C16.8987 13.6491 19.5185 14.659 19.5485 14.669C19.5185 14.739 19.1285 16.1089 18.1686 17.4988ZM12.459 1.4999C13.1889 0.669955 14.3989 0.0399973 15.3988 0C15.5288 1.16992 15.0588 2.34984 14.3589 3.18979C13.6689 4.03973 12.529 4.69969 11.409 4.60969C11.2591 3.45977 11.819 2.25985 12.459 1.4999Z"
+              ~ fill="currentColor"
+              ~ style="box-sizing: border-box;"
+              ~ )
+        div(style="box-sizing: border-box;") Get on App Store
+    div(style="display: none; flex-direction: column; justify-content: flex-start; align-items: stretch;")
+      div(style="display: inline-flex; position: relative; padding: 16px 36px; overflow: hidden; justify-content: center; align-items: center; gap: 8px; color: rgb(13, 13, 13); font-size: 24px; font-weight: 600; line-height: 38.4px; background-color: rgb(255, 255, 255); border-radius: 9999px;")
+        a(
+          ~ aria-label="Get on Google Play"
+          ~ href="https://play.google.com/store/apps/details?id=chat.atomic.app"
+          ~ style="box-sizing: border-box; position: absolute; inset: 0%; z-index: 2; max-width: 100%; text-decoration-line: underline;"
+          ~ )
+        div(style="display: flex; width: 20px; justify-content: center; align-items: center;")
+          svg(
+            ~ width="100%"
+            ~ height="100%"
+            ~ xmlns="http://www.w3.org/2000/svg"
+            ~ viewBox="0 0 24 24"
+            ~ fill="none"
+            ~ style="box-sizing: border-box;"
+            ~ )
+            path(
+              ~ d="M10.8051 11.4617L1.08984 22.0059C1.09076 22.0078 1.09076 22.0106 1.09167 22.0125C1.39005 23.1574 2.41203 24 3.62564 24C4.11108 24 4.56641 23.8656 4.95695 23.6305L4.98798 23.6118L15.9232 17.1593L10.8051 11.4617Z"
+              ~ fill="#EA4335"
+              ~ style="box-sizing: border-box;"
+              ~ )
+            path(
+              ~ d="M20.6332 9.66619L20.624 9.65966L15.9029 6.86123L10.584 11.7013L15.922 17.1582L20.6177 14.3878C21.4407 13.9324 22.0001 13.045 22.0001 12.0223C22.0001 11.0052 21.4489 10.1225 20.6332 9.66619Z"
+              ~ fill="#FBBC04"
+              ~ style="box-sizing: border-box;"
+              ~ )
+            path(
+              ~ d="M1.08942 1.99325C1.03102 2.21347 1 2.44488 1 2.68376V21.3163C1 21.5552 1.03102 21.7866 1.09034 22.0059L11.1386 11.7313L1.08942 1.99325Z"
+              ~ fill="#4285F4"
+              ~ style="box-sizing: border-box;"
+              ~ )
+            path(
+              ~ d="M10.8771 12L15.9049 6.85945L4.9825 0.383598C4.58557 0.140054 4.12203 8.69271e-05 3.62655 8.69271e-05C2.41295 8.69271e-05 1.38914 0.844559 1.09076 1.99043C1.09076 1.99136 1.08984 1.9923 1.08984 1.99323L10.8771 12Z"
+              ~ fill="#34A853"
+              ~ style="box-sizing: border-box;"
+              ~ )
+        div(style="box-sizing: border-box;") Get on Google Play
+    a(
+      ~ href="https://aimlapi.com/?utm_source=atomicchat&amp;utm_medium=referral&amp;utm_campaign=hero&amp;utm_content=run_in_cloud"
+      ~ aria-label="Run in cloud"
+      ~ style="display: flex; position: relative; width: 301.82px; height: 70.3984px; max-width: 100%; padding: 16px 36px; overflow: hidden; justify-content: center; align-items: center; gap: 8px; color: rgb(242, 242, 242); font-size: 24px; font-weight: 600; line-height: 38.4px; background-color: rgb(38, 38, 38); border-radius: 9999px; transform-origin: 150.91px 35.1992px;"
+      ~ )
+      div(style="display: flex; width: 20px; height: 20px; justify-content: center; align-items: center;")
+        svg(
+          ~ stroke-linejoin="round"
+          ~ stroke-linecap="round"
+          ~ stroke-width="2"
+          ~ stroke="currentColor"
+          ~ fill="none"
+          ~ viewBox="0 0 24 24"
+          ~ height="100%"
+          ~ width="100%"
+          ~ style="box-sizing: border-box;"
+          ~ )
+          path(
+            ~ d="M7.6 19.7A5.5 5.5 0 0 1 6.71 8.78A6.05 6.05 0 0 1 18.57 11.03A4.4 4.4 0 0 1 17.5 19.7Z"
+            ~ style="box-sizing: border-box;"
+            ~ )
+      div(style="box-sizing: border-box; width: 133.969px; height: 38.3984px; transform-origin: 66.9844px 19.1992px;") Run in cloud
+  div(style="box-sizing: border-box; width: 177.508px; height: 22.5px; margin-top: 34px; margin-bottom: 14px; color: rgba(242, 242, 242, 0.5); font-size: 15px; line-height: 22.5px;") or install from the terminal
+  div(style="display: flex; width: 660px; height: 54px; padding-right: 8px; padding-left: 20px; justify-content: flex-start; align-items: center; gap: 13px; font-family: &quot;SF Mono&quot;, ui-monospace, Menlo, Consolas, monospace; background-color: rgba(22, 22, 22, 0.82); border-width: 1px; border-style: solid; border-color: rgba(255, 255, 255, 0.1); border-radius: 12px; backdrop-filter: blur(6px);")
+    div(style="box-sizing: border-box; width: 9.03125px; height: 22.5px; flex-shrink: 0; color: rgba(242, 242, 242, 0.35); font-size: 15px; line-height: 22.5px;") $
+    div(style="box-sizing: border-box; width: 556.969px; height: 22.5px; min-width: 0px; overflow: hidden; flex-grow: 1; flex-basis: 0%; color: rgb(242, 242, 242); font-size: 15px; line-height: 22.5px; text-align: left; white-space: nowrap; text-overflow: ellipsis; transform-origin: 278.484px 11.25px;") curl -fsSL https://atomicagent.io/install | sh
+    div(style="display: flex; width: 38px; height: 38px; flex-shrink: 0; justify-content: center; align-items: center; color: rgba(242, 242, 242, 0.45); border-radius: 9px;")
+      div(style="box-sizing: border-box; width: 18px; height: 24.5px;")
+        svg(
+          ~ width="18"
+          ~ height="18"
+          ~ viewBox="0 0 24 24"
+          ~ fill="none"
+          ~ stroke="currentColor"
+          ~ stroke-width="1.8"
+          ~ stroke-linecap="round"
+          ~ stroke-linejoin="round"
+          ~ role="img"
+          ~ style="box-sizing: border-box;"
+          ~ )
+          title(style="box-sizing: border-box;") Copy install command
+          rect(x="9" y="9" width="11" height="11" rx="2" style="box-sizing: border-box;")
+          path(d="M5 15V5a2 2 0 0 1 2-2h10" style="box-sizing: border-box;")
+        svg(
+          ~ width="18"
+          ~ height="18"
+          ~ viewBox="0 0 24 24"
+          ~ fill="none"
+          ~ stroke="currentColor"
+          ~ stroke-width="2.2"
+          ~ stroke-linecap="round"
+          ~ stroke-linejoin="round"
+          ~ role="img"
+          ~ style="display: none;"
+          ~ )
+          title(style="box-sizing: border-box;") Copied
+          path(d="m5 13 4 4L19 7" style="box-sizing: border-box;")
+  div(style="box-sizing: border-box;")
+  div(style="box-sizing: border-box; position: relative; width: 1253.7px; height: 696.828px; max-width: 90%; margin-top: 72px; overflow: hidden; border-radius: 16px; transform-origin: 626.848px 348.414px;")
+    img(
+      ~ src="https://cdn.prod.website-files.com/69d4e04c943eea1581f96f37/6a56620024750bc2cbf7c47c_hero-section-optimized.webp"
+      ~ width="Auto"
+      ~ alt="Atomic Chat interface"
+      ~ style="display: block; height: 696.828px; max-width: 100%; max-height: 100%; vertical-align: middle; transform-origin: 626.848px 348.414px; object-fit: contain;"
+      ~ )
+    div(style="box-sizing: border-box; position: absolute; inset: 557.469px 0px 0px; height: 139.359px; background-image: linear-gradient(rgba(18, 18, 18, 0), rgb(18, 18, 18)); transform-origin: 626.848px 69.6797px;")

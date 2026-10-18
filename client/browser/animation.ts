@@ -3,7 +3,7 @@ export function animateScreen(panel: HTMLElement): void {
     element.classList.add('builder-enter')
     element.style.setProperty('--enter-delay', `${delay + Math.min(index, 5) * 24}ms`)
   })
-  enter(panel.querySelectorAll<HTMLElement>(':scope > header, :scope > nav, :scope > footer'))
+  enter(panel.querySelectorAll<HTMLElement>(':scope > header, :scope > footer'))
   enter(panel.querySelectorAll<HTMLElement>(
     '.scan-body > *, .draft-body > :not(.message), .preview-body > :not(.message), .success-body > *, .error-body > *'
   ), 36)

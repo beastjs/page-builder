@@ -1,0 +1,212 @@
+nav(style="display: flex; box-sizing: border-box; position: fixed; right: 0px; bottom: 805.203px; left: 0px; z-index: 200; width: 1441px; height: 95.7969px; padding: 21px 48px; justify-content: space-between; align-items: center; gap: 20px; color: rgb(229, 229, 229); font-family: &quot;Uncut Sans&quot;, Arial, sans-serif; line-height: 24px; background-color: rgba(13, 13, 13, 0.88); border-bottom: 1px solid rgba(255, 255, 255, 0.08); border-top-color: rgba(255, 255, 255, 0.08); border-right-color: rgba(255, 255, 255, 0.08); border-left-color: rgba(255, 255, 255, 0.08); backdrop-filter: blur(24px) saturate(1.8);")
+  a.wordmark(href="/")
+    svg(width="36" height="39" viewBox="0 0 24 27" fill="currentColor" aria-hidden="true")
+      path(d="m2.52 18.88 8.26 4.77c.78.46 1.66.46 2.44 0l8.26-4.77a2.4 2.4 0 0 0 1.22-2.11V7.22a2.4 2.4 0 0 0-1.22-2.11L13.22.34a2.3 2.3 0 0 0-2.44 0L2.52 5.11A2.4 2.4 0 0 0 1.3 7.2v9.56c0 .88.45 1.66 1.22 2.1m9.48 3.3V1.81q.33 0 .62.18l7.73 4.46c.4.23.63.63.63 1.08v8.93c0 .44-.23.84-.63 1.08L12.62 22q-.3.17-.62.18" stroke="none" strokeWidth="0")
+    | beast
+    span.studio STUDIO
+  div(style="display: flex; box-sizing: border-box; width: 1075.2px; height: 45.1953px; flex-grow: 1; flex-basis: 0%; justify-content: center; align-items: center; gap: 20px; transform-origin: 537.602px 22.5977px;")
+    ul(
+      ~ role="list"
+      ~ style="display: flex; box-sizing: border-box; width: 724.539px; height: 37.1953px; margin-top: 0px; margin-bottom: 0px; padding-left: 0px; flex-grow: 1; flex-basis: 0%; justify-content: center; align-items: stretch; align-self: center; gap: 24px; transform-origin: 362.27px 18.5977px; list-style-type: none;"
+      ~ )
+      li(style="box-sizing: border-box; width: 128.359px; height: 37.1953px; transform-origin: 64.1797px 18.5977px;")
+        div(style="box-sizing: border-box; position: relative; width: 128.359px; height: 37.1953px; transform-origin: 64.1797px 18.5977px;")
+          div(style="display: inline-flex; box-sizing: border-box; width: 128.359px; height: 37.1953px; justify-content: flex-start; align-items: center; gap: 4px; transform-origin: 64.1797px 18.5977px;")
+            div(style="box-sizing: border-box; position: relative; width: 114.141px; height: 37.1953px; padding-bottom: 2px; color: rgba(242, 242, 242, 0.5); font-size: 22px; font-weight: 600; line-height: 35.2px; transform-origin: 57.0703px 18.5977px;") Tools
+            div(style="box-sizing: border-box; width: 10.2188px; height: 24px; color: rgba(242, 242, 242, 0.5);") ▾
+            div(style="display: none; box-sizing: border-box; color: rgba(242, 242, 242, 0.5);")
+              svg(
+                ~ stroke-linejoin="round"
+                ~ stroke-linecap="round"
+                ~ stroke-width="2"
+                ~ stroke="currentColor"
+                ~ fill="none"
+                ~ viewBox="0 0 24 24"
+                ~ height="24"
+                ~ width="24"
+                ~ xmlns="http://www.w3.org/2000/svg"
+                ~ style="box-sizing: border-box; width: 100%; height: 100%;"
+                ~ )
+                path(d="m6 9 6 6 6-6" style="box-sizing: border-box;")
+          div(style="box-sizing: border-box; position: absolute; inset: 37.1953px -243.641px -406px 0px; z-index: 100; width: 372px; min-width: 372px; padding-top: 14px; opacity: 0; transform: matrix(1, 0, 0, 1, 0, -6);")
+            div(style="display: grid; box-sizing: border-box; height: 392px; padding: 16px; grid-template-columns: 338px; grid-template-rows: 58px 58px 58px 58px 58px 58px; grid-auto-columns: 1fr; gap: 2px; background-color: rgb(20, 20, 20); border-width: 1px; border-style: solid; border-color: rgba(255, 255, 255, 0.08); border-radius: 14px; box-shadow: rgba(0, 0, 0, 0.4) 0px 16px 40px 0px;")
+              a(
+                ~ href="https://www.sigmabrowser.com/?utm_source=atomicchatmenu&amp;utm_medium=referral&amp;utm_campaign=ecosystem&amp;utm_content=sigma_browser"
+                ~ style="display: flex; box-sizing: border-box; padding: 9px 10px; justify-content: flex-start; align-items: center; gap: 13px 14px; color: rgb(207, 207, 212); font-size: 14px; font-weight: 600; line-height: 21.7px; border-radius: 11px;"
+                ~ )
+                span(style="box-sizing: border-box; position: relative; width: 40px; height: 40px; overflow: hidden; flex-shrink: 0; background-color: rgba(255, 255, 255, 0.03); border-radius: 11px; box-shadow: rgba(255, 255, 255, 0.06) 0px 0px 0px 1px inset;")
+                  img(
+                    ~ src="https://cdn.prod.website-files.com/69d4e04c943eea1581f96f37/6a79d19a9f0012737ee8530a_eco-sigma-browser.webp"
+                    ~ alt="Sigma Browser icon"
+                    ~ style="display: block; box-sizing: border-box; position: absolute; right: 0px; bottom: 0px; left: 0px; height: 40px; max-width: 100%; vertical-align: middle; object-fit: cover;"
+                    ~ )
+                  img(
+                    ~ src="https://cdn.prod.website-files.com/69d4e04c943eea1581f96f37/6a79d19bde9e6ade4d7bc483_eco-sigma-browser-3d.webp"
+                    ~ alt="Sigma Browser 3D icon"
+                    ~ style="display: block; box-sizing: border-box; position: absolute; right: 0px; bottom: 0px; left: 0px; height: 40px; max-width: 100%; vertical-align: middle; opacity: 0; object-fit: cover;"
+                    ~ )
+                span(style="display: flex; box-sizing: border-box; width: 105.422px; height: 36.8438px; min-width: 0px; flex-direction: column; justify-content: center; align-items: flex-start; row-gap: 2px;")
+                  span(style="box-sizing: border-box; width: 103.328px; height: 18.5938px; color: rgb(242, 242, 242); font-size: 15.5px; line-height: 18.6px; letter-spacing: -0.31px; white-space: nowrap; transform-origin: 51.6641px 9.29688px;") Sigma Browser
+                  span(style="box-sizing: border-box; width: 105.422px; height: 16.25px; color: rgba(242, 242, 242, 0.62); font-size: 13px; font-weight: 400; line-height: 16.25px; white-space: nowrap;") Private AI browser
+              a(
+                ~ href="https://atomicvpn.io/?utm_source=atomic_chat&amp;utm_medium=website"
+                ~ style="display: flex; box-sizing: border-box; padding: 9px 10px; justify-content: flex-start; align-items: center; gap: 13px 14px; color: rgb(207, 207, 212); font-size: 14px; font-weight: 600; line-height: 21.7px; border-radius: 11px;"
+                ~ )
+                span(style="box-sizing: border-box; position: relative; width: 40px; height: 40px; overflow: hidden; flex-shrink: 0; background-color: rgba(255, 255, 255, 0.03); border-radius: 11px; box-shadow: rgba(255, 255, 255, 0.06) 0px 0px 0px 1px inset;")
+                  img(
+                    ~ src="https://cdn.prod.website-files.com/69d4e04c943eea1581f96f37/6a996edb40e4ed6e8e25c1d9_eco-atomic-vpn.webp"
+                    ~ alt="Atomic VPN icon"
+                    ~ style="display: block; box-sizing: border-box; position: absolute; right: 0px; bottom: 0px; left: 0px; height: 40px; max-width: 100%; vertical-align: middle; object-fit: cover;"
+                    ~ )
+                  img(
+                    ~ src="https://cdn.prod.website-files.com/69d4e04c943eea1581f96f37/6a996edb40e4ed6e8e25c1d9_eco-atomic-vpn.webp"
+                    ~ alt="Atomic VPN icon"
+                    ~ style="display: block; box-sizing: border-box; position: absolute; right: 0px; bottom: 0px; left: 0px; height: 40px; max-width: 100%; vertical-align: middle; opacity: 0; object-fit: cover;"
+                    ~ )
+                span(style="display: flex; box-sizing: border-box; width: 112.656px; height: 36.8438px; min-width: 0px; flex-direction: column; justify-content: center; align-items: flex-start; row-gap: 2px; transform-origin: 56.3281px 18.4219px;")
+                  span(style="box-sizing: border-box; width: 82.0625px; height: 18.5938px; color: rgb(242, 242, 242); font-size: 15.5px; line-height: 18.6px; letter-spacing: -0.31px; white-space: nowrap;") Atomic VPN
+                  span(style="box-sizing: border-box; width: 112.656px; height: 16.25px; color: rgba(242, 242, 242, 0.62); font-size: 13px; font-weight: 400; line-height: 16.25px; white-space: nowrap; transform-origin: 56.3281px 8.125px;") Private VPN service
+              a(
+                ~ href="https://atomicmail.io/?utm_source=atomicchatmenu&amp;utm_medium=referral&amp;utm_campaign=ecosystem&amp;utm_content=atomic_mail"
+                ~ style="display: flex; box-sizing: border-box; padding: 9px 10px; justify-content: flex-start; align-items: center; gap: 13px 14px; color: rgb(207, 207, 212); font-size: 14px; font-weight: 600; line-height: 21.7px; border-radius: 11px;"
+                ~ )
+                span(style="box-sizing: border-box; position: relative; width: 40px; height: 40px; overflow: hidden; flex-shrink: 0; background-color: rgba(255, 255, 255, 0.03); border-radius: 11px; box-shadow: rgba(255, 255, 255, 0.06) 0px 0px 0px 1px inset;")
+                  img(
+                    ~ src="https://cdn.prod.website-files.com/69d4e04c943eea1581f96f37/6a79d19bde9e6ade4d7bc4b6_eco-atomic-mail.webp"
+                    ~ alt="Atomic Mail icon"
+                    ~ style="display: block; box-sizing: border-box; position: absolute; right: 0px; bottom: 0px; left: 0px; height: 40px; max-width: 100%; vertical-align: middle; object-fit: cover;"
+                    ~ )
+                  img(
+                    ~ src="https://cdn.prod.website-files.com/69d4e04c943eea1581f96f37/6a79d19bde9e6ade4d7bc4e6_eco-atomic-mail-3d.webp"
+                    ~ alt="Atomic Mail 3D icon"
+                    ~ style="display: block; box-sizing: border-box; position: absolute; right: 0px; bottom: 0px; left: 0px; height: 40px; max-width: 100%; vertical-align: middle; opacity: 0; object-fit: cover;"
+                    ~ )
+                span(style="display: flex; box-sizing: border-box; width: 156.375px; height: 36.8438px; min-width: 0px; flex-direction: column; justify-content: center; align-items: flex-start; row-gap: 2px;")
+                  span(style="box-sizing: border-box; width: 81.0078px; height: 18.5938px; color: rgb(242, 242, 242); font-size: 15.5px; line-height: 18.6px; letter-spacing: -0.31px; white-space: nowrap; transform-origin: 40.5039px 9.29688px;") Atomic Mail
+                  span(style="box-sizing: border-box; width: 156.375px; height: 16.25px; color: rgba(242, 242, 242, 0.62); font-size: 13px; font-weight: 400; line-height: 16.25px; white-space: nowrap;") Free private &amp; secure email
+              a(
+                ~ href="https://atomicbot.ai/?utm_source=atomicchatmenu&amp;utm_medium=referral&amp;utm_campaign=ecosystem&amp;utm_content=atomic_bot"
+                ~ style="display: flex; box-sizing: border-box; padding: 9px 10px; justify-content: flex-start; align-items: center; gap: 13px 14px; color: rgb(207, 207, 212); font-size: 14px; font-weight: 600; line-height: 21.7px; border-radius: 11px;"
+                ~ )
+                span(style="box-sizing: border-box; position: relative; width: 40px; height: 40px; overflow: hidden; flex-shrink: 0; background-color: rgba(255, 255, 255, 0.03); border-radius: 11px; box-shadow: rgba(255, 255, 255, 0.06) 0px 0px 0px 1px inset;")
+                  img(
+                    ~ src="https://cdn.prod.website-files.com/69d4e04c943eea1581f96f37/6a79d19bd28c4900fc03417d_eco-atomic-bot.webp"
+                    ~ alt="Atomic Bot icon"
+                    ~ style="display: block; box-sizing: border-box; position: absolute; right: 0px; bottom: 0px; left: 0px; height: 40px; max-width: 100%; vertical-align: middle; object-fit: cover;"
+                    ~ )
+                  img(
+                    ~ src="https://cdn.prod.website-files.com/69d4e04c943eea1581f96f37/6a79d19bf376aa8ed0049e76_eco-atomic-bot-3d.webp"
+                    ~ alt="Atomic Bot 3D icon"
+                    ~ style="display: block; box-sizing: border-box; position: absolute; right: 0px; bottom: 0px; left: 0px; height: 40px; max-width: 100%; vertical-align: middle; opacity: 0; object-fit: cover;"
+                    ~ )
+                span(style="display: flex; box-sizing: border-box; width: 149.695px; height: 36.8438px; min-width: 0px; flex-direction: column; justify-content: center; align-items: flex-start; row-gap: 2px; transform-origin: 74.8477px 18.4219px;")
+                  span(style="box-sizing: border-box; width: 76.3359px; height: 18.5938px; color: rgb(242, 242, 242); font-size: 15.5px; line-height: 18.6px; letter-spacing: -0.31px; white-space: nowrap; transform-origin: 38.168px 9.29688px;") Atomic Bot
+                  span(style="box-sizing: border-box; width: 149.695px; height: 16.25px; color: rgba(242, 242, 242, 0.62); font-size: 13px; font-weight: 400; line-height: 16.25px; white-space: nowrap; transform-origin: 74.8477px 8.125px;") One-click AI agent runner
+              a(
+                ~ href="https://atomicagent.io/?utm_source=atomicchatmenu&amp;utm_medium=referral&amp;utm_campaign=ecosystem&amp;utm_content=atomic_agent"
+                ~ style="display: flex; box-sizing: border-box; padding: 9px 10px; justify-content: flex-start; align-items: center; gap: 13px 14px; color: rgb(207, 207, 212); font-size: 14px; font-weight: 600; line-height: 21.7px; border-radius: 11px;"
+                ~ )
+                span(style="box-sizing: border-box; position: relative; width: 40px; height: 40px; overflow: hidden; flex-shrink: 0; background-color: rgba(255, 255, 255, 0.03); border-radius: 11px; box-shadow: rgba(255, 255, 255, 0.06) 0px 0px 0px 1px inset;")
+                  img(
+                    ~ src="https://cdn.prod.website-files.com/69d4e04c943eea1581f96f37/6a79d19b396cc3a2b6832e8c_eco-atomic-agent.webp"
+                    ~ alt="Atomic Agent icon"
+                    ~ style="display: block; box-sizing: border-box; position: absolute; right: 0px; bottom: 0px; left: 0px; height: 40px; max-width: 100%; vertical-align: middle; object-fit: cover;"
+                    ~ )
+                  img(
+                    ~ src="https://cdn.prod.website-files.com/69d4e04c943eea1581f96f37/6a79d19bd0993d39b00294e8_eco-atomic-agent-3d.webp"
+                    ~ alt="Atomic Agent 3D icon"
+                    ~ style="display: block; box-sizing: border-box; position: absolute; right: 0px; bottom: 0px; left: 0px; height: 40px; max-width: 100%; vertical-align: middle; opacity: 0; object-fit: cover;"
+                    ~ )
+                span(style="display: flex; box-sizing: border-box; width: 111.945px; height: 36.8438px; min-width: 0px; flex-direction: column; justify-content: center; align-items: flex-start; row-gap: 2px; transform-origin: 55.9727px 18.4219px;")
+                  span(style="box-sizing: border-box; width: 94.8438px; height: 18.5938px; color: rgb(242, 242, 242); font-size: 15.5px; line-height: 18.6px; letter-spacing: -0.31px; white-space: nowrap;") Atomic Agent
+                  span(style="box-sizing: border-box; width: 111.945px; height: 16.25px; color: rgba(242, 242, 242, 0.62); font-size: 13px; font-weight: 400; line-height: 16.25px; white-space: nowrap; transform-origin: 55.9727px 8.125px;") Local-first AI agent
+              a(
+                ~ href="https://atomicwallet.io/?utm_source=atomicchatmenu&amp;utm_medium=referral&amp;utm_campaign=ecosystem&amp;utm_content=atomic_wallet"
+                ~ style="display: flex; box-sizing: border-box; padding: 9px 10px; justify-content: flex-start; align-items: center; gap: 13px 14px; color: rgb(207, 207, 212); font-size: 14px; font-weight: 600; line-height: 21.7px; border-radius: 11px;"
+                ~ )
+                span(style="box-sizing: border-box; position: relative; width: 40px; height: 40px; overflow: hidden; flex-shrink: 0; background-color: rgba(255, 255, 255, 0.03); border-radius: 11px; box-shadow: rgba(255, 255, 255, 0.06) 0px 0px 0px 1px inset;")
+                  img(
+                    ~ src="https://cdn.prod.website-files.com/69d4e04c943eea1581f96f37/6a79d19c823679bb7d837a84_eco-atomic-wallet.webp"
+                    ~ alt="Atomic Wallet icon"
+                    ~ style="display: block; box-sizing: border-box; position: absolute; right: 0px; bottom: 0px; left: 0px; height: 40px; max-width: 100%; vertical-align: middle; object-fit: cover;"
+                    ~ )
+                  img(
+                    ~ src="https://cdn.prod.website-files.com/69d4e04c943eea1581f96f37/6a79d19cd0993d39b00294ff_eco-atomic-wallet-3d.webp"
+                    ~ alt="Atomic Wallet 3D icon"
+                    ~ style="display: block; box-sizing: border-box; position: absolute; right: 0px; bottom: 0px; left: 0px; height: 40px; max-width: 100%; vertical-align: middle; opacity: 0; object-fit: cover;"
+                    ~ )
+                span(style="display: flex; box-sizing: border-box; width: 193.102px; height: 36.8438px; min-width: 0px; flex-direction: column; justify-content: center; align-items: flex-start; row-gap: 2px;")
+                  span(style="box-sizing: border-box; width: 95.4062px; height: 18.5938px; color: rgb(242, 242, 242); font-size: 15.5px; line-height: 18.6px; letter-spacing: -0.31px; white-space: nowrap; transform-origin: 47.7031px 9.29688px;") Atomic Wallet
+                  span(style="box-sizing: border-box; width: 193.102px; height: 16.25px; color: rgba(242, 242, 242, 0.62); font-size: 13px; font-weight: 400; line-height: 16.25px; white-space: nowrap;") Secure, anonymous crypto wallet
+            div(style="box-sizing: border-box;")
+      li(style="box-sizing: border-box; width: 74.8672px; height: 37.1953px; transform-origin: 37.4336px 18.5977px;")
+        a(
+          ~ href="https://atomic.chat/models"
+          ~ style="display: inline-block; box-sizing: border-box; position: relative; width: 74.8672px; height: 37.1953px; padding-bottom: 2px; color: rgba(242, 242, 242, 0.5); font-size: 22px; font-weight: 600; line-height: 35.2px; transform-origin: 37.4336px 18.5977px;"
+          ~ )
+          | Octane
+      li(style="box-sizing: border-box; width: 44.9453px; height: 37.1953px; transform-origin: 22.4727px 18.5977px;")
+        a(
+          ~ href="https://atomic.chat/blog"
+          ~ style="display: inline-block; box-sizing: border-box; position: relative; width: 44.9453px; height: 37.1953px; padding-bottom: 2px; color: rgba(242, 242, 242, 0.5); font-size: 22px; font-weight: 600; line-height: 35.2px; transform-origin: 22.4727px 18.5977px;"
+          ~ )
+          | v0.13.8
+    a(
+      ~ href="https://atomic.chat/#download"
+      ~ style="display: flex; box-sizing: border-box; position: relative; width: 118.664px; height: 45.1953px; padding: 9px 20px; overflow: hidden; justify-content: center; align-items: center; gap: 8px; color: rgb(13, 13, 13); font-size: 17px; font-weight: 600; line-height: 27.2px; background-color: rgb(255, 255, 255); border-radius: 9999px; transform-origin: 59.332px 22.5977px;"
+      ~ )
+      | Docs
+    div(style="display: none; box-sizing: border-box;")
+    div(style="display: flex; box-sizing: border-box; width: 192px; height: 33px; justify-content: flex-start; align-items: center; gap: 20px;")
+      a(
+        ~ aria-label="Atomic Chat on GitHub"
+        ~ title="GitHub"
+        ~ href="https://github.com/AtomicBot-ai/Atomic-Chat"
+        ~ style="display: flex; box-sizing: border-box; width: 33px; height: 33px; max-width: 100%; justify-content: center; align-items: center; color: rgb(255, 255, 255); border-radius: 6px;"
+        ~ )
+        div(
+          ~ aria-label="Atomic Chat on GitHub"
+          ~ style="display: flex; box-sizing: border-box; width: 33px; height: 33px; justify-content: center; align-items: center;"
+          ~ )
+          svg(
+            ~ width="100%"
+            ~ height="100%"
+            ~ viewBox="0 0 24 24"
+            ~ fill="#ffffff"
+            ~ style="box-sizing: border-box;"
+            ~ )
+            path(
+              ~ d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"
+              ~ style="box-sizing: border-box;"
+              ~ )
+      a(
+        ~ aria-label="Atomic Chat on X"
+        ~ title="X / Twitter"
+        ~ href="https://x.com/atomic_chat_hq"
+        ~ style="display: flex; box-sizing: border-box; width: 33px; height: 33px; max-width: 100%; justify-content: center; align-items: center; color: rgb(255, 255, 255); border-radius: 6px;"
+        ~ )
+        div(style="display: flex; box-sizing: border-box; width: 33px; height: 33px; justify-content: center; align-items: center;")
+          svg(
+            ~ width="100%"
+            ~ height="100%"
+            ~ viewBox="0 0 24 24"
+            ~ fill="#ffffff"
+            ~ style="box-sizing: border-box;"
+            ~ )
+            path(
+              ~ d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"
+              ~ style="box-sizing: border-box;"
+              ~ )
+  button(
+    ~ aria-label="Open menu"
+    ~ style="display: none; position: relative; z-index: 10; width: 46px; height: 46px; justify-content: center; align-items: center; color: rgb(229, 229, 229); font-family: &quot;Uncut Sans&quot;, Arial, sans-serif; font-size: 16px; line-height: 24px; background-color: rgba(240, 240, 240, 0); border-width: 0px; border-style: none; border-color: rgb(229, 229, 229); border-radius: 13px; appearance: button;"
+    ~ )
+    div(
+      ~ aria-hidden="true"
+      ~ style="display: flex; box-sizing: border-box; position: relative; width: 20px; height: 12px; flex-direction: column; justify-content: space-between;"
+      ~ )
+      div(style="box-sizing: border-box; width: 100%; height: 2px; background-color: rgb(255, 255, 255);")
+      div(style="box-sizing: border-box; width: 100%; height: 2px; background-color: rgb(255, 255, 255);")
+    div(style="box-sizing: border-box;")
+    div(style="box-sizing: border-box;")
+  div(style="display: none; box-sizing: border-box; position: absolute; inset: 0%; z-index: 2; background-color: rgb(10, 10, 10);")

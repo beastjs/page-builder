@@ -1,6 +1,7 @@
 import Header from './components/Header.btsx'
 import { Outlet } from '@octanejs/tanstack-router'
+import NewHeader from "./components/NewHeader.btsx";
 
 main.workspace
-  Header()
+  NewHeader()
   Outlet()

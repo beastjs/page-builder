@@ -7,6 +7,7 @@ const targets: NavigationTarget[] = [
   { id: 'footer', file: 'src/Footer.btsx', label: 'Footer menu', itemType: { name: 'FooterLink', origin: 'inferred', fields: [] } }
 ]
 const inventory: ProjectScan = {
+  sections: [],
   name: 'Page editor fixture', scannedAt: '', warnings: [], navigationTargets: targets,
   files: [{ name: 'FixturePage', path: 'src/pages/FixturePage.btsx', kind: 'page', lines: 3, components: [], error: null }],
   collections: [], pageRoutes: [], tabComponents: [], tabInstances: []

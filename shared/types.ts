@@ -40,6 +40,7 @@ export interface ProjectFile {
 export interface ProjectScan {
   name: string
   files: ProjectFile[]
+  sections: DetectedSection[]
   scannedAt: string
   warnings: string[]
   navigationTargets: NavigationTarget[]
@@ -48,6 +49,8 @@ export interface ProjectScan {
   tabComponents: TabComponent[]
   tabInstances: TabInstance[]
 }
+
+export interface DetectedSection { id: string; elementId: string; file: string; line: number }
 
 export interface ItemField { name: string; type: string; optional: boolean; scalar?: 'string' | 'number' | 'boolean'; values?: Array<string | number | boolean> }
 export interface ItemType { name: string; origin: 'declared' | 'inferred'; fields: ItemField[]; variants?: ItemType[] }
@@ -79,9 +82,9 @@ export interface DetectedCollection {
   dataSources: string[]
 }
 export interface NavigationTarget { id: string; file: string; label: string; array?: string; group?: string; itemType?: ItemType }
-export interface PageDraft { name: string; source: string; routePath?: string; navLabel?: string; navigationTarget?: string; path?: string }
+export interface PageDraft { name: string; source: string; routePath?: string; navLabel?: string; navigationTarget?: string; path?: string; section?: string }
 export interface PlannedFile { path: string; action: 'create' | 'edit'; before: string | null; source: string }
-export interface PagePreview { path: string; source: string; hash: string; routePath: string; navLabel: string; files: PlannedFile[] }
+export interface PagePreview { path: string; source: string; hash: string; routePath: string; navLabel: string; files: PlannedFile[]; section?: string }
 export interface PageRoute { file: string; name: string; routePath: string }
 export interface TabComponent {
   id: string

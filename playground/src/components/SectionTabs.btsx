@@ -7,7 +7,7 @@ section.section-tabs
   div.section-tab-list(role="tablist" aria-label="Workspace sections")
     each tab in workspaceTabs key tab.value
       button.section-tab(role="tab" id={"tab-" + tab.value} aria-selected={selected === tab.value} aria-controls={"panel-" + tab.value} tabIndex={selected === tab.value ? 0 : -1} disabled={tab.disabled} onClick={() => setSelected(tab.value)} onKeyDown={(event) => { if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) { event.preventDefault(); const index = event.key === 'Home' ? 0 : event.key === 'End' ? workspaceTabs.length - 1 : (workspaceTabs.findIndex(item => item.value === selected) + (event.key === 'ArrowRight' ? 1 : -1) + workspaceTabs.length) % workspaceTabs.length; const next = workspaceTabs[index]; setSelected(next.value); document.getElementById('tab-' + next.value)?.focus(); } }}) #{tab.label}
-  div.section-tab-panel(role="tabpanel" id={"panel-" + selected} aria-labelledby={"tab-" + selected} tabIndex="0")
+  div.section-tab-panel(role="tabpanel" id={"panel-" + selected} aria-labelledby={"tab-" + selected} tabIndex={0})
     if selected === 'ideas'
       p Your next page starts with a small idea. Open the builder to give it a home.
     else

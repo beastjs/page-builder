@@ -75,7 +75,7 @@ export function createBuilderServer(root: string, options: BeastPageBuilderOptio
       }
       else if (req.method === 'POST' && (route === '/preview' || route === '/create')) {
         const body = await jsonBody(req)
-        const draft = { name: body.name, source: body.source, routePath: body.routePath, navLabel: body.navLabel, navigationTarget: body.navigationTarget, path: body.path } as PageDraft
+        const draft = { name: body.name, source: body.source, routePath: body.routePath, navLabel: body.navLabel, navigationTarget: body.navigationTarget, path: body.path, section: body.section } as PageDraft
         send(route === '/create' ? 201 : 200, route === '/create' ? await project.create(draft, body.hash as string) : await project.preview(draft))
       } else send(404, { error: 'Unknown page-builder endpoint.' })
     })().catch(error => {
