@@ -2,7 +2,7 @@
 
 Updated: October 18, 2026
 
-Next deliverable: final package verification, bundle comparison, and large-inventory palette/editor measurements.
+Migration complete. See [verification and measurements](CLIENT_VERIFICATION.md) for the final results and remaining performance limits.
 
 ## Progress board
 
@@ -17,7 +17,7 @@ Next deliverable: final package verification, bundle comparison, and large-inven
 | 6 | Source and collection inspectors | Done | 3, 5 |
 | 7 | Scan, success, and error screens | Done | 3 |
 | 8 | Builder shell and state cleanup | Done | 4–7 |
-| 9 | Final verification and measurements | Next | 8 |
+| 9 | Final verification and measurements | Done | 8 |
 
 “Done” means implemented and verified in the current working tree. It does not mean committed or published. Proposed filenames below may change during implementation.
 
@@ -144,19 +144,19 @@ Evidence (October 18, 2026): `Builder.btsx` owns the declarative shell and scree
 
 ## 9. Final verification and measurements
 
-Status: **Next**
+Status: **Done**
 
-- [ ] Run `bun run check` for type checking, production build, and the complete non-browser test suite.
-- [ ] Run the complete browser suite, including loaders and all migration regressions; use a separate test server if a development server is already running.
-- [ ] Inspect desktop/mobile layouts, dark mode, reduced motion, focus, and source overflow.
-- [ ] Run `bun run pack:check` and verify the self-contained client and server runtime dependencies.
-- [ ] Record final minified/gzipped sizes against this baseline; investigate material growth before adding dependencies or splitting bundles.
-- [ ] Measure palette updates and editor input under a large project inventory; report measurements separately from bundle size.
-- [ ] Update the README and this board with the final module layout, test results, measurements, and any remaining limitations.
+- [x] Run `bun run check` for type checking, production build, and the complete non-browser test suite.
+- [x] Run the complete browser suite, including loaders and all migration regressions; use a separate test server if a development server is already running.
+- [x] Inspect desktop/mobile layouts, dark mode, reduced motion, focus, and source overflow.
+- [x] Run `bun run pack:check` and verify the self-contained client and server runtime dependencies.
+- [x] Record final minified/gzipped sizes against this baseline; investigate material growth before adding dependencies or splitting bundles.
+- [x] Measure palette updates and editor input under a large project inventory; report measurements separately from bundle size.
+- [x] Update the README and this board with the final module layout, test results, measurements, and any remaining limitations.
 
 Complete when: the full suite and package check pass, visual checks are complete, and the migration has a recorded final result.
 
-Evidence: pending.
+Evidence (October 18, 2026): `bun run check` passed type checking, production build, and all 58 non-browser tests, including 6 bundler integration tests and the new artifact dependency/declaration check. The complete browser suite passed all 69 tests in one run on isolated port 5191 (63 widget cases and 6 native loader cases). Desktop/mobile, light/dark, reduced motion, focus, and source/type overflow screenshots were inspected. The package dry run passed with 20 expected files; the built client has no external imports, and adapter imports use Node built-ins or declared runtime dependencies. The final client is 454,177 bytes minified and 141,480 bytes gzipped with Node zlib defaults: +23,873 bytes (+5.55%) and +8,034 bytes (+6.02%) over the recorded pre-section-3 baseline, which already included tabs and palette BTSX. A reproducible read-only harness now records raw samples for 1,000/5,000/10,000 files. At 10,000 files, expanding a narrow search to all results measured 488.6 ms median / 551.2 ms p95; retaining rows measured 12 / 14.1 ms. Page-name input-event processing through layout measured 0.5 / 1.4 ms and 58 KB source input-event processing measured 4.4 / 7.6 ms. Full source value/caret replacement measured 139.2 / 143.7 ms, primarily before the widget input handler, and is reported separately. There is no matched pre-migration runtime baseline, so no runtime speedup claim is made. Full methodology, package scope, final module layout, remaining scaling limits, and the saved raw samples are linked from `CLIENT_VERIFICATION.md` and the README. All builder UI is BTSX; the plain TypeScript build script, server behavior, and dependencies are unchanged.
 
 ## Rules throughout the migration
 

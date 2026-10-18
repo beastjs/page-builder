@@ -17,7 +17,7 @@ Open `http://127.0.0.1:5190` and press **⌘B**, or click **Builder** in the bot
 
 ## Client development
 
-Track the remaining sections and their task checklists in the [BTSX migration plan](MIGRATION_PLAN.md).
+The client BTSX migration is complete. See the [migration checklist](MIGRATION_PLAN.md) and [verification and measurements](CLIENT_VERIFICATION.md) for the final results and remaining performance limits.
 
 The search palette lives in `client/palette/*.btsx`, the tabs editor in `client/tabs/*.btsx`, and page creation/editing in `client/pages/*.btsx`. Palette action construction and filtering live in `client/palette/actions.ts`; page suggestions and section insertion live in `client/pages/model.ts`.
 
@@ -218,6 +218,16 @@ bun run test:browser
 ```
 
 `bun run build` produces the Node plugin adapters, public types, and the standalone widget in `dist/`. Restart the playground after changing the plugin or widget source.
+
+To reproduce the client measurements, build first, finish other CPU-heavy checks, then run:
+
+```sh
+bun scripts/measure-client.ts test-results/client-performance.json
+# Optional fresh-session editor check, without the repeated palette operations:
+bun scripts/measure-client.ts test-results/editor-performance.json --editor-only
+```
+
+The harness serves the production widget on an ephemeral localhost port with 1,000, 5,000, and 10,000 synthetic files. It records raw samples and median/p95 timings for palette updates and page-editor input. Editor results separate full value/caret replacement from input-event processing. These are local measurements through DOM commit and forced layout; they exclude network, project scanning, and paint, and do not establish a speedup over the former client.
 
 ```text
 vite.ts / rspack.ts / rsbuild.ts  Bundler adapters
