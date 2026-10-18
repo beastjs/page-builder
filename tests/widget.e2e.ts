@@ -1,15 +1,23 @@
 import { test, expect, type Page } from '@playwright/test'
 import { readFile, rm, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
+import { browserFixtureRoot } from './browser-fixture.js'
+
+test.describe.configure({ mode: 'serial' })
+const fixturePath = (path: string) => join(browserFixtureRoot, path)
 
 const pageName = `BrowserPage${Date.now()}`
-const originalRouter = await readFile('playground/src/router.ts', 'utf8')
-const originalHeader = await readFile('playground/src/components/Header.btsx', 'utf8')
-const originalHome = await readFile('playground/src/pages/Home.btsx', 'utf8')
+let originalRouter: string, originalHeader: string, originalHome: string
+test.beforeAll(async () => {
+  originalRouter = await readFile(fixturePath('src/router.ts'), 'utf8')
+  originalHeader = await readFile(fixturePath('src/components/Header.btsx'), 'utf8')
+  originalHome = await readFile(fixturePath('src/pages/Home.btsx'), 'utf8')
+})
 test.afterAll(async () => {
-  await writeFile('playground/src/router.ts', originalRouter)
-  await writeFile('playground/src/components/Header.btsx', originalHeader)
-  await writeFile('playground/src/pages/Home.btsx', originalHome)
-  await rm(`playground/src/pages/${pageName}.btsx`, { force: true })
+  await writeFile(fixturePath('src/router.ts'), originalRouter)
+  await writeFile(fixturePath('src/components/Header.btsx'), originalHeader)
+  await writeFile(fixturePath('src/pages/Home.btsx'), originalHome)
+  await rm(fixturePath(`src/pages/${pageName}.btsx`), { force: true })
 })
 async function toggle(page: Page) {
   await page.keyboard.press(await page.evaluate(() => /Mac|iPhone|iPad/.test(navigator.platform)) ? 'Meta+b' : 'Control+b')
@@ -136,7 +144,7 @@ test('reduced motion skips the waiting animation', async ({ page }) => {
 test('navigation and tab inspectors expose item kinds, declared types, and optional fields', async ({ page }) => {
   await open(page)
   await page.getByRole('button', { name: 'Navs', exact: true }).click()
-  await page.getByRole('button', { name: /nav.workspace-nav/ }).click()
+  await page.getByRole('button', { name: /nav#navbar.workspace-nav/ }).click()
   await expect(page.getByRole('heading', { name: 'Item type', exact: true })).toBeVisible()
   await expect(page.getByText('internal link', { exact: true }).first()).toBeVisible()
   await expect(page.getByText('external link', { exact: true })).toBeVisible()
@@ -199,7 +207,7 @@ test('Tabs form follows the current route, searches and navigates pages, then sa
   await page.getByRole('button', { name: 'Close builder', exact: true }).click()
   await expect(page.getByRole('navigation', { name: 'Tabs', exact: true })).toBeVisible()
   await expect(page.getByRole('navigation', { name: 'Tabs', exact: true }).getByRole('link', { name: 'Overview', exact: true })).toHaveAttribute('aria-current', 'page')
-  const source = await readFile(`playground/src/pages/${pageName}.btsx`, 'utf8')
+  const source = await readFile(fixturePath(`src/pages/${pageName}.btsx`), 'utf8')
   expect(source).toContain('"shortLabel":"Tab 1"')
   expect(source).toContain('"label":"Overview"')
   expect(source).toContain('"icon":"menu"')
@@ -242,7 +250,7 @@ test('created pages can be edited, reviewed and saved from page details', async 
   await expect(page.getByRole('heading', { name: `${pageName} is updated.` })).toBeVisible()
   await page.getByRole('link', { name: 'Open page', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Your edited page starts here.' })).toBeVisible()
-  expect(await readFile(`playground/src/pages/${pageName}.btsx`, 'utf8')).toContain('Your edited page starts here.')
+  expect(await readFile(fixturePath(`src/pages/${pageName}.btsx`), 'utf8')).toContain('Your edited page starts here.')
 })
 
 test('existing tabs reopen with saved values and update in place through review', async ({ page }) => {
@@ -266,7 +274,7 @@ test('existing tabs reopen with saved values and update in place through review'
   const nav = page.getByRole('navigation', { name: 'Page views', exact: true })
   await expect(nav.getByRole('link', { name: 'Summary', exact: true })).toBeVisible()
   await expect(nav.getByRole('link', { name: 'Home', exact: true })).toHaveAttribute('aria-current', 'page')
-  const source = await readFile(`playground/src/pages/${pageName}.btsx`, 'utf8')
+  const source = await readFile(fixturePath(`src/pages/${pageName}.btsx`), 'utf8')
   expect(source.match(/PageTabs\(items=/g)).toHaveLength(1)
   expect(source).toContain('Your edited page starts here.')
   await toggle(page)
@@ -282,6 +290,7 @@ test('builder drags within the screen and keeps its position across views and re
   await open(page)
   await page.getByRole('button', { name: /Create a new page/ }).click()
   const dialog = page.getByRole('dialog')
+  await expect(dialog).not.toHaveAttribute('data-resizing')
   const handle = page.getByRole('button', { name: 'Move builder', exact: true })
   const initial = (await dialog.boundingBox())!
   const grip = (await handle.boundingBox())!
@@ -295,17 +304,20 @@ test('builder drags within the screen and keeps its position across views and re
   await page.getByRole('button', { name: 'Back to builder' }).click()
   await page.getByRole('button', { name: 'Tabs', exact: true }).click()
   await page.getByRole('button', { name: /Add Tabs to a page/ }).click()
+  await expect(dialog).not.toHaveAttribute('data-resizing')
   const form = (await dialog.boundingBox())!
   expect(form.x).toBeCloseTo(moved.x, 0)
   expect(form.y).toBeCloseTo(moved.y, 0)
   await page.getByRole('button', { name: 'Close builder' }).click()
   await toggle(page)
   await expect(page.getByText('Builder ready', { exact: true })).toBeVisible()
+  await expect(dialog).not.toHaveAttribute('data-resizing')
   const reopened = (await dialog.boundingBox())!
   expect(reopened.x).toBeCloseTo(moved.x, 0)
   expect(reopened.y).toBeCloseTo(moved.y, 0)
   await page.getByRole('button', { name: 'All', exact: true }).click()
   await page.getByRole('button', { name: /Create a new page/ }).click()
+  await expect(dialog).not.toHaveAttribute('data-resizing')
   const header = (await handle.boundingBox())!
   await page.mouse.move(header.x + header.width / 2, header.y + header.height / 2)
   await page.mouse.down()
@@ -360,6 +372,7 @@ test('touch dragging works with bottom-right positioning and releases cleanly', 
   await open(page)
   await page.getByRole('button', { name: /Create a new page/ }).click()
   const dialog = page.getByRole('dialog')
+  await expect(dialog).not.toHaveAttribute('data-resizing')
   const before = (await dialog.boundingBox())!
   const handle = (await page.getByRole('button', { name: 'Move builder', exact: true }).boundingBox())!
   const session = await page.context().newCDPSession(page)

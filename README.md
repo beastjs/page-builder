@@ -35,7 +35,7 @@ Shared headers, action footers, and status messages live in `client/ui/`. The ta
 
 ## Add it to a Beast project
 
-After the release is published to npm, install it in your Beast app:
+Install it in your Beast app:
 
 ```sh
 bun add -d @beastjs/page-builder
@@ -141,7 +141,9 @@ Use the sun/moon button in the footer to toggle dark mode. Your choice is rememb
 
 Choose **Hide launcher** under **All** to hide the floating Builder button. Open the builder with **⌘B** on macOS or **Ctrl+B** elsewhere (or your configured shortcut), then choose **Show launcher** to restore it. Your visibility choice is remembered across reloads.
 
-Drag the builder's header or grip to move it. Its position stays within the viewport and is kept when switching views or reopening the builder. You can also focus **Move builder** and use the arrow keys (Shift for larger steps); Home restores its configured position.
+Drag the builder's header or grip to move it. Its position stays within the viewport and is saved in localStorage across views, reopening, and reloads. You can also focus **Move builder** and use the arrow keys (Shift for larger steps); Home clears the saved coordinates and restores its configured position.
+
+Use **Sections** to find IDs such as `#topbar` in page and component source. Existing IDs offer **Edit**; a section template offers **Create** only when no matching ID exists. Review and save section changes in their original source file. Create and edit panels have up to 60% more height, with consistent height transitions and a sliding result hover indicator. The widget bundles OKX interface fonts and BMR monospace fonts; the host app does not need to serve them.
 
 Pages are classified by `pagesDir`, a `pages/` or `routes/` folder, or a component name ending in `Page`. Other Beast files appear as components. Dependency, generated, hidden, and symlinked entries are skipped. Use **Rescan project** after filesystem changes; there is no background file watcher in this version.
 
@@ -205,7 +207,7 @@ Detection is based on source semantics, not the browser DOM. Runtime-generated l
 
 ## Scope of this version
 
-This is a source-based page builder. Review shows BTSX source, not a rendered page. It creates and edits page source, and adds or edits typed Tabs components on existing pages. It does not arrange arbitrary project components visually, generate content with AI, or generate new router infrastructure. Compilation validates Beast and Octane syntax; it does not type-check imports or props against the whole host project. Run the host app's normal checks after changes.
+This is a source-based page builder. Review shows BTSX source, not a rendered page. It creates and edits page source, edits source files containing detected section IDs, and adds or edits typed Tabs components on existing pages. It does not arrange arbitrary project components visually, generate content with AI, or generate new router infrastructure. Compilation validates Beast and Octane syntax; it does not type-check imports or props against the whole host project. Run the host app's normal checks after changes.
 
 The API lives under `/__beast-page-builder`. Reads and writes reject cross-site requests. Writes require same-origin JSON, bounded request bodies, valid page names, and project-contained paths. The review hash includes every original and proposed file. Saving rechecks the reviewed source, stages all complete files, then commits them, with rollback on a write failure. Page creation never overwrites existing pages; explicit page and Tabs edits update the selected existing page after review. A changed draft, router, menu, or Tabs contract requires another review; concurrent saves through one project instance are serialized. If an external edit prevents rollback, the error identifies the files to inspect.
 
@@ -245,7 +247,25 @@ Release artifacts are attached to the corresponding [GitHub release](https://git
 To publish the verified tarball from a release:
 
 ```sh
-npm publish ./releases/beastjs-page-builder-0.2.0.tgz --access public
+npm publish ./releases/beastjs-page-builder-0.3.0.tgz --access public
+```
+
+Before npm publication, install the GitHub release artifact directly:
+
+```sh
+bun add -d https://github.com/beastjs/page-builder/releases/download/v0.3.0/beastjs-page-builder-0.3.0.tgz
 ```
 
 For a future release, update the package version and changelog, run `bun run check` and `bun run test:browser`, then run `npm pack --pack-destination releases`. `prepack` builds the distribution so each tarball includes the adapters, declarations, and browser widget. Publishing from the repository also runs `prepublishOnly` checks. Check the packed file list with `bun run pack:check`.
+
+Browser checks use an isolated fixture at `.cache/beast-browser-tests/playground` on port 5191, so real-write tests do not modify the editable playground.
+
+After publishing 0.3.0, deprecate the older npm releases (this adds an installation warning; existing installs continue to work):
+
+```sh
+for version in 0.0.0-stage 0.1.0 0.2.0; do
+  npm deprecate "@beastjs/page-builder@$version" "This version is no longer maintained. See https://github.com/beastjs/page-builder/releases/tag/v0.3.0 for the replacement release."
+done
+```
+
+The 0.3.0 GitHub release also includes a checksum-verified publish script that publishes the tarball before deprecating those versions. Authenticate with `npm login` before running it.

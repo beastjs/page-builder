@@ -84,7 +84,7 @@ test('shared header grip supports keyboard reset and pointer dragging on the tab
   await grip.press('Shift+ArrowDown')
   const moved = (await dialog.boundingBox())!
   expect(moved.x).toBeCloseTo(before.x + 10, 0)
-  expect(moved.y).toBeCloseTo(before.y + 40, 0)
+  expect(moved.y).toBeCloseTo(Math.min(before.y + 40, page.viewportSize()!.height - before.height - 8), 0)
   await grip.press('Home')
   await expect(dialog).not.toHaveAttribute('data-moved')
   const reset = (await dialog.boundingBox())!
@@ -96,7 +96,7 @@ test('shared header grip supports keyboard reset and pointer dragging on the tab
   await page.mouse.up()
   const dragged = (await dialog.boundingBox())!
   expect(dragged.x).toBeCloseTo(reset.x + 75, 0)
-  expect(dragged.y).toBeCloseTo(reset.y + 25, 0)
+  expect(dragged.y).toBeCloseTo(Math.min(reset.y + 25, page.viewportSize()!.height - reset.height - 8), 0)
   await expect(dialog).not.toHaveAttribute('data-dragging')
   await expect(label).toHaveValue('Move without losing me')
   await page.screenshot({ path: 'test-results/shared-components-desktop.png' })
@@ -122,7 +122,7 @@ test('shared controls fit on mobile and keep drafts through touch movement and t
     await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: y - 70 }] })
     await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
     const after = (await dialog.boundingBox())!
-    expect(after.y).toBeCloseTo(before.y - 70, 0)
+    expect(after.y).toBeCloseTo(Math.max(8, before.y - 70), 0)
     expect(after.x).toBeGreaterThanOrEqual(0)
     expect(after.x + after.width).toBeLessThanOrEqual(390)
     expect(after.y + after.height).toBeLessThanOrEqual(844)

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0 — 2026-10-18
+
+- Detect section IDs in Beast pages and components. Offer editing for existing sections and creation only when no matching ID exists, with compiler validation and stale-source protection before saving.
+- Persist builder coordinates in localStorage across reopening and reloads, with viewport clamping and a keyboard reset.
+- Expand create and edit panels by up to 60% and animate height changes consistently across screens, review disclosures, and interrupted navigation. Preserve focus and reduced-motion behavior.
+- Add a shared sliding hover indicator across all palette tabs, with scroll-aware alignment, filtering cleanup, and dark-mode support.
+- Bundle OKX regular/medium and BMR regular for the builder's sans-serif and monospace text without requiring host application assets.
+- Complete the client BTSX migration with shared views, typed controller state, form bindings, and browser subscription cleanup.
+- Isolate browser test fixtures from the editable playground and verify packaged consumer installation before release.
+
 ## 0.2.0 — 2026-10-17
 
 - Edit existing page source with compiler validation, reviewed changes, and stale-source checks before saving.
