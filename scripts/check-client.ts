@@ -28,7 +28,7 @@ try {
       allowImportingTsExtensions: true,
       lib: ['ES2022', 'DOM', 'DOM.Iterable'], types: ['node', 'bun']
     },
-    include: ['client/**/*.tsrx']
+    include: ['client/**/*.tsrx', 'client/assets.d.ts']
   }))
   const check = Bun.spawn(['node', 'node_modules/@tsrx/typescript-plugin/dist/tsc.js', '-p', join(root, 'tsconfig.json')], { stdout: 'inherit', stderr: 'inherit' })
   process.exitCode = await check.exited

@@ -1,0 +1,36 @@
+import type { BuilderProps } from './state.js'
+import Palette from './palette/Palette.btsx'
+import PageEditor from './pages/PageEditor.btsx'
+import TabsEditor from './tabs/TabsEditor.btsx'
+import ReviewView from './review/ReviewView.btsx'
+import FileInspector from './inspect/FileInspector.btsx'
+import CollectionInspector from './inspect/CollectionInspector.btsx'
+import StatusView from './status/StatusView.btsx'
+import Icon from './ui/Icon.btsx'
+import css from './widget.css'
+
+props { opened, theme, position, launcherVisible, shortcut, screen, onOpen, onClose, onThemeToggle }: BuilderProps
+
+style #{css}
+.widget(data-theme={theme} data-position={position} onClick={onThemeToggle})
+  button.launcher(type="button" hidden={!launcherVisible} aria-label="Open Beast page builder" aria-expanded={opened} onClick={onOpen})
+    Icon(name="hex")
+    span Builder
+    kbd #{shortcut}
+  .backdrop(hidden={!opened} onClick={onClose})
+  section.panel(role="dialog" aria-modal={true} aria-label="Beast page builder" hidden={!opened} tabIndex={-1} data-view={opened ? screen?.view : undefined})
+    each active in opened && screen ? [screen] : [] key active.key
+      if active.type === 'palette'
+        Palette({...active.props})
+      elseif active.type === 'page'
+        PageEditor({...active.props})
+      elseif active.type === 'tabs'
+        TabsEditor({...active.props})
+      elseif active.type === 'review'
+        ReviewView({...active.props})
+      elseif active.type === 'file'
+        FileInspector({...active.props})
+      elseif active.type === 'collection'
+        CollectionInspector({...active.props})
+      else
+        StatusView({...active.props})

@@ -21,15 +21,17 @@ Track the remaining sections and their task checklists in the [BTSX migration pl
 
 The search palette lives in `client/palette/*.btsx`, the tabs editor in `client/tabs/*.btsx`, and page creation/editing in `client/pages/*.btsx`. Palette action construction and filtering live in `client/palette/actions.ts`; page suggestions and section insertion live in `client/pages/model.ts`.
 
-The shared page/tabs review screens live in `client/review/*.btsx` and use `client/ui/SourceViewer.btsx` for proposed and original source. API requests and reviewed hashes remain in the TypeScript shell. Scan, success, and error screens live in `client/status/*.btsx`; the widget shell remains TypeScript. The scan view attaches its native HexTrace loader in an effect and removes it when the view unmounts.
+The shared page/tabs review screens live in `client/review/*.btsx` and use `client/ui/SourceViewer.btsx` for proposed and original source. API requests and reviewed hashes remain in TypeScript. Scan, success, and error screens live in `client/status/*.btsx`. The scan view attaches its native HexTrace loader in an effect and removes it when the view unmounts.
 
 File and collection inspectors live in `client/inspect/*.btsx`. They share `SourceViewer.btsx` with review screens and reuse the recursive `TypeContract.btsx` for collection and item contracts. Clipboard access stays in TypeScript.
+
+`client/Builder.btsx` renders the launcher, backdrop, panel, and every screen behind one Octane root. `client/state.ts` defines the typed screen snapshots; `client/controller.ts` owns drafts, workflow transitions, and async operation guards. `client/api.ts` and `client/persistence.ts` handle requests and stored preferences/receipts. `client/browser/` contains route coordination, theme/shortcut preferences, animation, dragging, viewport clamping, and focus behavior. `client/mount.ts` only bootstraps and disposes the widget. Closing unmounts the active screen while preserving its draft; removing the host also cleans up browser subscriptions.
 
 Shared headers, action footers, and status messages live in `client/ui/`. The tabs editor, page editor, and review screens use these components, and the palette shares the status message. Both page modes share `SourceEditor.btsx`. New views should reuse them as they migrate.
 
 `scripts/build.ts` stays plain TypeScript and compiles BTSX through Beast and Octane before esbuild bundles the client, including source-distributed Octane bindings. Consumers still receive a self-contained `dist/client.js` on Vite, Rspack, and Rsbuild.
 
-`bun run typecheck` checks the TypeScript shell and type-checks generated TSRX for the client components in a temporary directory. Edit the authored BTSX files; the check removes its generated files afterward. The tabs and page forms use `@octanejs/tanstack-form`, while the shell handles API requests, draft persistence, navigation, dragging, and focus management.
+`bun run typecheck` checks the TypeScript controller and browser utilities and type-checks generated TSRX for the client components in a temporary directory. Edit the authored BTSX files; the check removes its generated files afterward. The tabs and page forms use `@octanejs/tanstack-form`, while TypeScript owns API requests, draft persistence, navigation, dragging, and focus management.
 
 ## Add it to a Beast project
 

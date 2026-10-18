@@ -2,7 +2,7 @@
 
 Updated: October 18, 2026
 
-Next deliverable: consolidate the builder shell behind one BTSX root and extract its TypeScript state, API, persistence, and browser utilities.
+Next deliverable: final package verification, bundle comparison, and large-inventory palette/editor measurements.
 
 ## Progress board
 
@@ -16,8 +16,8 @@ Next deliverable: consolidate the builder shell behind one BTSX root and extract
 | 5 | Review and save screens | Done | 3, 4 |
 | 6 | Source and collection inspectors | Done | 3, 5 |
 | 7 | Scan, success, and error screens | Done | 3 |
-| 8 | Builder shell and state cleanup | Next | 4–7 |
-| 9 | Final verification and measurements | Queued | 8 |
+| 8 | Builder shell and state cleanup | Done | 4–7 |
+| 9 | Final verification and measurements | Next | 8 |
 
 “Done” means implemented and verified in the current working tree. It does not mean committed or published. Proposed filenames below may change during implementation.
 
@@ -126,25 +126,25 @@ Evidence (October 18, 2026): `bun run check` passed production build, type check
 
 ## 8. Builder shell and state cleanup
 
-Status: **Next**
+Status: **Done**
 
-Proposed files: `client/Builder.btsx`, plus focused TypeScript modules for API, state, persistence, and browser behavior.
+Files: `client/Builder.btsx`, `state.ts`, `controller.ts`, `api.ts`, `persistence.ts`, `browser/*.ts`, and the reduced `mount.ts`.
 
-- [ ] Consolidate migrated screens behind one builder root and a typed screen-state union.
-- [ ] Render launcher, backdrop, panel, and screen selection declaratively.
-- [ ] Keep a single authoritative owner for each draft; remove temporary bridges and duplicate rendering paths.
-- [ ] Extract API requests, storage/receipts, theme preferences, and route coordination into TypeScript modules.
-- [ ] Keep small browser utilities for dragging, pointer capture, viewport clamping, focus trapping/restoration, and animation; clean up listeners and observers on unmount.
-- [ ] Reduce `mount.ts` to bootstrap and integration code; remove legacy view HTML strings, listener rebinding, and unused helpers.
-- [ ] Verify shortcuts, launcher preferences, route changes, resize behavior, disposal, and repeated open/close cycles.
+- [x] Consolidate migrated screens behind one builder root and a typed screen-state union.
+- [x] Render launcher, backdrop, panel, and screen selection declaratively.
+- [x] Keep a single authoritative owner for each draft; remove temporary bridges and duplicate rendering paths.
+- [x] Extract API requests, storage/receipts, theme preferences, and route coordination into TypeScript modules.
+- [x] Keep small browser utilities for dragging, pointer capture, viewport clamping, focus trapping/restoration, and animation; clean up listeners and observers on unmount.
+- [x] Reduce `mount.ts` to bootstrap and integration code; remove legacy view HTML strings, listener rebinding, and unused helpers.
+- [x] Verify shortcuts, launcher preferences, route changes, resize behavior, disposal, and repeated open/close cycles.
 
 Complete when: all builder UI is authored in BTSX, the shell has one rendering lifecycle, and imperative DOM code is limited to browser integration utilities.
 
-Evidence: pending.
+Evidence (October 18, 2026): `Builder.btsx` owns the declarative shell and screen selection behind one Octane root, with a typed screen union in `state.ts`. The controller owns drafts and async transitions; API, persistence, preferences, routes, animation, geometry, shortcuts, and focus have focused TypeScript modules. All six temporary view roots, legacy shell HTML, listener rebinding, and the unused string icon helper were removed. `mount.ts` decreased from 1,089 to 35 lines. Screen versions replace root-identity guards, including a fix preventing a delayed file load from replacing a newer screen in the same open session. Closing disposes the screen effects while retaining drafts; host removal also disposes subscriptions, listeners, observers, timers, and pointer capture. `bun run check` passed all 57 non-browser tests, including 6 bundler integration tests; the final build and type check also passed. All 69 browser cases were verified: 68 passed in the full run, then all 5 shell tests passed after correcting a test-only launcher-label selector. These cover 63 widget cases and 6 native loader cases, including new checks for repeated open/close cycles and retained drafts, stable shell elements, drag cancellation, resize clamping, removal/reinjection, blocked browser storage, custom shortcuts, and obsolete file responses. Desktop/mobile and dark-mode screenshots were inspected. The client bundle is 454,177 bytes minified and 141,480 bytes gzipped (Node zlib defaults): increases of 2,102 and 1,568 bytes over section 7. The client type checker now includes the existing CSS module declaration for the BTSX shell. Dependencies, server behavior, and the plain TypeScript build script are unchanged.
 
 ## 9. Final verification and measurements
 
-Status: **Queued**
+Status: **Next**
 
 - [ ] Run `bun run check` for type checking, production build, and the complete non-browser test suite.
 - [ ] Run the complete browser suite, including loaders and all migration regressions; use a separate test server if a development server is already running.
