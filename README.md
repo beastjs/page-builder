@@ -4,6 +4,8 @@ A floating page builder for Beast projects. Press **⌘B** on macOS or **Ctrl+B*
 
 The plugin runs on development servers only. The widget uses an isolated Shadow DOM and a prebuilt browser bundle with its own Octane runtime, so the host app needs no additional widget styles or runtime setup.
 
+![Mural](public/page-builder-ss.png)
+
 ## Try it locally
 
 Requires Bun and Node.js 22.22.2 or newer.
@@ -60,7 +62,7 @@ import { beastOctane } from 'beast-tsrx/vite'
 import { beastPageBuilder } from '@beastjs/page-builder/vite'
 
 export default defineConfig({
-  plugins: [beastOctane(), beastPageBuilder()],
+  plugins: [beastOctane(), beastPageBuilder()]
 })
 ```
 
@@ -73,7 +75,7 @@ import { beastOctane } from 'beast-tsrx/rspack'
 import { beastPageBuilder } from '@beastjs/page-builder/rspack'
 
 export default {
-  plugins: [beastOctane(), beastPageBuilder()],
+  plugins: [beastOctane(), beastPageBuilder()]
 }
 ```
 
@@ -87,7 +89,7 @@ import { beastOctane } from 'beast-tsrx/rsbuild'
 import { beastPageBuilder } from '@beastjs/page-builder/rsbuild'
 
 export default defineConfig({
-  plugins: [...beastOctane(), beastPageBuilder()],
+  plugins: [...beastOctane(), beastPageBuilder()]
 })
 ```
 
@@ -108,21 +110,21 @@ beastPageBuilder({
   position: 'center',
   theme: 'light',
   scanDuration: 1600,
-  launcher: true,
+  launcher: true
 })
 ```
 
-| Option | Default | Behavior |
-| --- | --- | --- |
-| `include` | `['src']` | Project-relative directories to scan recursively for `.btsx`, `.ts`, and `.tsx` sources |
-| `pagesDir` | `'src/pages'` | Destination for new files; also included in the scan |
-| `routerFile` | `'src/router.ts'` | Existing `@octanejs/tanstack-router` module with a root `addChildren([...])` route tree |
-| `navigation` | Auto-detect | Optional menu file and selector/array/group; see below |
-| `shortcut` | `'Mod+B'` | `Mod` means Command on macOS and Control elsewhere. Supports `Meta`, `Ctrl`, and optional `+Shift`, followed by a letter. |
-| `position` | `'center'` | `'center'` or `'bottom-right'` |
-| `theme` | `'light'` | `'light'`, `'dark'`, or `'auto'` |
-| `scanDuration` | `1600` | Minimum sonar duration, in milliseconds, from 0 to 10,000. Reduced motion skips this delay. |
-| `launcher` | `true` | Show the floating Builder button |
+| Option         | Default           | Behavior                                                                                                                  |
+| -------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `include`      | `['src']`         | Project-relative directories to scan recursively for `.btsx`, `.ts`, and `.tsx` sources                                   |
+| `pagesDir`     | `'src/pages'`     | Destination for new files; also included in the scan                                                                      |
+| `routerFile`   | `'src/router.ts'` | Existing `@octanejs/tanstack-router` module with a root `addChildren([...])` route tree                                   |
+| `navigation`   | Auto-detect       | Optional menu file and selector/array/group; see below                                                                    |
+| `shortcut`     | `'Mod+B'`         | `Mod` means Command on macOS and Control elsewhere. Supports `Meta`, `Ctrl`, and optional `+Shift`, followed by a letter. |
+| `position`     | `'center'`        | `'center'` or `'bottom-right'`                                                                                            |
+| `theme`        | `'light'`         | `'light'`, `'dark'`, or `'auto'`                                                                                          |
+| `scanDuration` | `1600`            | Minimum sonar duration, in milliseconds, from 0 to 10,000. Reduced motion skips this delay.                               |
+| `launcher`     | `true`            | Show the floating Builder button                                                                                          |
 
 ⌘B/Ctrl+B is intercepted while the plugin is active, including in text fields. Choose a different shortcut if it conflicts with your app. The optional launcher is always another way to open the widget.
 
