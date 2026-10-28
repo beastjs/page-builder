@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import { BASE, type BeastPageBuilderOptions, type ClientConfig, type PageDraft, type TabsDraft } from '../shared/types.js'
 import { BuilderError, BuilderProject } from './project.js'
+import { sectionSummaries, sectionTemplate } from './catalog/index.js'
 
 // The server modules are bundled into each public entrypoint in dist/.
 export const CLIENT_ENTRY = fileURLToPath(new URL('./client.js', import.meta.url))
@@ -68,6 +69,13 @@ export function createBuilderServer(root: string, options: BeastPageBuilderOptio
       else if (req.method === 'GET' && route === '/creation') send(200, await project.creation(url.searchParams.get('hash') ?? ''))
       else if (req.method === 'GET' && route === '/source') send(200, { source: await project.source(url.searchParams.get('path') ?? '') })
       else if (req.method === 'GET' && route === '/tabs/creation') send(200, await project.tabCreation(url.searchParams.get('hash') ?? ''))
+      else if (req.method === 'GET' && route === '/sections') send(200, sectionSummaries)
+      else if (req.method === 'GET' && route.startsWith('/sections/')) {
+        // Template ids are plain kebab-case, so an encoded or malformed id is simply unknown.
+        const template = sectionTemplate(route.slice('/sections/'.length))
+        if (!template) throw new BuilderError('Unknown section template.', 404)
+        send(200, template)
+      }
       else if (req.method === 'POST' && (route === '/tabs/preview' || route === '/tabs/create')) {
         const body = await jsonBody(req)
         const draft = { page: body.page, routePath: body.routePath, component: body.component, items: body.items, active: body.active, label: body.label, instance: body.instance } as TabsDraft

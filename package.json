@@ -44,7 +44,9 @@
     "prepack": "bun run build",
     "pack:check": "npm pack --dry-run",
     "icons:build": "bun scripts/build-icons.ts --svg src/lib/icons/svg --out src/lib/icons/icons.ts",
-    "icons:check": "bun scripts/build-icons.ts --svg src/lib/icons/svg --out src/lib/icons/icons.ts --check"
+    "icons:check": "bun scripts/build-icons.ts --svg src/lib/icons/svg --out src/lib/icons/icons.ts --check",
+    "catalog:sync": "bun scripts/sync-catalog.ts",
+    "catalog:check": "bun scripts/sync-catalog.ts --check"
   },
   "dependencies": {
     "@tsrx/oxc": "0.20.0",

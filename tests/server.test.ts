@@ -33,6 +33,16 @@ test('API scans an empty project and leaves app requests alone', async () => {
   expect((await response.json() as { files: unknown[] }).files).toEqual([])
   expect(await (await fetch(origin + '/app')).text()).toBe('App route')
 })
+test('API serves section summaries and fetches one template on demand', async () => {
+  const origin = await fixture(), base = origin + '/__beast-page-builder'
+  const summaries = await (await fetch(base + '/sections')).json() as { id: string; source?: string }[]
+  expect(summaries.length).toBeGreaterThan(0)
+  expect(summaries.some(summary => summary.source !== undefined)).toBe(false)
+  const template = await (await fetch(base + '/sections/' + summaries[0]!.id)).json() as { id: string; source: string }
+  expect(template).toMatchObject({ id: summaries[0]!.id, source: expect.stringContaining('data-section=') })
+  expect((await fetch(base + '/sections/missing')).status).toBe(404)
+  expect((await fetch(base + '/sections/%E0%A4%A')).status).toBe(404)
+})
 test('API rejects cross-site, malformed, oversized, and non-JSON writes', async () => {
   const origin = await fixture(), url = origin + '/__beast-page-builder/preview'
   expect((await fetch(url, { method: 'POST', headers: { Origin: 'https://untrusted.example', 'Content-Type': 'application/json' }, body: '{}' })).status).toBe(403)

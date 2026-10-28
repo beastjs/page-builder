@@ -1,3 +1,4 @@
+import type { SectionTemplate } from './catalog/types.js'
 export const BASE = '/__beast-page-builder'
 
 export interface BeastPageBuilderOptions {
@@ -100,3 +101,5 @@ export type TabValue = string | number | boolean
 export interface TabsDraft { page: string; routePath: string; component: string; items: Record<string, TabValue>[]; active: TabValue; label?: string; instance?: string }
 export interface TabInstance { id: string; page: string; routePath: string; component: string; line: number; draft?: TabsDraft; reason?: string }
 export interface TabsPreview { path: string; source: string; hash: string; routePath: string; files: PlannedFile[] }
+/** A catalog section without its source, for browsing. Fetch `/sections/:id` for the full template. */
+export type SectionSummary = Omit<SectionTemplate, 'source'>
