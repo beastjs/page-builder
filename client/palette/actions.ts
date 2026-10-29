@@ -6,6 +6,7 @@ import type { PaletteAction, PaletteTab } from './types.js'
 interface PaletteHandlers {
   createPage: () => void
   addTabs: () => void
+  openLibrary: () => void
   scan: () => void
   toggleLauncher: () => void
   editTabs: (instance: TabInstance) => void
@@ -99,6 +100,14 @@ export function paletteActions({ report, tab, query, launcherHidden, shortcut, s
           group: 'Existing sections',
           run: () => handlers.editSection(section)
         })),
+        {
+          id: 'action:section-library',
+          name: 'Browse the section library',
+          detail: 'Studio designs, installed as components',
+          icon: 'plus',
+          group: 'Create sections',
+          run: handlers.openLibrary
+        },
         ...Object.entries(sections).filter(([name]) => !(report?.sections ?? []).some(section => matches(section, name))).map(([name, snippet]) => ({
           id: `section:${name}`,
           name: `Create ${name}`,

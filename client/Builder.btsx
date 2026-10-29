@@ -6,6 +6,7 @@ import ReviewView from './review/ReviewView.btsx'
 import FileInspector from './inspect/FileInspector.btsx'
 import CollectionInspector from './inspect/CollectionInspector.btsx'
 import StatusView from './status/StatusView.btsx'
+import SectionLibrary from './sections/SectionLibrary.btsx'
 import Icon from './ui/Icon.btsx'
 import css from './widget.css'
 
@@ -32,5 +33,7 @@ style #{css}
         FileInspector({...active.props})
       elseif active.type === 'collection'
         CollectionInspector({...active.props})
+      elseif active.type === 'sections'
+        SectionLibrary({...active.props})
       else
         StatusView({...active.props})

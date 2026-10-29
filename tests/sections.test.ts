@@ -102,21 +102,22 @@ test('palette offers every detected match for editing and creates only missing s
   const noop = () => {}
   const options = {
     report, tab: 'Sections' as const, query: '', launcherHidden: false, shortcut: 'Mod+B', sections: sectionLibrary,
-    handlers: { createPage: noop, addTabs: noop, scan: noop, toggleLauncher: noop, editTabs: noop, openFile: noop, openCollection: noop,
+    handlers: { createPage: noop, addTabs: noop, openLibrary: () => { runs.push('library') }, scan: noop, toggleLauncher: noop, editTabs: noop, openFile: noop, openCollection: noop,
       editSection: (section: ProjectScan['sections'][number]) => { runs.push(section.id) }, addSection: (snippet: string) => { runs.push(snippet) } }
   }
   const actions = paletteActions(options)
   expect(actions.filter(action => action.group === 'Existing sections').map(action => action.name)).toEqual(['Edit Topbar', 'Edit Topbar', 'Edit Partners marquee', 'Edit custom-section', 'Edit Stats', 'Edit FAQ'])
   expect(actions.find(action => action.id === 'section:edit:five')?.detail).toBe('data-section=stats · sections/Stats.btsx:1 · on Home.btsx')
-  expect(actions.filter(action => action.group === 'Create sections').map(action => action.name)).toEqual(['Create Sidebar', 'Create Hero', 'Create Footer'])
+  expect(actions.filter(action => action.group === 'Create sections').map(action => action.name)).toEqual(['Browse the section library', 'Create Sidebar', 'Create Hero', 'Create Footer'])
   actions[1]!.run()
   actions.find(action => action.name === 'Create Sidebar')!.run()
-  expect(runs).toEqual(['two', sectionLibrary.Sidebar!])
+  actions.find(action => action.id === 'action:section-library')!.run()
+  expect(runs).toEqual(['two', sectionLibrary.Sidebar!, 'library'])
   expect(paletteActions({ ...options, query: '#topbar' })).toHaveLength(2)
   expect(paletteActions({ ...options, query: 'Create Topbar' })).toEqual([])
   expect(paletteActions({ ...options, tab: 'All' }).some(action => action.name === 'Edit Topbar')).toBe(true)
   expect(paletteActions({ ...options, tab: 'Components' })).toEqual([])
-  expect(paletteActions({ ...options, report: null }).filter(action => action.group === 'Create sections')).toHaveLength(6)
+  expect(paletteActions({ ...options, report: null }).filter(action => action.group === 'Create sections')).toHaveLength(7)
 })
 
 test('section templates provide matching IDs for the next project scan', () => {

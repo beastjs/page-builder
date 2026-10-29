@@ -4,7 +4,7 @@ import Icon from '../ui/Icon.btsx'
 
 props { screen, onBack, onClose }: { screen: SuccessScreen; onBack: () => void; onClose: () => void }
 setup
-  const title = screen.type === 'tabs-success' ? (screen.editing ? 'Tabs updated' : 'Tabs added') : screen.section ? 'Section updated' : screen.editing ? 'Page updated' : 'Your idea has a home'
+  const title = screen.type === 'tabs-success' ? (screen.editing ? 'Tabs updated' : 'Tabs added') : screen.type === 'section-success' ? 'Section added' : screen.section ? 'Section updated' : screen.editing ? 'Page updated' : 'Your idea has a home'
 
 ViewHeader(title={title} subtitle={screen.preview.path} onBack={onBack} onClose={onClose})
 .success-body
@@ -17,6 +17,17 @@ ViewHeader(title={title} subtitle={screen.preview.path} onBack={onBack} onClose=
         | #{`${screen.count} tabs ${screen.editing ? 'updated on' : 'added to'} `}
         strong #{screen.preview.routePath}
         | .
+  elseif screen.type === 'section-success'
+    fragment
+      span.eyebrow READY FOR WHAT’S NEXT
+      h2 #{screen.label} is on the page.
+      p
+        | #{`${screen.preview.name} is in ${screen.preview.path} and renders on ${screen.preview.page}.`}
+      if screen.preview.routePath
+        a.primary.visit(href={screen.href} onClick={screen.onVisit})
+          | Open page
+          Icon(name="arrow")
+      button.secondary.add-another(type="button" onClick={screen.onAddAnother}) Add another section
   else
     fragment
       span.eyebrow READY FOR WHAT’S NEXT

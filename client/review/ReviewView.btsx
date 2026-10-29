@@ -11,7 +11,8 @@ module
     'edit-page': { label: 'Save page', hint: 'Updates the existing page source.' },
     'edit-section': { label: 'Save section', hint: 'Updates the source file containing this section.' },
     'add-tabs': { label: 'Add Tabs', hint: 'Adds the Tabs component and its items to this page.' },
-    'edit-tabs': { label: 'Save tabs', hint: 'Updates this tab group in place.' }
+    'edit-tabs': { label: 'Save tabs', hint: 'Updates this tab group in place.' },
+    'add-section': { label: 'Add section', hint: 'Creates the section component and renders it on the page.' }
   } satisfies Record<ReviewMode, { label: string; hint: string }>
 
 props { mode, preview, ready = true, busy, dark, message, onSave, onBack, onClose }: ReviewViewProps
@@ -24,6 +25,10 @@ ViewHeader(title="One last look" subtitle={preview.path} onBack={onBack} onClose
   .validation
     Icon(name="check")
     | Compiles with Beast and Octane
+  if 'warnings' in preview && preview.warnings.length
+    ul.install-warnings(aria-label="Before this section looks right")
+      each warning in preview.warnings key warning
+        li #{warning}
   each file in preview.files key file.path
     PlannedFile(file={file})
   StatusMessage(message={message})

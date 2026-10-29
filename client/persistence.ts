@@ -38,6 +38,14 @@ export function createPersistence(base: string) {
         return sessionStorage.getItem(key('save'))
       } catch { return null }
     },
+    /** The hash of a section install whose response a reload may interrupt. */
+    installReceipt(value?: string): string | null {
+      try {
+        if (value === '') sessionStorage.removeItem(key('install'))
+        else if (value) sessionStorage.setItem(key('install'), value)
+        return sessionStorage.getItem(key('install'))
+      } catch { return null }
+    },
     tabsReceipt(value?: TabsReceipt | null): TabsReceipt | null {
       try {
         if (value === null) sessionStorage.removeItem(key('tabs'))

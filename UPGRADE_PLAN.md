@@ -13,7 +13,7 @@ Bring the Design Studio section catalog from `~/Code/play` into the page builder
 | 2 | Section identity and discovery | Done | 1 |
 | 3 | Section install plan | Done | 1, 2 |
 | 4 | Tailwind detection and studio base styles | Done | 3 |
-| 5 | Section library UI | Not started | 1, 3 |
+| 5 | Section library UI | Done | 1, 3 |
 | 6 | Final verification and measurements | Not started | 1–5 |
 
 “Done” means implemented and verified in the current working tree. It does not mean committed or published. Proposed filenames below may change during implementation.
@@ -117,22 +117,22 @@ Test change: “reduced motion skips the waiting animation” required the real 
 
 ## 5. Section library UI
 
-Status: **Not started**
+Status: **Done**
 
-Files: `client/sections/SectionLibrary.btsx`, `Wireframe.btsx`, `types.ts`, `client/widget.css`, and `client/icons.ts`.
+Files: `client/sections/SectionLibrary.btsx`, `Wireframe.btsx`, `model.ts`, `types.ts`, `client/controller.ts`, `client/state.ts`, `client/Builder.btsx`, `client/persistence.ts`, `client/review/*`, `client/status/SuccessView.btsx` and `types.ts`, `client/pages/PageEditor.btsx` and `types.ts`, `client/palette/actions.ts`, `client/widget.css`, and `tests/library-ui.e2e.ts`.
 
-- [ ] Port `Wireframe.btsx`; convert its Tailwind token classes to scoped CSS in `widget.css`.
-- [ ] Port `SectionLibrary.btsx` logic (stages, kinds, search, current/swap/add states) onto summaries from milestone 1; restyle with existing widget classes.
-- [ ] Add missing icons (`chevron-down-tiny` or an existing equivalent).
-- [ ] Reach the library from the palette and from the page editor's “Add a section” menu, replacing the plain name list.
-- [ ] Load a template's source only when it is chosen.
-- [ ] Wire install into `client/controller.ts`: choose a page, call `/install/preview`, show the existing review screen, save through `/install/create`, and recover through `/install/creation` after a reload.
-- [ ] Title studio section edits by kind (“Edit Stats”) rather than “Edit #stats”, since `data-section` roots have no `id`.
-- [ ] Leave out `DesignStudio`, `StudioStage`, `DesignOverlay`, `DesignInspector`, `ThemeDesigner`, `ThemePicker`, and `FullstackBrowser`; saved sections already render in the user's site through HMR.
+- [x] Port `Wireframe.btsx`: the same token vocabulary, as `.wf-<token>` rules in `widget.css` drawn with `color-mix` on `currentColor`, so thumbnails follow the light and dark themes.
+- [x] Port the library: stages, kinds with counts, expandable template cards, and word search over kind and template text (`client/sections/model.ts`). Restyled with the widget's own variables. Play's “swap” state is dropped because the builder has no replace operation; a kind already on the chosen page shows “On page”, and its cards read “Add another”.
+- [x] Icons: no new icons. The kind toggle reuses `arrow` (rotated when open) and cards use `plus` and `search`.
+- [x] Reach the library from the palette (“Browse the section library” in the Create sections group, on the All and Sections tabs) and from the page editor when editing a saved page. The editor's button is disabled while the draft has unsaved edits, because an install rewrites the page file. New-page drafts keep the inline snippet menu: a draft has no file to install into yet.
+- [x] Load sources only when chosen: the client never fetches template sources. It loads summaries once from `/sections`, and the review screen shows the source the server plans to write.
+- [x] Wire install into the controller: a page picker (defaulting to the current route's page), `/install/preview` into the existing review screen (new `add-section` mode, with Tailwind warnings listed above the files), save through `/install/create`, a “Section added” screen with Open page and Add another section, and recovery through `/install/creation` with a new session receipt after the reload Vite triggers on save.
+- [x] Title studio section edits by kind (“Edit Stats”); inline sections keep “Edit #id”.
+- [x] Leave out `DesignStudio`, `StudioStage`, `DesignOverlay`, `DesignInspector`, `ThemeDesigner`, `ThemePicker`, and `FullstackBrowser`.
 
 Complete when: users can browse, search, and install catalog sections from the builder, in light and dark themes, on desktop and mobile.
 
-Evidence:
+Evidence (October 29, 2026): `bun run check` passed type checking, client type checking, the production build, and all 86 non-browser tests (the palette test now covers the library action). The full browser suite passed all 87 tests in 3.4 minutes, including 4 new tests in `tests/library-ui.e2e.ts`: browsing, search, empty results, per-page “On page” marks and page switching; a held review showing the pending card and disabled cards, warnings, back-to-library focus, save, receipt, and Add another; a failed review keeping the library and its message, and reload recovery from the receipt; and the page editor's library button (disabled while dirty) plus the “Edit Stats” title. By hand in the app's browser against the browser-test server: installed “Metric row” into the fixture's home page, saw the page reload and the success screen restored from the receipt, saw the section render, and returned to the library with Stats marked “On page”. Light, dark, desktop, and 375 px mobile layouts were inspected; the footer text was widened on mobile after that check. The client is 602,687 bytes minified and 238,119 gzipped (Node zlib defaults): +24,532 and +6,113 bytes over milestone 4, for the library, wireframes, controller flow, and kind list. No template source is in the client.
 
 ## 6. Final verification and measurements
 

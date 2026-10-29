@@ -9,7 +9,7 @@ import ActionFooter from '../ui/ActionFooter.btsx'
 import StatusMessage from '../ui/StatusMessage.btsx'
 import SourceEditor from './SourceEditor.btsx'
 
-props { draft, pagesDir, targets, dark, busy, message, onDraftChange, onReview, onBack, onClose, onClearMessage }: PageEditorProps
+props { draft, pagesDir, targets, dark, busy, message, onDraftChange, onReview, onBack, onClose, onClearMessage, sectionTitle, library }: PageEditorProps
 setup
   const form = usePageForm(draft, onDraftChange, onReview)
   const values = useSelector(form.store, (state) => state.values)
@@ -25,7 +25,7 @@ setup
   }
   const replaceTemplate = (name: keyof typeof templates) => { changeSource(templates[name]); onClearMessage() }
 
-ViewHeader(title={values.section ? `Edit #${values.section}` : editing ? 'Edit page' : 'Make room for a new idea'} subtitle={editing ? values.path : `Create a page in ${pagesDir}`} onBack={onBack} onClose={onClose})
+ViewHeader(title={values.section ? `Edit ${sectionTitle ?? '#' + values.section}` : editing ? 'Edit page' : 'Make room for a new idea'} subtitle={editing ? values.path : `Create a page in ${pagesDir}`} onBack={onBack} onClose={onClose})
 form#builder-page-form.draft-body.page-form(ref={formRef} onSubmit={submit})
   if !editing
     fragment
@@ -58,10 +58,14 @@ form#builder-page-form.draft-body.page-form(ref={formRef} onSubmit={submit})
           .section-menu
             each name in Object.keys(sections) key name
               button(type="button" data-section={name} onClick={() => changeSource(insertSection(form.state.values.source, sections[name]))}) #{name}
+  if library
+    .editor-toolbar
+      span.field-label Sections
+      button.open-library(type="button" disabled={!library.onOpen} title={library.onOpen ? undefined : 'Review or discard your edits first; adding a section changes this file.'} onClick={() => library.onOpen?.()}) Add from section library +
   SourceEditor(id={editing ? 'edit-page-source' : 'page-source'} value={values.source} visibleLabel={editing} label={values.section ? 'BTSX section source' : 'BTSX page source'} onChange={changeSource})
   StatusMessage(message={message})
 ActionFooter(
-  ~ description={values.section ? `Edit #${values.section} in its source file.` : editing ? 'Edit page content and styles.' : 'Page + route + navigation link.'}
+  ~ description={values.section ? `Edit ${sectionTitle ?? '#' + values.section} in its source file.` : editing ? 'Edit page content and styles.' : 'Page + route + navigation link.'}
   ~ descriptionIcon={editing ? undefined : 'page'}
   ~ dark={dark}
   ~ action={{ type: 'submit', form: 'builder-page-form', className: 'review', label: editing ? 'Review changes' : 'Review page', pendingLabel: 'Checking…', pending: busy || submitting, icon: 'arrow' }}

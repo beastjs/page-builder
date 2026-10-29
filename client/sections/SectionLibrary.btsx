@@ -1,0 +1,93 @@
+import type { SectionLibraryProps } from './types.js'
+import type { SectionSummary } from '../../shared/types.js'
+import { sectionKind, sectionKinds, sectionStages } from '../../shared/catalog/kinds.js'
+import { searchSummaries } from './model.js'
+import ViewHeader from '../ui/ViewHeader.btsx'
+import StatusMessage from '../ui/StatusMessage.btsx'
+import ThemeToggle from '../ui/ThemeToggle.btsx'
+import Icon from '../ui/Icon.btsx'
+import Wireframe from './Wireframe.btsx'
+
+module
+  interface CardProps {
+    summary: SectionSummary
+    showKind: boolean
+    onPage: boolean
+    pending: boolean
+    disabled: boolean
+    onInstall: (template: string) => void
+  }
+
+component SectionCard
+  props { summary, showKind, onPage, pending, disabled, onInstall }: CardProps
+
+  button.section-card(
+    ~ type="button"
+    ~ data-template={summary.id}
+    ~ aria-label={`${onPage ? 'Add another' : 'Add'} ${sectionKind(summary.kind).label}: ${summary.title}`}
+    ~ aria-busy={pending || undefined}
+    ~ disabled={disabled}
+    ~ onClick={() => onInstall(summary.id)}
+    ~ )
+    Wireframe(rows={summary.wireframe})
+    span.section-card-text
+      span.section-card-title
+        if showKind
+          span.muted #{sectionKind(summary.kind).label + ' · '}
+        | #{summary.title}
+      span.section-card-description #{summary.description}
+    span.section-card-action
+      | #{pending ? 'Checking…' : onPage ? 'Add another' : 'Add'}
+      Icon(name="plus")
+
+props { summaries, pages, page, pageKinds, sectionsDir, query, openKind, pending, dark, message, onPageChange, onQueryChange, onOpenKind, onInstall, onBack, onClose }: SectionLibraryProps
+setup
+  const catalog = summaries ?? []
+  const results = query.trim() ? searchSummaries(catalog, query) : []
+  const of = (kind: string) => catalog.filter(summary => summary.kind === kind)
+  const disabled = !page || pending !== undefined
+
+ViewHeader(title="Section library" subtitle={page ? `Adds to ${page}` : 'Choose a page to add sections to'} onBack={onBack} onClose={onClose})
+.draft-body.library-body
+  label.field-label(for="section-page") Add to page
+  select#section-page.text-field(value={page} disabled={!pages.length} onChange={(event) => onPageChange(event.currentTarget.value)})
+    each item in pages key item.path
+      option(value={item.path}) #{item.name} · #{item.path}
+  if !pages.length
+    p.hint No pages found. Create a page first, then add sections to it.
+  label.name-field.library-search
+    Icon(name="search")
+    span.sr-only Search sections
+    input#section-search(type="search" value={query} placeholder="pricing, logos, waitlist…" spellcheck={false} autoComplete="off" onInput={(event) => onQueryChange(event.currentTarget.value)})
+  StatusMessage(message={message})
+  if summaries === null
+    p.hint(role="status") Loading designs…
+  elseif query.trim()
+    fragment
+      p.hint(role="status") #{results.length} #{results.length === 1 ? 'design' : 'designs'} for “#{query.trim()}”
+      .section-cards
+        each summary in results key summary.id
+          SectionCard(summary={summary} showKind={true} onPage={pageKinds.includes(summary.kind)} pending={pending === summary.id} disabled={disabled} onInstall={onInstall})
+        empty
+          p.hint No sections match. Try “hero”, “reviews”, or “signup”.
+  else
+    each stage in sectionStages key stage.id
+      section.library-stage
+        h3.group-label #{stage.label}
+        each kind in sectionKinds.filter(candidate => candidate.stage === stage.id) key kind.id
+          .library-kind
+            button.library-kind-toggle(type="button" aria-expanded={openKind === kind.id} data-kind={kind.id} onClick={() => onOpenKind(openKind === kind.id ? undefined : kind.id)})
+              Icon(name="arrow")
+              span.library-kind-text
+                span #{kind.label}
+                span.muted #{kind.summary}
+              if pageKinds.includes(kind.id)
+                span.on-page(title="On this page") On page
+              span.library-count #{of(kind.id).length}
+            if openKind === kind.id
+              .section-cards
+                each summary in of(kind.id) key summary.id
+                  SectionCard(summary={summary} showKind={false} onPage={pageKinds.includes(kind.id)} pending={pending === summary.id} disabled={disabled} onInstall={onInstall})
+footer.action-footer.library-footer
+  span #{summaries ? `${catalog.length} designs · installed as components in ${sectionsDir}` : 'Studio sections'}
+  ThemeToggle(dark={dark})

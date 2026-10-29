@@ -1,0 +1,12 @@
+module
+  // Wireframe vocabulary for SectionTemplate.wireframe; each token has a .wf-<token> rule in widget.css.
+  const tokens = new Set(['logo', 'dot', 'avatar', 'xs', 'line', 'long', 'wide', 'title', 'head', 'huge', 'num', 'pill', 'btn', 'ghost', 'field', 'row', 'card', 'tall', 'feature', 'media', 'text', 'gap'])
+  const cells = (row: string) => row.replace(/^\^\s*/, '').split(/\s+/).filter(Boolean)
+
+props { rows }: { rows: string[] }
+
+.wireframe(aria-hidden="true")
+  each row, index in rows key index
+    .wireframe-row(data-centered={row.startsWith('^') || undefined})
+      each token, position in cells(row) key position
+        span(className={'wf-' + (tokens.has(token) ? token : 'line')})

@@ -8,6 +8,8 @@ import {
   type PageRoute,
   type ProjectFile,
   type ProjectScan,
+  type SectionInstallPreview,
+  type SectionSummary,
   type TabComponent,
   type TabInstance,
   type TabsDraft,
@@ -22,6 +24,10 @@ import { paletteActions } from './palette/actions.js'
 import type { PaletteProps, PaletteTab } from './palette/types.js'
 import { newTab, tabKey } from './tabs/model.js'
 import type { TabsEditorProps } from './tabs/types.js'
+import type { SectionLibraryProps } from './sections/types.js'
+import { kindsOnPage } from './sections/model.js'
+import type { SectionKindId } from '../shared/catalog/types.js'
+import { sectionKind } from '../shared/catalog/kinds.js'
 import { sectionLibrary, templates } from './templates.js'
 import type { BuilderProps, BuilderScreen, BuilderView } from './state.js'
 import { defaultConfig, createApi } from './api.js'
@@ -43,7 +49,7 @@ interface ControllerOptions {
 export function createBuilderController({ host, shadow, panel, apiBase, commit }: ControllerOptions): () => void {
   const request = createApi(apiBase)
   const storage = createPersistence(apiBase)
-  const { receipt, tabsReceipt } = storage
+  const { receipt, tabsReceipt, installReceipt } = storage
   let disposed = false
   let config = defaultConfig
   let report: ProjectScan | null = null
@@ -72,6 +78,12 @@ export function createBuilderController({ host, shadow, panel, apiBase, commit }
   let tabsDraft: TabsDraft = { page: '', routePath: '', component: '', items: [], active: '', label: 'Tabs' }
   let tabsPreview: TabsPreview | null = null
   let draftRevision = 0
+  let sectionSummaries: SectionSummary[] | null = null
+  let sectionPage = ''
+  let sectionQuery = ''
+  let sectionKindOpen: SectionKindId | undefined
+  let sectionTemplate: string | undefined
+  let sectionPreview: SectionInstallPreview | null = null
   let resumeTabs = false
   const routePrefix = apiBase.slice(0, -BASE.length)
   const navigation = createNavigation(routePrefix)
@@ -119,7 +131,8 @@ export function createBuilderController({ host, shadow, panel, apiBase, commit }
     const screen = !opened ? null : view === 'palette' ? paletteScreen()
       : view === 'draft' || view === 'page-edit' ? pageScreen()
       : view === 'tabs-draft' ? tabsScreen()
-      : view === 'preview' || view === 'tabs-preview' ? reviewScreen()
+      : view === 'sections' ? libraryScreen()
+      : view === 'preview' || view === 'tabs-preview' || view === 'section-preview' ? reviewScreen()
       : view === 'file' || view === 'collection' ? inspectorScreen() : statusScreen()
     behavior.updateContent(() => commit({
       opened, screen, theme: preferences.mode(config), position: config.position,
@@ -297,6 +310,23 @@ export function createBuilderController({ host, shadow, panel, apiBase, commit }
         void scan()
       }
     }
+    else if (view === 'section-success') {
+      const installed = sectionPreview!
+      screen = {
+        type: 'section-success', label: sectionKind(installed.kind).label, preview: installed, href: routePrefix + installed.routePath,
+        onVisit: () => { installReceipt('') },
+        onAddAnother() {
+          installReceipt('')
+          sectionPreview = null
+          void scan().then(() => { if (opened && atView('palette')) openLibrary(installed.page) })
+        },
+        onDone() {
+          installReceipt('')
+          sectionPreview = null
+          void scan()
+        }
+      }
+    }
     else screen = {
       type: 'page-success', editing: !!draft.path, section: draft.section, name: draft.name, preview: preview!, href: routePrefix + preview!.routePath,
       onVisit: () => { receipt('') },
@@ -319,6 +349,7 @@ export function createBuilderController({ host, shadow, panel, apiBase, commit }
         message = ''
         if (view === 'success') receipt('')
         if (view === 'tabs-success') tabsReceipt(null)
+        if (view === 'section-success') installReceipt('')
         if (!report) { void scan(); return }
         setView('palette')
         render()
@@ -372,6 +403,13 @@ export function createBuilderController({ host, shadow, panel, apiBase, commit }
       busy, dark: isDark(), message,
       onBack() {
         message = ''
+        if (view === 'section-preview') {
+          sectionPreview = null
+          setView('sections')
+          render()
+          panel.querySelector<HTMLElement>(`[data-template="${CSS.escape(sectionTemplate ?? '')}"]`)?.focus()
+          return
+        }
         setView(view === 'tabs-preview' ? 'tabs-draft' : draft.path ? 'page-edit' : 'draft')
         render()
         panel.querySelector<HTMLElement>('input:not(:disabled), textarea:not(:disabled), select:not(:disabled)')?.focus()
@@ -380,13 +418,19 @@ export function createBuilderController({ host, shadow, panel, apiBase, commit }
     }
     const props: ReviewViewProps = view === 'tabs-preview'
       ? { ...controls, mode: tabsDraft.instance ? 'edit-tabs' : 'add-tabs', preview: tabsPreview!, ready: tabsReady(), onSave: saveTabs }
+      : view === 'section-preview'
+      ? { ...controls, mode: 'add-section', preview: sectionPreview!, onSave: saveSection }
       : { ...controls, mode: draft.section ? 'edit-section' : draft.path ? 'edit-page' : 'create-page', preview: preview!, onSave: save }
     return { type: 'review', key: screenVersion, view, props }
   }
 
   function pageScreen(): BuilderScreen {
+    const detected = draft.section ? report?.sections.find(section => section.file === draft.path && section.elementId === draft.section) : undefined
+    const savedPage = !!draft.path && !draft.section && !!report?.files.some(file => file.path === draft.path && file.kind === 'page')
     const props: PageEditorProps = {
       draft, pagesDir: config.pagesDir, targets: report?.navigationTargets ?? [], dark: isDark(), busy, message,
+      sectionTitle: detected?.marker === 'data-section' && detected.kind ? sectionKind(detected.kind).label : undefined,
+      library: savedPage ? { onOpen: draft.source === currentSource ? () => openLibrary(draft.path) : undefined } : undefined,
       onDraftChange(next) {
         if (next === draft) return
         draftRevision++
@@ -427,6 +471,106 @@ export function createBuilderController({ host, shadow, panel, apiBase, commit }
     panel.querySelector<HTMLInputElement>('#page-name')!.focus()
   }
 
+  function openLibrary(page?: string): void {
+    const pages = report?.files.filter(file => file.kind === 'page') ?? []
+    const routed = report?.pageRoutes.find(route => normalizePath(route.routePath) === currentPath())?.file
+    sectionPage = [page, sectionPage, routed].find(candidate => candidate && pages.some(file => file.path === candidate)) ?? pages[0]?.path ?? ''
+    sectionTemplate = undefined
+    sectionPreview = null
+    message = ''
+    setView('sections')
+    render()
+    panel.querySelector<HTMLInputElement>('#section-search')?.focus()
+    if (!sectionSummaries) void loadSummaries()
+  }
+  async function loadSummaries(): Promise<void> {
+    const turn = generation
+    try {
+      const result = await request<SectionSummary[]>('/sections')
+      sectionSummaries = result
+      if (opened && turn === generation) render()
+    } catch (error) {
+      if (opened && turn === generation && view === 'sections') notify(error instanceof Error ? error.message : String(error))
+    }
+  }
+  function libraryScreen(): BuilderScreen {
+    const props: SectionLibraryProps = {
+      summaries: sectionSummaries, pages: report?.files.filter(file => file.kind === 'page') ?? [], page: sectionPage,
+      pageKinds: kindsOnPage(report?.sections ?? [], sectionPage), sectionsDir: config.sectionsDir,
+      query: sectionQuery, openKind: sectionKindOpen, pending: busy ? sectionTemplate : undefined, dark: isDark(), message,
+      onPageChange(page) { sectionPage = page; message = ''; render() },
+      onQueryChange(next) { sectionQuery = next; render() },
+      onOpenKind(kind) { sectionKindOpen = kind; render() },
+      onInstall: (template) => void reviewSection(template),
+      onBack() {
+        message = ''
+        if (!report) { void scan(); return }
+        setView('palette')
+        render()
+        focusSearch()
+      },
+      onClose: close
+    }
+    return { type: 'sections', key: screenVersion, view, props }
+  }
+  async function reviewSection(template: string): Promise<void> {
+    if (busy || view !== 'sections' || !sectionPage) return
+    const turn = generation
+    const owner = screenVersion
+    const page = sectionPage
+    const current = () => opened && turn === generation && view === 'sections' && screenVersion === owner && sectionPage === page && sectionTemplate === template
+    busy = true
+    sectionTemplate = template
+    message = ''
+    render()
+    try {
+      const result = await request<SectionInstallPreview>('/install/preview', { page, template })
+      if (!current()) return
+      sectionPreview = result
+      setView('section-preview')
+    } catch (error) {
+      if (current()) message = error instanceof Error ? error.message : String(error)
+    } finally {
+      busy = false
+      if (opened) {
+        render()
+        if (turn === generation && atView('section-preview')) focusSearch()
+      }
+    }
+  }
+  async function saveSection(): Promise<void> {
+    if (busy || view !== 'section-preview' || !sectionPreview) return
+    const turn = generation
+    const owner = screenVersion
+    const proposed = sectionPreview
+    const current = () => opened && turn === generation && view === 'section-preview' && screenVersion === owner && sectionPreview === proposed
+    busy = true
+    message = ''
+    render()
+    installReceipt(proposed.hash)
+    try {
+      const result = await request<SectionInstallPreview>('/install/create', { page: proposed.page, template: proposed.template, hash: proposed.hash })
+      if (!current()) return
+      sectionPreview = result
+      // A page draft opened before the install no longer matches the file it would save over.
+      if (draft.path === result.page) {
+        draft = { name: 'UntitledPage', source: templates.blank }
+        draftRevision++
+        preview = null
+      }
+      setView('section-success')
+    } catch (error) {
+      if (turn === generation && installReceipt() === proposed.hash) installReceipt('')
+      if (current()) message = error instanceof Error ? error.message : String(error)
+    } finally {
+      busy = false
+      if (opened) {
+        render()
+        if (turn === generation && atView('section-success')) focusSearch()
+      }
+    }
+  }
+
   function paletteScreen(): BuilderScreen {
     const actions = paletteActions({
       report, tab, query, launcherHidden: !preferences.launcher(config), shortcut: shortcutLabel(), sections: sectionLibrary,
@@ -436,6 +580,7 @@ export function createBuilderController({ host, shadow, panel, apiBase, commit }
           panel.querySelector<HTMLInputElement>('#page-name')!.select()
         },
         addTabs: startTabs,
+        openLibrary: () => openLibrary(),
         scan: () => void scan(),
         toggleLauncher,
         editTabs: startEditingTabs,
@@ -652,6 +797,7 @@ export function createBuilderController({ host, shadow, panel, apiBase, commit }
   function close(): void {
     behavior.stopDrag()
     if (view === 'success') receipt('')
+    if (view === 'section-success') installReceipt('')
     if (view.startsWith('tabs-') && !busy) tabsReceipt(null)
     opened = false
     generation++
@@ -686,6 +832,25 @@ export function createBuilderController({ host, shadow, panel, apiBase, commit }
       resumeTabs = true
       open()
     }
+  }
+  const pendingInstall = installReceipt()
+  if (pendingInstall && /^[a-f0-9]{64}$/.test(pendingInstall)) {
+    void configuration
+      .catch(() => {})
+      .then(async () => {
+        if (generation !== recoveryTurn || opened || !host.isConnected) return
+        try {
+          const result = await request<SectionInstallPreview>(`/install/creation?hash=${pendingInstall}`)
+          if (installReceipt() !== pendingInstall || opened || generation !== recoveryTurn || !host.isConnected) return
+          sectionPreview = result
+          setView('section-success')
+          showPanel()
+          render()
+          focusSearch()
+        } catch {
+          if (generation === recoveryTurn && installReceipt() === pendingInstall) installReceipt('')
+        }
+      })
   }
   const pendingHash = receipt()
   if (pendingHash && /^[a-f0-9]{64}$/.test(pendingHash)) {
