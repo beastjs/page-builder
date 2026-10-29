@@ -21,7 +21,7 @@ Open `http://127.0.0.1:5190` and press **⌘B**, or click **Builder** in the bot
 
 The client BTSX migration is complete. See the [migration checklist](MIGRATION_PLAN.md) and [verification and measurements](CLIENT_VERIFICATION.md) for the final results and remaining performance limits.
 
-The search palette lives in `client/palette/*.btsx`, the tabs editor in `client/tabs/*.btsx`, and page creation/editing in `client/pages/*.btsx`. Palette action construction and filtering live in `client/palette/actions.ts`; page suggestions and section insertion live in `client/pages/model.ts`.
+The search palette lives in `client/palette/*.btsx`, the tabs editor in `client/tabs/*.btsx`, page creation/editing in `client/pages/*.btsx`, and the section library in `client/sections/*.btsx`. Palette action construction and filtering live in `client/palette/actions.ts`; page suggestions and section insertion live in `client/pages/model.ts`.
 
 The shared page/tabs review screens live in `client/review/*.btsx` and use `client/ui/SourceViewer.btsx` for proposed and original source. API requests and reviewed hashes remain in TypeScript. Scan, success, and error screens live in `client/status/*.btsx`. The scan view attaches its native HexTrace loader in an effect and removes it when the view unmounts.
 
@@ -103,6 +103,7 @@ All three adapters accept the same options:
 beastPageBuilder({
   include: ['src'],
   pagesDir: 'src/pages',
+  sectionsDir: 'src/sections',
   routerFile: 'src/router.ts',
   // Optional: choose the shared menu for new page links.
   navigation: { file: 'src/lib/navs.ts', array: 'navGroups', group: 'Workspace' },
@@ -118,6 +119,7 @@ beastPageBuilder({
 | -------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `include`      | `['src']`         | Project-relative directories to scan recursively for `.btsx`, `.ts`, and `.tsx` sources                                   |
 | `pagesDir`     | `'src/pages'`     | Destination for new files; also included in the scan                                                                      |
+| `sectionsDir`  | Beside `pagesDir` | Where library sections are installed as components (`src/pages` → `src/sections`); also scanned. Must be outside page folders. |
 | `routerFile`   | `'src/router.ts'` | Existing `@octanejs/tanstack-router` module with a root `addChildren([...])` route tree                                   |
 | `navigation`   | Auto-detect       | Optional menu file and selector/array/group; see below                                                                    |
 | `shortcut`     | `'Mod+B'`         | `Mod` means Command on macOS and Control elsewhere. Supports `Meta`, `Ctrl`, and optional `+Shift`, followed by a letter. |
@@ -146,6 +148,16 @@ Choose **Hide launcher** under **All** to hide the floating Builder button. Open
 Drag the builder's header or grip to move it. Its position stays within the viewport and is saved in localStorage across views, reopening, and reloads. You can also focus **Move builder** and use the arrow keys (Shift for larger steps); Home clears the saved coordinates and restores its configured position.
 
 Use **Sections** to find IDs such as `#topbar` in page and component source. Existing IDs offer **Edit**; a section template offers **Create** only when no matching ID exists. Review and save section changes in their original source file. Create and edit panels have up to 60% more height, with consistent height transitions and a sliding result hover indicator. The widget bundles OKX interface fonts and BMR monospace fonts; the host app does not need to serve them.
+
+## Add sections from the library
+
+Choose **Browse the section library** under **Sections**, or **Add from section library** while editing a saved page. The library holds 83 designs across 14 kinds (topbar, hero, partners, stats, features, guides, products, testimonials, pricing, FAQ, team, call to action, newsletter, and footer), grouped by where they sit in a page's story. Pick a page, then search or open a kind to see wireframe thumbnails; kinds already on that page are marked **On page**.
+
+Choosing a design opens the usual review. It creates `<sectionsDir>/<Kind>.btsx` (numbered when that name is taken; existing files are never overwritten), imports it into the page, and renders it under the page's root element before the first section of a later kind. Sections are found again by their `data-section` attribute, and editing one opens its component file. The page needs exactly one root element.
+
+Library sections are styled with **Tailwind CSS v4**. The builder reads `package.json` for `tailwindcss` and a bundler integration (`@tailwindcss/vite`, `@tailwindcss/postcss`, `@rsbuild/plugin-tailwindcss`, or `@tailwindcss/webpack`), and looks for a scanned stylesheet with `@import "tailwindcss"`. The first install adds a marked block of base styles, animations, and theme variables to that stylesheet. The builder never installs packages: when something is missing, the review lists what to add, and the section is still installed. Sections use only `currentColor` and `--studio-*` variables, so they take on the host page's colors.
+
+The catalog is synced from the Design Studio in `play` with `bun run catalog:sync`; `bun run catalog:check` reports drift, including in the base styles.
 
 Pages are classified by `pagesDir`, a `pages/` or `routes/` folder, or a component name ending in `Page`. Other Beast files appear as components. Dependency, generated, hidden, and symlinked entries are skipped. Use **Rescan project** after filesystem changes; there is no background file watcher in this version.
 
@@ -209,7 +221,7 @@ Detection is based on source semantics, not the browser DOM. Runtime-generated l
 
 ## Scope of this version
 
-This is a source-based page builder. Review shows BTSX source, not a rendered page. It creates and edits page source, edits source files containing detected section IDs, and adds or edits typed Tabs components on existing pages. It does not arrange arbitrary project components visually, generate content with AI, or generate new router infrastructure. Compilation validates Beast and Octane syntax; it does not type-check imports or props against the whole host project. Run the host app's normal checks after changes.
+This is a source-based page builder. Review shows BTSX source, not a rendered page. It creates and edits page source, edits source files containing detected section IDs, installs library sections into existing pages, and adds or edits typed Tabs components on existing pages. Library installs add sections; they do not replace or reorder existing ones. It does not arrange arbitrary project components visually, generate content with AI, or generate new router infrastructure. Compilation validates Beast and Octane syntax; it does not type-check imports or props against the whole host project. Run the host app's normal checks after changes.
 
 The API lives under `/__beast-page-builder`. Reads and writes reject cross-site requests. Writes require same-origin JSON, bounded request bodies, valid page names, and project-contained paths. The review hash includes every original and proposed file. Saving rechecks the reviewed source, stages all complete files, then commits them, with rollback on a write failure. Page creation never overwrites existing pages; explicit page and Tabs edits update the selected existing page after review. A changed draft, router, menu, or Tabs contract requires another review; concurrent saves through one project instance are serialized. If an external edit prevents rollback, the error identifies the files to inspect.
 
@@ -235,8 +247,9 @@ The harness serves the production widget on an ephemeral localhost port with 1,0
 
 ```text
 vite.ts / rspack.ts / rsbuild.ts  Bundler adapters
-server/                         Project scan, route/menu edits, reviewed saves, JSON API
-shared/                         Public configuration and wire types
+server/                         Project scan, route/menu edits, section installs, reviewed saves, JSON API
+server/catalog/                 Section library templates (synced from play; server-only)
+shared/                         Public configuration, wire types, section kinds
 client/                         Widget, sonar animation, page starters
 playground/                     Beast app for trying the plugin
 tests/                          Project, API, bundler, and browser checks

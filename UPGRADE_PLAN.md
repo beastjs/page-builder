@@ -1,6 +1,6 @@
 # Studio section components upgrade
 
-Updated: October 29, 2026
+Updated: October 29, 2026 — all milestones done
 
 Bring the Design Studio section catalog from `~/Code/play` into the page builder so users can browse, preview as wireframes, and install standalone section components into their project.
 
@@ -14,7 +14,7 @@ Bring the Design Studio section catalog from `~/Code/play` into the page builder
 | 3 | Section install plan | Done | 1, 2 |
 | 4 | Tailwind detection and studio base styles | Done | 3 |
 | 5 | Section library UI | Done | 1, 3 |
-| 6 | Final verification and measurements | Not started | 1–5 |
+| 6 | Final verification and measurements | Done | 1–5 |
 
 “Done” means implemented and verified in the current working tree. It does not mean committed or published. Proposed filenames below may change during implementation.
 
@@ -136,19 +136,25 @@ Evidence (October 29, 2026): `bun run check` passed type checking, client type c
 
 ## 6. Final verification and measurements
 
-Status: **Not started**
+Status: **Done**
 
-- [ ] Run `bun run check` for type checking, production build, and the complete non-browser test suite.
-- [ ] Extend `tests/sections.test.ts`, `tests/sections-ui.e2e.ts`, and the palette tests for studio sections; run the complete browser suite.
-- [ ] Install at least one section of every kind into the playground (with Tailwind added) and inspect it on desktop and mobile.
-- [ ] Inspect the library in light/dark mode, reduced motion, and keyboard focus.
-- [ ] Run `bun run pack:check` and verify the catalog ships with the server, not the client.
-- [ ] Record minified/gzipped client sizes against the 575,113 / 230,827 byte baseline measured in milestone 1.
-- [ ] Update the README and CHANGELOG with the new option, requirements, and limitations.
+- [x] Run `bun run check` for type checking, production build, and the complete non-browser test suite.
+- [x] Extend `tests/sections.test.ts`, `tests/sections-ui.e2e.ts`, and the palette tests for studio sections (milestones 2 and 5, plus `tests/library-ui.e2e.ts`); run the complete browser suite.
+- [x] Install at least one section of every kind into the playground (with Tailwind added) and inspect it on desktop and mobile.
+- [x] Inspect the library in light/dark mode, reduced motion, and keyboard focus (milestone 5 by hand and in `tests/library-ui.e2e.ts`; reduced motion through the browser suite's reduced-motion runs).
+- [x] Run `bun run pack:check` and verify the catalog ships with the server, not the client.
+- [x] Record minified/gzipped client sizes against the 575,113 / 230,827 byte baseline measured in milestone 1.
+- [x] Update the README and CHANGELOG with the new option, requirements, and limitations.
 
 Complete when: the full suite and package check pass, visual checks are complete, and the upgrade has a recorded final result.
 
-Evidence:
+Evidence (October 29, 2026): `bun run check` passed type checking, client type checking, the production build, and all 86 non-browser tests across 12 files. The full browser suite passed all 87 tests in 3.5 minutes. `bun run catalog:check` reports no drift from play. `npm pack --dry-run` lists 42 files, 446.6 kB packed and 1.4 MB unpacked; the catalog is bundled into each server adapter, and the client contains only kind labels and summaries.
+
+Playground check: the playground was copied to `.cache/sections-check` (git-ignored), with `tailwindcss` and `@tailwindcss/vite` 4.3.3 installed there only and `@import "tailwindcss"` added to its stylesheet. The repo's dependencies are unchanged. Driving the builder's server code, a `SectionsPage` was created through the normal page flow (route and navigation link), then the first design of each of the 14 kinds was installed. The scan reported Tailwind ready, there were no warnings, the stylesheet was edited only on the first install, and the page ended with all 14 components in story order. Served with Vite plus Tailwind's plugin, `/sections` rendered every section with no console errors (heights 65–871 px). At 375 px there was no horizontal overflow, and the pricing period toggle (`useState`) switched prices. Serving needed the copy to use the repo's `package.json`: with its own manifest, Vite tried to pre-bundle Octane's source-distributed router and failed. That is a fixture quirk; real projects list those packages themselves.
+
+Final client: 602,687 bytes minified and 238,119 gzipped (Node zlib defaults), +27,574 (+4.8%) and +7,292 (+3.2%) over the milestone 1 baseline. `dist/vite.js` grew from 83,850 to about 264 KB, mostly the catalog.
+
+Known limits, also in the README: installs add sections but do not replace or reorder them; Tailwind setup is detected from `package.json` and stylesheets, not bundler configs; named imports and re-exports are not followed when linking sections to pages; the per-kind install test samples one template per kind (all 83 compile in `tests/catalog.test.ts`); studio themes are not ported; and whether milestones 1–4 slightly slowed scans remains unsettled (see milestone 4).
 
 ## Rules throughout the upgrade
 

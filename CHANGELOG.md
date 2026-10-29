@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Add a section library: 83 Design Studio sections across 14 kinds, browsable by page story stage with wireframe thumbnails and search. Installing one creates a component in the new `sectionsDir` option (default beside `pagesDir`), imports it into the chosen page, and renders it in story order, through the usual review, stale-source checks, and rollback. Success survives the reload Vite triggers after saving.
+- Detect studio sections by `data-section` and link section components to the pages that render them. Section kinds are the shared identity, so inline `#partners-marquee` and `data-section='partners'` are one kind; studio section edits are titled by kind.
+- Detect Tailwind CSS v4 setup and warn in review when it is missing. The first install adds the sections' base styles, animations, and theme variables to the Tailwind stylesheet once.
+- New endpoints: `GET /sections`, `GET /sections/:id`, `POST /install/preview`, `POST /install/create`, and `GET /install/creation`.
+- `catalog:sync` and `catalog:check` scripts keep the catalog and base styles in step with play.
+
 ## 0.3.0 — 2026-10-18
 
 - Detect section IDs in Beast pages and components. Offer editing for existing sections and creation only when no matching ID exists, with compiler validation and stale-source protection before saving.

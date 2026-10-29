@@ -1,6 +1,7 @@
 import PageTabs from "../components/Tabs.btsx"
 import ProjectCard from '../components/ProjectCard.btsx'
 import SectionTabs from '../components/SectionTabs.btsx'
+import Hero from '../sections/Hero.btsx'
 
 div.home#hero
   PageTabs(items={[{"href":"#account","id":"account","label":"Accounts","shortLabel":"Account","icon":"arrow-right"},{"href":"#projects","id":"projects","label":"Projects","shortLabel":"Projects","icon":"close"},{"href":"#tab-3","id":"tab-3","label":"Kimpoi","shortLabel":"Kimpoi","icon":"menu"}]} activeId={"account"} label={"The tabs"})
@@ -15,6 +16,7 @@ div.home#hero
       | Your page builder is a shortcut away.
       kbd ⌘ B
   SectionTabs
+  Hero
   section.projects#features
     div.section-heading
       h2 A few starting points
