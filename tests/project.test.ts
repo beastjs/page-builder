@@ -219,6 +219,22 @@ describe('section installs', () => {
     expect(await readFile(join(root, 'src/sections/Stats.btsx'), 'utf8')).toContain('Mine')
   })
 
+  test('adds the studio base styles to the Tailwind stylesheet once, and warns when Tailwind is missing', async () => {
+    const { project, root } = await fixture()
+    const draft = { page: 'src/pages/HomePage.btsx', template: 'stats-row' }
+    expect((await project.previewSection(draft)).warnings).toHaveLength(2)
+    await writeFile(join(root, 'package.json'), JSON.stringify({ devDependencies: { tailwindcss: '^4.1.0', '@tailwindcss/vite': '^4.1.0' } }))
+    await writeFile(join(root, 'src/style.css'), '@import "tailwindcss";\n')
+    expect((await project.scan()).tailwind).toEqual({ version: '^4.1.0', integration: '@tailwindcss/vite', stylesheet: 'src/style.css', ready: true })
+    const preview = await project.previewSection(draft)
+    expect(preview.warnings).toEqual([])
+    expect(preview.files.map(file => [file.path, file.action])).toEqual([['src/sections/Stats.btsx', 'create'], [draft.page, 'edit'], ['src/style.css', 'edit']])
+    await project.installSection(draft, preview.hash)
+    expect(await readFile(join(root, 'src/style.css'), 'utf8')).toContain('@keyframes studio-marquee')
+    const next = await project.previewSection({ ...draft, template: 'stats-story' })
+    expect(next.files.map(file => file.path)).toEqual(['src/sections/Stats2.btsx', draft.page])
+  })
+
   test('sectionsDir defaults beside pagesDir and must stay out of page folders', async () => {
     const { root } = await fixture()
     expect(new BuilderProject(root).sectionsDir).toBe('src/sections')

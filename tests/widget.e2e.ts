@@ -134,9 +134,11 @@ test('focus is trapped and restored, and the mobile panel fits', async ({ page }
 
 test('reduced motion skips the waiting animation', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
+  // A long configured animation makes skipping it unmistakable without racing the real scan's latency.
+  await page.route('**/__beast-page-builder/config', async route => route.fulfill({ json: { ...await (await route.fetch()).json(), scanDuration: 10_000 } }))
   await page.goto('/')
   await toggle(page)
-  await expect(page.getByText('Builder ready', { exact: true })).toBeVisible({ timeout: 1200 })
+  await expect(page.getByText('Builder ready', { exact: true })).toBeVisible({ timeout: 5000 })
   expect(await page.locator('#beast-page-builder').locator('.panel').evaluate(element => getComputedStyle(element).animationName)).toBe('none')
 })
 

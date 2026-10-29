@@ -5,6 +5,7 @@ import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import path from 'node:path'
 import { parseArgs } from 'node:util'
+import { STUDIO_STYLES } from '../server/styles.js'
 
 const { values } = parseArgs({ options: { from: { type: 'string' }, check: { type: 'boolean' } } })
 const studio = path.join(values.from?.replace(/^~/, homedir()) ?? path.join(homedir(), 'Code/play'), 'src/playground/studio')
@@ -21,8 +22,16 @@ for (const name of sections) {
   files.set(`server/catalog/sections/${name}`, relink(source).replace("from '../types.js'", "from '../../../shared/catalog/types.js'"))
 }
 
+// The base styles live in play's page composer, which cannot be copied whole, so only their text is compared.
+const template = (source: string, name: string) => source.match(new RegExp(`const ${name} = \`([^\`]*)\``))?.[1]
+const page = await readFile(path.join(studio, 'page.ts'), 'utf8')
+const themes = await readFile(path.join(studio, 'themes.ts'), 'utf8')
+const marker = page.match(/const STYLES_MARKER = '([^']*)'/)?.[1]
+const upstreamStyles = template(page, 'STUDIO_STYLES')?.replace('${STYLES_MARKER}', marker ?? '').replace('${THEME_BASE}', template(themes, 'THEME_BASE') ?? '')
+const stylesStale = upstreamStyles !== STUDIO_STYLES
+
 if (values.check) {
-  const stale: string[] = []
+  const stale: string[] = stylesStale ? ['server/styles.ts STUDIO_STYLES (update by hand)'] : []
   for (const [file, source] of files) if (await readFile(file, 'utf8').catch(() => '') !== source) stale.push(file)
   const extra = (await readdir('server/catalog/sections')).filter(name => !sections.includes(name))
   if (stale.length || extra.length) {
@@ -37,4 +46,5 @@ if (values.check) {
     await writeFile(file, source)
   }
   console.log(`Synced ${sections.length} section files from ${studio}. Register new kinds in server/catalog/index.ts.`)
+  if (stylesStale) console.warn('STUDIO_STYLES in server/styles.ts no longer matches play; update it by hand.')
 }

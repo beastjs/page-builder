@@ -41,6 +41,17 @@ export interface ProjectFile {
   error: string | null
 }
 
+/** How far the project is set up for Tailwind CSS v4, which studio sections are styled with. */
+export interface TailwindSetup {
+  /** The `tailwindcss` range from package.json. */
+  version: string | null
+  /** The bundler integration package found in package.json. */
+  integration: string | null
+  /** The first scanned stylesheet that imports tailwindcss; studio base styles are added here. */
+  stylesheet: string | null
+  ready: boolean
+}
+
 export interface ProjectScan {
   name: string
   files: ProjectFile[]
@@ -52,6 +63,7 @@ export interface ProjectScan {
   pageRoutes: PageRoute[]
   tabComponents: TabComponent[]
   tabInstances: TabInstance[]
+  tailwind?: TailwindSetup
 }
 
 export interface DetectedSection {
@@ -128,4 +140,4 @@ export interface SectionInstallDraft {
   /** Position among the page root's children; defaults to the kind's place in the page's story. */
   index?: number
 }
-export interface SectionInstallPreview { path: string; page: string; name: string; kind: SectionKindId; template: string; routePath: string; hash: string; files: PlannedFile[] }
+export interface SectionInstallPreview { path: string; page: string; name: string; kind: SectionKindId; template: string; routePath: string; hash: string; files: PlannedFile[]; warnings: string[] }

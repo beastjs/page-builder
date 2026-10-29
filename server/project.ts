@@ -9,6 +9,7 @@ import { discoverProjectItems, type DiscoverySource } from './discovery.js'
 import { addTabs, discoverPageRoutes, discoverTabInstances } from './tabs.js'
 import { componentImports, discoverComponentUses, discoverSections, importedNames, literalAttr } from './sections.js'
 import { addSectionUse } from './install.js'
+import { addStudioStyles, tailwindSetup, tailwindWarnings, usesTailwind } from './styles.js'
 import { BuilderError } from './errors.js'
 import { sectionTemplate } from './catalog/index.js'
 import { sectionKind } from '../shared/catalog/kinds.js'
@@ -67,6 +68,7 @@ export class BuilderProject {
     const files: ProjectFile[] = []
     const sections: ProjectScan['sections'] = []
     const uses = new Map<string, SectionUse[]>()
+    const stylesheets: string[] = []
     const warnings: string[] = []
     let navigationTargets: NavigationTarget[] = []
     const sources = new Map<string, DiscoverySource>()
@@ -96,6 +98,9 @@ export class BuilderProject {
             } catch (cause) { error = cause instanceof Error ? cause.message : String(cause) }
             files.push({ path: filePath, name, kind: inside(resolve(this.root, this.pagesDir), path) || /(?:^|\/)(pages|routes)\//.test(filePath) || /Page$/.test(name) ? 'page' : 'component', lines: source.split('\n').length, components, error })
             sources.set(filePath, { file: filePath, source, page: files.at(-1)!.kind === 'page' })
+          } else if (entry.isFile() && entry.name.endsWith('.css')) {
+            const file = posix(relative(this.root, path))
+            if (!stylesheets.includes(file) && usesTailwind(await readFile(path, 'utf8'))) stylesheets.push(file)
           } else if (entry.isFile() && /\.tsx?$/.test(entry.name)) {
             if (sources.size >= 5000) throw new BuilderError('Scan limited to 5,000 files. Narrow the include directories.')
             const file = posix(relative(this.root, path))
@@ -136,7 +141,11 @@ export class BuilderProject {
       const source = sources.get(page.file)?.source
       return source ? discoverTabInstances(source, page, tabComponents) : []
     })
-    return { sections, collections, tabComponents, tabInstances, pageRoutes, name: basename(this.root), files: files.sort((a, b) => a.path.localeCompare(b.path)), scannedAt: new Date().toISOString(), warnings, navigationTargets }
+    let packageJson: string | null = null
+    try { await this.safe(resolve(this.root, 'package.json')); packageJson = await readFile(resolve(this.root, 'package.json'), 'utf8') }
+    catch (cause) { if ((cause as NodeJS.ErrnoException).code !== 'ENOENT') warnings.push(cause instanceof Error ? cause.message : String(cause)) }
+    const tailwind = tailwindSetup(packageJson, stylesheets)
+    return { sections, collections, tabComponents, tabInstances, pageRoutes, tailwind, name: basename(this.root), files: files.sort((a, b) => a.path.localeCompare(b.path)), scannedAt: new Date().toISOString(), warnings, navigationTargets }
   }
 
   async source(path: string): Promise<string> {
@@ -398,9 +407,19 @@ export class BuilderProject {
       { path, action: 'create', before: null, source: sectionSource },
       { path: page.path, action: 'edit', before, source: pageSource },
     ]
+    // The first install adds the studio base styles to the Tailwind stylesheet; later ones find the marker.
+    const tailwind = report.tailwind!
+    if (tailwind.stylesheet) {
+      const target = resolve(this.root, tailwind.stylesheet)
+      await this.safe(target)
+      const css = await readFile(target, 'utf8')
+      const styled = addStudioStyles(css)
+      if (styled !== null) files.push({ path: tailwind.stylesheet, action: 'edit', before: css, source: styled })
+    }
+    const warnings = tailwindWarnings(tailwind)
     const routePath = report.pageRoutes.find(route => route.file === page.path)?.routePath ?? ''
     const hash = createHash('sha256').update(JSON.stringify({ template: template.id, name, files, routePath })).digest('hex')
-    return { path, page: page.path, name, kind: template.kind, template: template.id, routePath, hash, files }
+    return { path, page: page.path, name, kind: template.kind, template: template.id, routePath, hash, files, warnings }
   }
 
   async installSection(draft: SectionInstallDraft, hash: string): Promise<SectionInstallPreview> {

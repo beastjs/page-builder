@@ -12,7 +12,7 @@ Bring the Design Studio section catalog from `~/Code/play` into the page builder
 | 1 | Section catalog and server endpoint | Done | 0 |
 | 2 | Section identity and discovery | Done | 1 |
 | 3 | Section install plan | Done | 1, 2 |
-| 4 | Tailwind detection and studio base styles | Not started | 3 |
+| 4 | Tailwind detection and studio base styles | Done | 3 |
 | 5 | Section library UI | Not started | 1, 3 |
 | 6 | Final verification and measurements | Not started | 1–5 |
 
@@ -99,19 +99,21 @@ Evidence (October 29, 2026): `bun run check` passed type checking, client type c
 
 ## 4. Tailwind detection and studio base styles
 
-Status: **Not started**
+Status: **Done**
 
-Files: `server/project.ts`, a new `server/styles.ts`, and `shared/types.ts`.
+Files: `server/styles.ts`, `server/project.ts`, `shared/types.ts`, `scripts/sync-catalog.ts`, `tests/styles.test.ts`, `tests/project.test.ts`, and `tests/widget.e2e.ts`.
 
-- [ ] Detect Tailwind v4 in the project (`@import "tailwindcss"` in a stylesheet and the bundler plugin in the config) and report it in `ProjectScan`.
-- [ ] Warn before install when Tailwind is missing; the builder does not install packages, so state the requirement.
-- [ ] Add the studio base block (`[data-section]` reset, `studio-*` keyframes, `--studio-*` variables) once, behind a marker, as an additional planned file edit.
-- [ ] Decide whether the `dark:` custom variant is added or left to the project.
-- [ ] Defer studio themes (`themes.ts`, `colorhunt.ts`) unless a later milestone adds them.
+- [x] Detect Tailwind v4 and report it as `ProjectScan.tailwind` (`version`, `integration`, `stylesheet`, `ready`). The version and integration come from `package.json` (`tailwindcss`, plus `@tailwindcss/vite`, `@tailwindcss/postcss`, `@rsbuild/plugin-tailwindcss`, or `@tailwindcss/webpack`) rather than parsing bundler configs. The stylesheet is the first scanned `.css` file that imports `tailwindcss`, with the same import rule as play. Ranges without a major version (`latest`, `workspace:*`) count as v4.
+- [x] Warn before install when Tailwind is missing: install previews carry `warnings` naming the missing package, an outdated major, a missing integration, or a missing `@import "tailwindcss"`. Warnings do not block the install; the builder never installs packages.
+- [x] Add the studio base block (`[data-section]` reset, the five `studio-*` keyframes, `--studio-*` variables and `[data-page]` theme base) once, behind play's marker, as a third planned file edit on the Tailwind stylesheet. Later installs find the marker and leave the stylesheet alone. The block is copied from play's `page.ts` and `themes.ts`, and `bun run catalog:check` now fails if play's copy changes.
+- [x] Decide on the `dark:` custom variant: left to the project. No catalog template uses `dark:`.
+- [x] Defer studio themes (`themes.ts`, `colorhunt.ts`).
 
 Complete when: a first install on a Tailwind project adds the base block exactly once, a second install leaves the stylesheet untouched, and a project without Tailwind gets a clear warning.
 
-Evidence:
+Evidence (October 29, 2026): `bun run check` passed type checking, client type checking, the production build, and all 86 non-browser tests across 12 files. New tests: 4 in `tests/styles.test.ts` (import recognition; readiness across versions, integrations, and stylesheets; warning text; the block appended once and covering every keyframe and variable templates use) and 1 project test (a project without Tailwind gets 2 warnings; with Tailwind the first install edits `src/style.css` and the next does not). The drift check was confirmed by editing one keyframe and seeing `catalog:check` fail. The full browser suite passed all 83 tests in 3.5 minutes. The client is unchanged at 578,155 bytes minified and 232,006 gzipped; `dist/vite.js` is 264,158 bytes (+4,471 over milestone 3).
+
+Test change: “reduced motion skips the waiting animation” required the real scan to finish within 1,200 ms of opening the builder, while warm scans take about 0.75 s on the browser fixture. It failed 1–6 times in 20 isolated repeats on the working tree (0 in 30 at HEAD, same machine) and passed full runs. Timing the real test server's `/scan` gave the same latency in both trees (about 0.72–0.78 s warm, 8 s for the first request), and switching off this milestone's scan reads did not remove the failures, so no single cause was found. The test now stretches the configured scan animation to 10 seconds through a routed `/config` and allows 5 seconds. A build that ignored reduced motion still fails it (checked), and it passed 20 of 20 repeats. If later work shows scans getting slower, compare with `/scan` timings against `bun scripts/serve-browser-tests.ts`.
 
 ## 5. Section library UI
 
