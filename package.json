@@ -80,11 +80,13 @@
     "@rsbuild/core": "^2.2.13",
     "@rspack/core": "^2.2.9",
     "@rspack/dev-server": "^2.2.1",
+    "@tailwindcss/vite": "^4.3.3",
     "@tsrx/typescript-plugin": "0.6.3",
     "@types/bun": "^1.4.3",
     "@types/node": "^26.6.5",
     "esbuild": "^0.28.2",
     "svgo": "^4.1.0",
+    "tailwindcss": "^4.3.3",
     "vite": "^8.3.4"
   },
   "author": "phtn",

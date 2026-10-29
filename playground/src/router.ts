@@ -5,7 +5,7 @@ const rootRoute = createRootRoute({ component: App })
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
-  component: lazyRouteComponent(() => import('./pages/Atomic.btsx'))
+  component: lazyRouteComponent(() => import('./pages/Home.btsx'))
 })
 
 const routeTree = rootRoute.addChildren([indexRoute])

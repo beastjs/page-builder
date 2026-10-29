@@ -15,7 +15,7 @@ bun install
 bun run dev
 ```
 
-Open `http://127.0.0.1:5190` and press **⌘B**, or click **Builder** in the bottom-right corner. The playground is a real Beast/Octane app; its `.btsx` files appear in the scan.
+Open `http://127.0.0.1:5190` and press **⌘B**, or click **Builder** in the bottom-right corner. The playground is a real Beast/Octane app; its `.btsx` files appear in the scan. It uses Tailwind CSS v4 through `@tailwindcss/vite` (theme and utilities only, without Preflight, so its own styles stay as they are), so library sections render as designed.
 
 ## Client development
 
@@ -151,11 +151,11 @@ Use **Sections** to find IDs such as `#topbar` in page and component source. Exi
 
 ## Add sections from the library
 
-Choose **Browse the section library** under **Sections**, or **Add from section library** while editing a saved page. The library holds 83 designs across 14 kinds (topbar, hero, partners, stats, features, guides, products, testimonials, pricing, FAQ, team, call to action, newsletter, and footer), grouped by where they sit in a page's story. Pick a page, then search or open a kind to see wireframe thumbnails; kinds already on that page are marked **On page**.
+Choose **Browse the section library** under **Sections**, or **Add from section library** while editing a saved page. The library holds 83 designs across 14 kinds (topbar, hero, partners, stats, features, guides, products, testimonials, pricing, FAQ, team, call to action, newsletter, and footer), grouped by where they sit in a page's story. Pick a page, then search or open a kind to see wireframe thumbnails; kinds already on that page are marked **On page**. The picker starts on the page at the current URL and labels each page with its route; a page no route renders is labeled **no route**, since sections added there are not visible until a route uses it.
 
-Choosing a design opens the usual review. It creates `<sectionsDir>/<Kind>.btsx` (numbered when that name is taken; existing files are never overwritten), imports it into the page, and renders it under the page's root element before the first section of a later kind. Sections are found again by their `data-section` attribute, and editing one opens its component file. The page needs exactly one root element.
+Choosing a design opens the usual review. It creates `<sectionsDir>/<Kind>.btsx` (numbered when that name is taken; existing files are never overwritten), imports it into the page, and renders it under the page's root element before the first section of a later kind. Sections are found again by their `data-section` attribute, and editing one opens its component file. With the page open in the browser, the dev server's hot update shows the new section without a reload. A page with no markup yet gets a `main` root for its first section; otherwise the page needs exactly one root element.
 
-Library sections are styled with **Tailwind CSS v4**. The builder reads `package.json` for `tailwindcss` and a bundler integration (`@tailwindcss/vite`, `@tailwindcss/postcss`, `@rsbuild/plugin-tailwindcss`, or `@tailwindcss/webpack`), and looks for a scanned stylesheet with `@import "tailwindcss"`. The first install adds a marked block of base styles, animations, and theme variables to that stylesheet. The builder never installs packages: when something is missing, the review lists what to add, and the section is still installed. Sections use only `currentColor` and `--studio-*` variables, so they take on the host page's colors.
+Library sections are styled with **Tailwind CSS v4**. The builder reads `package.json` (the project's own and those above it, up to the repository or workspace root, so a nested bundler root still finds its package) for `tailwindcss` and a bundler integration (`@tailwindcss/vite`, `@tailwindcss/postcss`, `@rsbuild/plugin-tailwindcss`, or `@tailwindcss/webpack`), and looks for a scanned stylesheet with `@import "tailwindcss"`. The first install adds a marked block of base styles, animations, and theme variables to that stylesheet. The builder never installs packages: when something is missing, the review lists what to add, and the section is still installed. Sections use only `currentColor` and `--studio-*` variables, so they take on the host page's colors.
 
 The catalog is synced from the Design Studio in `play` with `bun run catalog:sync`; `bun run catalog:check` reports drift, including in the base styles.
 

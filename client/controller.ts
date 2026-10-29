@@ -496,6 +496,8 @@ export function createBuilderController({ host, shadow, panel, apiBase, commit }
   function libraryScreen(): BuilderScreen {
     const props: SectionLibraryProps = {
       summaries: sectionSummaries, pages: report?.files.filter(file => file.kind === 'page') ?? [], page: sectionPage,
+      routes: Object.fromEntries((report?.pageRoutes ?? []).map(route => [route.file, route.routePath])),
+      currentPage: report?.pageRoutes.find(route => normalizePath(route.routePath) === currentPath())?.file,
       pageKinds: kindsOnPage(report?.sections ?? [], sectionPage), sectionsDir: config.sectionsDir,
       query: sectionQuery, openKind: sectionKindOpen, pending: busy ? sectionTemplate : undefined, dark: isDark(), message,
       onPageChange(page) { sectionPage = page; message = ''; render() },

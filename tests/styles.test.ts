@@ -10,22 +10,29 @@ test('Tailwind stylesheets are recognised by their import', () => {
 })
 
 test('setup is ready only with Tailwind v4, an integration, and a stylesheet', () => {
-  expect(tailwindSetup(manifest({ tailwindcss: '^4.1.0', '@tailwindcss/vite': '^4.1.0' }), ['src/style.css'])).toEqual({ version: '^4.1.0', integration: '@tailwindcss/vite', stylesheet: 'src/style.css', ready: true })
-  expect(tailwindSetup(manifest({ tailwindcss: 'latest', '@rsbuild/plugin-tailwindcss': '^2.0.0' }), ['a.css', 'b.css'])).toMatchObject({ stylesheet: 'a.css', ready: true })
-  expect(tailwindSetup(manifest({ tailwindcss: '^3.4.0', '@tailwindcss/postcss': '^4.0.0' }), ['a.css']).ready).toBe(false)
-  expect(tailwindSetup(manifest({ tailwindcss: '^4.0.0' }), ['a.css']).ready).toBe(false)
-  expect(tailwindSetup(manifest({ tailwindcss: '^4.0.0', '@tailwindcss/vite': '^4.0.0' }), []).ready).toBe(false)
-  expect(tailwindSetup(null, [])).toEqual({ version: null, integration: null, stylesheet: null, ready: false })
-  expect(tailwindSetup('{', ['a.css'])).toMatchObject({ version: null, stylesheet: 'a.css', ready: false })
+  expect(tailwindSetup([manifest({ tailwindcss: '^4.1.0', '@tailwindcss/vite': '^4.1.0' })], ['src/style.css'])).toEqual({ version: '^4.1.0', integration: '@tailwindcss/vite', stylesheet: 'src/style.css', ready: true })
+  expect(tailwindSetup([manifest({ tailwindcss: 'latest', '@rsbuild/plugin-tailwindcss': '^2.0.0' })], ['a.css', 'b.css'])).toMatchObject({ stylesheet: 'a.css', ready: true })
+  expect(tailwindSetup([manifest({ tailwindcss: '^3.4.0', '@tailwindcss/postcss': '^4.0.0' })], ['a.css']).ready).toBe(false)
+  expect(tailwindSetup([manifest({ tailwindcss: '^4.0.0' })], ['a.css']).ready).toBe(false)
+  expect(tailwindSetup([manifest({ tailwindcss: '^4.0.0', '@tailwindcss/vite': '^4.0.0' })], []).ready).toBe(false)
+  expect(tailwindSetup([], [])).toEqual({ version: null, integration: null, stylesheet: null, ready: false })
+  expect(tailwindSetup(['{'], ['a.css'])).toMatchObject({ version: null, stylesheet: 'a.css', ready: false })
+})
+
+test('nearer manifests win and ancestors fill in what they lack', () => {
+  const app = JSON.stringify({ dependencies: { tailwindcss: '^3.4.0' } })
+  const repository = manifest({ tailwindcss: '^4.1.0', '@tailwindcss/vite': '^4.1.0' })
+  expect(tailwindSetup([app, repository], ['a.css'])).toMatchObject({ version: '^3.4.0', integration: '@tailwindcss/vite', ready: false })
+  expect(tailwindSetup(['{}', repository], ['a.css'])).toMatchObject({ version: '^4.1.0', ready: true })
 })
 
 test('warnings name each missing piece and nothing for a ready project', () => {
-  expect(tailwindWarnings(tailwindSetup(manifest({ tailwindcss: '^4.1.0', '@tailwindcss/vite': '^4.1.0' }), ['src/style.css']))).toEqual([])
-  const missing = tailwindWarnings(tailwindSetup(null, []))
+  expect(tailwindWarnings(tailwindSetup([manifest({ tailwindcss: '^4.1.0', '@tailwindcss/vite': '^4.1.0' })], ['src/style.css']))).toEqual([])
+  const missing = tailwindWarnings(tailwindSetup([], []))
   expect(missing).toHaveLength(2)
   expect(missing[0]).toContain('does not install')
   expect(missing[1]).toContain('@import "tailwindcss"')
-  expect(tailwindWarnings(tailwindSetup(manifest({ tailwindcss: '~3.4.0' }), ['a.css']))).toEqual(['Studio sections need Tailwind CSS v4; this project uses tailwindcss ~3.4.0.', expect.stringContaining('bundler integration')])
+  expect(tailwindWarnings(tailwindSetup([manifest({ tailwindcss: '~3.4.0' })], ['a.css']))).toEqual(['Studio sections need Tailwind CSS v4; this project uses tailwindcss ~3.4.0.', expect.stringContaining('bundler integration')])
 })
 
 test('the studio block is appended once and covers every keyframe templates animate with', () => {

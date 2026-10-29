@@ -235,6 +235,17 @@ describe('section installs', () => {
     expect(next.files.map(file => file.path)).toEqual(['src/sections/Stats2.btsx', draft.page])
   })
 
+  test('reads Tailwind from the package above a nested bundler root, stopping at the repository', async () => {
+    const outer = await mkdtemp(join(tmpdir(), 'beast-builder-repo-')); roots.push(outer)
+    const repository = join(outer, 'repo'), app = join(repository, 'playground')
+    await mkdir(join(repository, '.git'), { recursive: true })
+    await mkdir(join(app, 'src'), { recursive: true })
+    await writeFile(join(outer, 'package.json'), JSON.stringify({ devDependencies: { tailwindcss: '^3.0.0' } }))
+    await writeFile(join(repository, 'package.json'), JSON.stringify({ devDependencies: { tailwindcss: '^4.3.3', '@tailwindcss/vite': '^4.3.3' } }))
+    await writeFile(join(app, 'src/style.css'), '@import "tailwindcss/utilities.css" layer(utilities);\n')
+    expect((await new BuilderProject(app).scan()).tailwind).toEqual({ version: '^4.3.3', integration: '@tailwindcss/vite', stylesheet: 'src/style.css', ready: true })
+  })
+
   test('sectionsDir defaults beside pagesDir and must stay out of page folders', async () => {
     const { root } = await fixture()
     expect(new BuilderProject(root).sectionsDir).toBe('src/sections')

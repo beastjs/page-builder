@@ -23,6 +23,10 @@ ViewHeader(title={title} subtitle={screen.preview.path} onBack={onBack} onClose=
       h2 #{screen.label} is on the page.
       p
         | #{`${screen.preview.name} is in ${screen.preview.path} and renders on ${screen.preview.page}.`}
+        if !screen.preview.routePath
+          fragment
+            br
+            | No route renders that page yet, so the section isn’t visible.
       if screen.preview.routePath
         a.primary.visit(href={screen.href} onClick={screen.onVisit})
           | Open page

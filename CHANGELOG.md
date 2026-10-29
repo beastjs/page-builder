@@ -7,6 +7,11 @@
 - Detect Tailwind CSS v4 setup and warn in review when it is missing. The first install adds the sections' base styles, animations, and theme variables to the Tailwind stylesheet once.
 - New endpoints: `GET /sections`, `GET /sections/:id`, `POST /install/preview`, `POST /install/create`, and `GET /install/creation`.
 - `catalog:sync` and `catalog:check` scripts keep the catalog and base styles in step with play.
+- Installing into a page with no markup yet creates a `main` root for the section instead of refusing.
+- The library's page picker shows each page's route, marks the page at the current URL, and warns when no route renders the chosen page; the success screen says so too.
+- Browser-test fixtures copy sections installed into the playground, so playground pages that import them still load.
+- Tailwind detection reads `package.json` from the bundler root upward to the repository or workspace root, so a Vite root below its package (like the playground) is detected correctly.
+- The playground and its browser-test server use Tailwind CSS v4 through `@tailwindcss/vite`, without Preflight.
 
 ## 0.3.0 — 2026-10-18
 

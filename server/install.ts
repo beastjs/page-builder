@@ -15,10 +15,10 @@ export interface SectionPlacement {
   index?: number
 }
 
-/** The page's single root element, which installed sections become children of. */
-export function pageRoot(document: BeastDocument): ElementNode {
+/** The page's single root element, which installed sections become children of; null for a page with no markup yet. */
+export function pageRoot(document: BeastDocument): ElementNode | null {
   const roots = document.children.filter(node => node.kind !== 'style')
-  if (!roots.length) throw new BuilderError('This page has no root element to add a section to.', 422)
+  if (!roots.length) return null
   if (roots.length > 1 || roots[0]!.kind !== 'element') throw new BuilderError('Wrap the page in one root element before adding sections.', 422)
   const root = roots[0] as ElementNode
   if (VOID.has(root.tag)) throw new BuilderError(`A <${root.tag}> root cannot contain sections.`, 422)
@@ -34,6 +34,18 @@ export function pageRoot(document: BeastDocument): ElementNode {
 export function addSectionUse(source: string, document: BeastDocument, placement: SectionPlacement, kindOf: (node: BeastNode) => SectionKindId | undefined): string {
   const root = pageRoot(document)
   const lines = source.split('\n')
+  if (!root) {
+    // A page with no markup yet gets a root, so this and later sections have somewhere to go.
+    if (placement.index !== undefined && placement.index !== 0) throw new BuilderError('Choose a position between 0 and 0.')
+    const style = document.children.find(node => node.kind === 'style')
+    if (style) lines.splice(style.lineNo - 1, 0, 'main', `  ${placement.name}`, '')
+    else {
+      let at = lines.length
+      while (at > 0 && !lines[at - 1]!.trim()) at--
+      lines.splice(at, lines.length - at, ...(at ? [''] : []), 'main', `  ${placement.name}`, '')
+    }
+    return addImport(lines, document, placement)
+  }
   const children = root.children
   const indent = children.length ? lines[children[0]!.lineNo - 1]!.match(/^\s*/)![0] : lines[root.lineNo - 1]!.match(/^\s*/)![0] + '  '
 
@@ -56,7 +68,11 @@ export function addSectionUse(source: string, document: BeastDocument, placement
     while (at > root.lineNo && !lines[at - 1]!.trim()) at--
   }
   lines.splice(at, 0, `${indent}${placement.name}`)
+  return addImport(lines, document, placement)
+}
 
+/** Adds the section's import after the page's last import, or at the top with a blank line after it. */
+function addImport(lines: string[], document: BeastDocument, placement: SectionPlacement): string {
   const imports = document.declarations.filter(declaration => declaration.kind === 'import')
   const statement = `import ${placement.name} from '${placement.specifier}'`
   if (imports.length) lines.splice(Math.max(...imports.map(declaration => declaration.span.end.line)), 0, statement)

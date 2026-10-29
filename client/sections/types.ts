@@ -5,6 +5,10 @@ export interface SectionLibraryProps {
   /** Null until the catalog has loaded. */
   summaries: SectionSummary[] | null
   pages: ProjectFile[]
+  /** Each routed page's URL; a page missing here is not rendered by any route. */
+  routes: Record<string, string>
+  /** The page rendered at the browser's current URL. */
+  currentPage?: string
   page: string
   /** Kinds the chosen page already renders, inline or as section components. */
   pageKinds: SectionKindId[]

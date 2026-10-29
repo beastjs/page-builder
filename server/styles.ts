@@ -9,12 +9,15 @@ const INTEGRATIONS = ['@tailwindcss/vite', '@tailwindcss/postcss', '@rsbuild/plu
 
 const majorOf = (version: string | null) => { const major = version?.match(/\d+/)?.[0]; return major === undefined ? undefined : Number(major) }
 
-export function tailwindSetup(packageJson: string | null, stylesheets: string[]): TailwindSetup {
+/** `manifests` are package.json sources, nearest first; a nearer manifest's version wins. */
+export function tailwindSetup(manifests: string[], stylesheets: string[]): TailwindSetup {
   let dependencies: Record<string, string> = {}
-  try {
-    const manifest = packageJson ? JSON.parse(packageJson) as Record<string, Record<string, string> | undefined> : {}
-    dependencies = { ...manifest.dependencies, ...manifest.devDependencies }
-  } catch { /* An unreadable manifest reads as no dependencies. */ }
+  for (const source of [...manifests].reverse()) {
+    try {
+      const manifest = JSON.parse(source) as Record<string, Record<string, string> | undefined>
+      dependencies = { ...dependencies, ...manifest.dependencies, ...manifest.devDependencies }
+    } catch { /* An unreadable manifest adds no dependencies. */ }
+  }
   const version = typeof dependencies.tailwindcss === 'string' ? dependencies.tailwindcss : null
   const integration = INTEGRATIONS.find(name => typeof dependencies[name] === 'string') ?? null
   // Ranges such as `latest` or `workspace:*` carry no major version, so they get the benefit of the doubt.

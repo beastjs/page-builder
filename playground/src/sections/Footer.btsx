@@ -1,0 +1,22 @@
+setup
+  const colophon = [
+    { label: 'Typeset in', value: 'A serif and a monospace' },
+    { label: 'Edited by', value: 'Aurelio Mance' },
+    { label: 'Published from', value: 'A small room with a large window' }
+  ];
+  const links = ['Archive', 'Contributors', 'Stockists', 'Write to us'];
+
+section(data-section='footer' className='px-4 py-16 sm:px-8')
+  div(className='mx-auto grid max-w-6xl gap-10 border-t-4 border-double border-current/60 pt-10 md:grid-cols-[2fr_1fr_1fr]')
+    div
+      p(className='font-serif text-3xl italic') Colophon
+      p(className='mt-4 max-w-md font-serif text-current/70') This site was set by hand in a small room with a large window. It has no cookies, no tracking, and no opinion about the size of your screen.
+    dl(className='grid content-start gap-4 text-sm')
+      each entry in colophon key entry.label
+        div
+          dt(className='font-mono text-[10px] tracking-widest text-current/50 uppercase') #{entry.label}
+          dd #{entry.value}
+    nav(aria-label='Footer' className='grid content-start gap-2 text-sm')
+      each link in links key link
+        a(role='link' aria-disabled='true' className='transition-colors hover:text-[var(--studio-accent)] hover:italic') #{link}
+  p(className='mx-auto mt-12 max-w-6xl text-center font-mono text-[10px] tracking-[0.3em] text-current/40 uppercase') ❦ Printed on light, 2026 ❦

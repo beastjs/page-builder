@@ -1,3 +1,8 @@
+/* Tailwind theme and utilities for library sections, without Preflight so the playground's own styles keep working. */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
 * {
   box-sizing: border-box;
 }
@@ -212,5 +217,32 @@ h1 {
   }
   .intro {
     padding-top: 50px;
+  }
+}
+
+/* Design Studio sections: element defaults and motion. */
+@layer base {
+  [data-section], [data-section] * { box-sizing: border-box; }
+  [data-section] :where(h1, h2, h3, h4, p, ul, ol, dl, dd, figure, blockquote) { margin: 0; }
+  [data-section] :where(h1, h2, h3, h4) { font-size: inherit; font-weight: inherit; }
+  [data-section] :where(ul, ol) { padding: 0; list-style: none; }
+  [data-section] :where(a) { color: inherit; text-decoration: inherit; }
+  [data-section] :where(button, input, select, textarea) { font: inherit; color: inherit; background: transparent; border: 0 solid; }
+}
+@keyframes studio-marquee { to { transform: translateX(-50%); } }
+@keyframes studio-spin { to { transform: rotate(360deg); } }
+@keyframes studio-rise { from { transform: translateY(0) scale(0.6); opacity: 0; } 12% { opacity: 1; } to { transform: translateY(-110vh) scale(1.15); opacity: 0; } }
+@keyframes studio-sway { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(7deg); } }
+@keyframes studio-fill { from { height: 0; } }
+@layer base {
+  :root {
+    --studio-bg: transparent;
+    --studio-fg: inherit;
+    --studio-accent: currentColor;
+  }
+  [data-page] {
+    color: var(--studio-fg);
+    background-color: var(--studio-bg);
+    font-family: var(--studio-font, inherit);
   }
 }

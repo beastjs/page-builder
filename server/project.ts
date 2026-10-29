@@ -49,6 +49,25 @@ export class BuilderProject {
     if (options.navigation && !/\.(?:tsx?|btsx)$/.test(options.navigation.file)) throw new BuilderError('navigation.file must be .ts, .tsx, or .btsx.')
   }
 
+  /**
+   * package.json sources from the project root upward, nearest first. A bundler root is often below its package
+   * (a playground or app folder), so dependencies are read the way Node resolves them, stopping at the repository
+   * root, a workspace root, or the filesystem root. These files are only read, never written.
+   */
+  private async manifests(): Promise<string[]> {
+    const manifests: string[] = []
+    for (let directory = this.root; ; directory = dirname(directory)) {
+      try {
+        const source = await readFile(resolve(directory, 'package.json'), 'utf8')
+        manifests.push(source)
+        try { if ((JSON.parse(source) as { workspaces?: unknown }).workspaces) break } catch { /* Keep looking past an unreadable manifest. */ }
+      } catch (cause) { if (!['ENOENT', 'EISDIR', 'EACCES'].includes((cause as NodeJS.ErrnoException).code ?? '')) throw cause }
+      const atRepository = await lstat(resolve(directory, '.git')).then(() => true, () => false)
+      if (atRepository || dirname(directory) === directory) break
+    }
+    return manifests
+  }
+
   /** Check existing ancestors too, so a configured directory cannot escape through a symlink. */
   private async safe(path: string): Promise<void> {
     const canonicalRoot = await realpath(this.root)
@@ -141,10 +160,7 @@ export class BuilderProject {
       const source = sources.get(page.file)?.source
       return source ? discoverTabInstances(source, page, tabComponents) : []
     })
-    let packageJson: string | null = null
-    try { await this.safe(resolve(this.root, 'package.json')); packageJson = await readFile(resolve(this.root, 'package.json'), 'utf8') }
-    catch (cause) { if ((cause as NodeJS.ErrnoException).code !== 'ENOENT') warnings.push(cause instanceof Error ? cause.message : String(cause)) }
-    const tailwind = tailwindSetup(packageJson, stylesheets)
+    const tailwind = tailwindSetup(await this.manifests(), stylesheets)
     return { sections, collections, tabComponents, tabInstances, pageRoutes, tailwind, name: basename(this.root), files: files.sort((a, b) => a.path.localeCompare(b.path)), scannedAt: new Date().toISOString(), warnings, navigationTargets }
   }
 

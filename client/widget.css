@@ -1601,3 +1601,6 @@ select:focus-visible {
 .action-footer.library-footer > span {
   max-width: none;
 }
+.hint.unrouted {
+  color: var(--text);
+}

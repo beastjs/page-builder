@@ -11,6 +11,7 @@ const inventory: ProjectScan = {
   files: [
     { path: about, name: 'AboutPage', kind: 'page', lines: 3, components: ['AboutPage'], error: null },
     { path: home, name: 'Home', kind: 'page', lines: 6, components: ['Home'], error: null },
+    { path: 'src/pages/DraftPage.btsx', name: 'DraftPage', kind: 'page', lines: 2, components: ['DraftPage'], error: null },
     { path: 'src/sections/Stats.btsx', name: 'Stats', kind: 'component', lines: 3, components: ['Stats'], error: null },
   ],
   sections: [{ id: 'src/sections/Stats.btsx:1:stats', elementId: 'stats', file: 'src/sections/Stats.btsx', line: 1, marker: 'data-section', kind: 'stats', usedBy: [{ file: home, line: 5 }] }],
@@ -51,6 +52,11 @@ test('library browses by stage, searches, marks kinds on the page, and follows t
   await openLibrary(page)
   await expect(page.getByRole('searchbox', { name: 'Search sections' })).toBeFocused()
   await expect(page.getByLabel('Add to page')).toHaveValue(home)
+  await expect(page.getByLabel('Add to page').locator('option')).toHaveText(['AboutPage · /about', 'Home · / · this page', 'DraftPage · no route'])
+  await expect(page.getByRole('note')).toHaveCount(0)
+  await page.getByLabel('Add to page').selectOption('src/pages/DraftPage.btsx')
+  await expect(page.getByRole('note')).toHaveText('DraftPage isn’t rendered by any route, so sections added here won’t be visible until a route uses it.')
+  await page.getByLabel('Add to page').selectOption(home)
   await expect(page.getByText('3 designs · installed as components in src/sections')).toBeVisible()
   const stats = page.locator('[data-kind="stats"]')
   await expect(stats).toContainText('On page')
@@ -68,6 +74,7 @@ test('library browses by stage, searches, marks kinds on the page, and follows t
 
   await page.getByLabel('Add to page').selectOption(about)
   await expect(page.getByText(`Adds to ${about}`)).toBeVisible()
+  await expect(page.getByText('Open /about to see sections appear as they are added.')).toBeVisible()
   await page.getByRole('searchbox', { name: 'Search sections' }).fill('')
   await expect(page.locator('[data-kind="stats"]')).not.toContainText('On page')
   await page.screenshot({ path: 'test-results/section-library.png' })

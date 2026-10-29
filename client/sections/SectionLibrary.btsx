@@ -40,21 +40,27 @@ component SectionCard
       | #{pending ? 'Checking…' : onPage ? 'Add another' : 'Add'}
       Icon(name="plus")
 
-props { summaries, pages, page, pageKinds, sectionsDir, query, openKind, pending, dark, message, onPageChange, onQueryChange, onOpenKind, onInstall, onBack, onClose }: SectionLibraryProps
+props { summaries, pages, routes, currentPage, page, pageKinds, sectionsDir, query, openKind, pending, dark, message, onPageChange, onQueryChange, onOpenKind, onInstall, onBack, onClose }: SectionLibraryProps
 setup
   const catalog = summaries ?? []
   const results = query.trim() ? searchSummaries(catalog, query) : []
   const of = (kind: string) => catalog.filter(summary => summary.kind === kind)
   const disabled = !page || pending !== undefined
+  const pageLabel = (path: string, name: string) => `${name} · ${routes[path] ?? 'no route'}${path === currentPage ? ' · this page' : ''}`
+  const chosen = pages.find(item => item.path === page)
 
 ViewHeader(title="Section library" subtitle={page ? `Adds to ${page}` : 'Choose a page to add sections to'} onBack={onBack} onClose={onClose})
 .draft-body.library-body
   label.field-label(for="section-page") Add to page
   select#section-page.text-field(value={page} disabled={!pages.length} onChange={(event) => onPageChange(event.currentTarget.value)})
     each item in pages key item.path
-      option(value={item.path}) #{item.name} · #{item.path}
+      option(value={item.path}) #{pageLabel(item.path, item.name)}
   if !pages.length
     p.hint No pages found. Create a page first, then add sections to it.
+  elseif chosen && routes[chosen.path] === undefined
+    p.hint.unrouted(role="note") #{chosen.name} isn’t rendered by any route, so sections added here won’t be visible until a route uses it.
+  elseif chosen && chosen.path !== currentPage
+    p.hint #{`Open ${routes[chosen.path]} to see sections appear as they are added.`}
   label.name-field.library-search
     Icon(name="search")
     span.sr-only Search sections
