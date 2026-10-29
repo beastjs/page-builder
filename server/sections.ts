@@ -17,7 +17,7 @@ function visitElements(document: BeastDocument, callback: (node: ElementNode) =>
 }
 
 /** A literal attribute value: a string, or an expression that is only a string literal. */
-function literalAttr(node: ElementNode, name: string): string | undefined {
+export function literalAttr(node: ElementNode, name: string): string | undefined {
   const attr = node.attrs.find(attr => attr.kind === 'attribute' && attr.name === name)
   if (attr?.kind !== 'attribute') return undefined
   if (attr.value.type === 'string') return attr.value.value
@@ -45,21 +45,42 @@ export function discoverSections(document: BeastDocument, file: string): Detecte
   return sections
 }
 
+/** Every name a file's imports bind, so new imports never shadow one. */
+export function importedNames(document: BeastDocument): Set<string> {
+  const names = new Set<string>()
+  for (const statement of importStatements(document)) {
+    const clause = statement.importClause
+    if (clause?.name) names.add(clause.name.text)
+    const bindings = clause?.namedBindings
+    if (bindings && ts.isNamespaceImport(bindings)) names.add(bindings.name.text)
+    else if (bindings) for (const element of bindings.elements) names.add(element.name.text)
+  }
+  return names
+}
+
+function importStatements(document: BeastDocument): ts.ImportDeclaration[] {
+  return document.declarations.flatMap(declaration => declaration.kind !== 'import' ? []
+    : ts.createSourceFile('import.ts', declaration.code, ts.ScriptTarget.Latest).statements.filter(ts.isImportDeclaration))
+}
+
+/** Local names of relative, default, non-type `.btsx` imports, mapped to the imported file's project-relative path. */
+export function componentImports(document: BeastDocument, file: string): Map<string, string> {
+  const imports = new Map<string, string>()
+  for (const statement of importStatements(document)) {
+    if (statement.importClause?.isTypeOnly || !statement.importClause?.name) continue
+    const specifier = (statement.moduleSpecifier as ts.StringLiteral).text
+    if (!specifier.startsWith('.') || !specifier.endsWith('.btsx')) continue
+    imports.set(statement.importClause.name.text, posix.join(posix.dirname(file), specifier))
+  }
+  return imports
+}
+
 /**
  * Where this file renders components default-imported from other project `.btsx` files, keyed by the imported
  * file's project-relative path. Section components are linked to their pages through these.
  */
 export function discoverComponentUses(document: BeastDocument, file: string): Map<string, SectionUse[]> {
-  const imports = new Map<string, string>()
-  for (const declaration of document.declarations) {
-    if (declaration.kind !== 'import') continue
-    for (const statement of ts.createSourceFile('import.ts', declaration.code, ts.ScriptTarget.Latest).statements) {
-      if (!ts.isImportDeclaration(statement) || statement.importClause?.isTypeOnly || !statement.importClause?.name) continue
-      const specifier = (statement.moduleSpecifier as ts.StringLiteral).text
-      if (!specifier.startsWith('.') || !specifier.endsWith('.btsx')) continue
-      imports.set(statement.importClause.name.text, posix.join(posix.dirname(file), specifier))
-    }
-  }
+  const imports = componentImports(document, file)
   const uses = new Map<string, SectionUse[]>()
   if (!imports.size) return uses
   visitElements(document, node => {

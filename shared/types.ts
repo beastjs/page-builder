@@ -6,6 +6,8 @@ export interface BeastPageBuilderOptions {
   include?: string[]
   /** New pages are created here; existing files are never overwritten. */
   pagesDir?: string
+  /** Catalog sections are installed here as components; it is scanned too. Defaults beside pagesDir. */
+  sectionsDir?: string
   /** TanStack Router module containing rootRoute.addChildren([...]). */
   routerFile?: string
   /** Limit page-link insertion to this file and optionally one nav/array/group. */
@@ -26,6 +28,7 @@ export interface ClientConfig {
   scanDuration: number
   launcher: boolean
   pagesDir: string
+  sectionsDir: string
   routerFile: string
 }
 
@@ -116,3 +119,13 @@ export interface TabInstance { id: string; page: string; routePath: string; comp
 export interface TabsPreview { path: string; source: string; hash: string; routePath: string; files: PlannedFile[] }
 /** A catalog section without its source, for browsing. Fetch `/sections/:id` for the full template. */
 export type SectionSummary = Omit<SectionTemplate, 'source'>
+/** Install a catalog template as a component in `sectionsDir` and render it on a page. */
+export interface SectionInstallDraft {
+  page: string
+  template: string
+  /** PascalCase component name; defaults to the kind's component, numbered when taken. */
+  name?: string
+  /** Position among the page root's children; defaults to the kind's place in the page's story. */
+  index?: number
+}
+export interface SectionInstallPreview { path: string; page: string; name: string; kind: SectionKindId; template: string; routePath: string; hash: string; files: PlannedFile[] }

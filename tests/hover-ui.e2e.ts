@@ -19,7 +19,7 @@ const inventory: ProjectScan = {
 async function setup(page: Page) {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.route('**/__beast-page-builder/config', route => route.fulfill({ json: {
-    shortcut: 'Mod+B', position: 'center', theme: 'light', scanDuration: 0, launcher: true, pagesDir: 'src/pages', routerFile: 'src/router.ts'
+    shortcut: 'Mod+B', position: 'center', theme: 'light', scanDuration: 0, launcher: true, pagesDir: 'src/pages', sectionsDir: 'src/sections', routerFile: 'src/router.ts'
   } }))
   await page.route('**/__beast-page-builder/scan', route => route.fulfill({ json: inventory }))
   await page.goto('/')

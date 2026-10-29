@@ -11,7 +11,7 @@ Bring the Design Studio section catalog from `~/Code/play` into the page builder
 | 0 | Readiness review | Done | — |
 | 1 | Section catalog and server endpoint | Done | 0 |
 | 2 | Section identity and discovery | Done | 1 |
-| 3 | Section install plan | Not started | 1, 2 |
+| 3 | Section install plan | Done | 1, 2 |
 | 4 | Tailwind detection and studio base styles | Not started | 3 |
 | 5 | Section library UI | Not started | 1, 3 |
 | 6 | Final verification and measurements | Not started | 1–5 |
@@ -81,20 +81,21 @@ Evidence (October 29, 2026): `bun run check` passed type checking, client type c
 
 ## 3. Section install plan
 
-Status: **Not started**
+Status: **Done**
 
-Files: `server/project.ts`, `server/server.ts`, `shared/types.ts`, `client/api.ts`, and `client/controller.ts`.
+Files: `server/install.ts` (page edit), `server/project.ts` (`previewSection`, `installSection`, `sectionInstall`), `server/errors.ts`, `server/sections.ts` (shared import helpers), `server/server.ts`, `shared/types.ts`, `client/api.ts` (config default only), `tests/install.test.ts`, `tests/project.test.ts`, and `tests/server.test.ts`.
 
-- [ ] Add a `sectionsDir` option (default beside `pagesDir`, for example `src/sections`) and require it to be inside `include`.
-- [ ] Add `previewSection` / `createSection`: plan `create <sectionsDir>/<Name>.btsx` plus `edit <page>` (sorted import and usage line), hashed like page previews.
-- [ ] Number repeated kinds (`Features`, `Features2`) and never overwrite an existing component file.
-- [ ] Insert the usage at the stage order from `kinds.ts`, or at a position the user chooses.
-- [ ] Compile both planned files before review, and reuse `writeFiles` and the review screen for saving.
-- [ ] Reject installs into pages whose root cannot accept a component child, with a clear message.
+- [x] Add a `sectionsDir` option, defaulting beside `pagesDir` (`src/pages` → `src/sections`). Like `pagesDir`, it is added to the scan directories rather than required to be in `include`. It must be inside the project and outside `pagesDir` and any `pages`/`routes` folder, since files there scan as pages. `ClientConfig` carries it for milestone 5.
+- [x] Add `POST /install/preview` and `POST /install/create` (plus `GET /install/creation?hash=` for reload receipts). The plan creates `<sectionsDir>/<Name>.btsx` and edits the page, adding a default import after the page's other imports and a usage line under the page root. It is hashed with the template id, name, files, and route.
+- [x] Number repeated kinds (`Stats`, `Stats2`) past any name the page's imports or declarations bind and any file in `sectionsDir`. A chosen name must be PascalCase and free, or the review fails with 409. An existing component file is never overwritten.
+- [x] Insert the usage before the root's first child of a later kind. Children are typed by their `data-section`/`id` kind, or by the kind of the section file a component tag imports. With no typed children, navigation kinds go first and the rest go last (before any `style` block). An `index` overrides this and is range checked.
+- [x] Compile both planned files before review, and save through `writeFiles` behind the same mutation queue, hash recheck, and rollback as pages and tabs.
+- [x] Reject installs into pages with no root element, more than one root, or a void root (`img`, `input`, …), and into pages that do not compile, each with its own message.
+- [ ] Client wiring (an install action and the review screen in `client/controller.ts`) moves to milestone 5, where the library UI calls it.
 
 Complete when: installing a section creates the component and edits the page through the existing review/save flow with the same stale-draft and rollback protections.
 
-Evidence:
+Evidence (October 29, 2026): `bun run check` passed type checking, client type checking, the production build, and all 81 non-browser tests across 11 files. New tests: 5 planner tests (story order, end-of-root before styles, navigation first, explicit index, root errors), 4 project tests (end-to-end install with numbering and next-scan `usedBy`, one template per kind previewed as a compiling install, taken names / bad inputs / stale review leaving no file, `sectionsDir` defaults and rules), and 1 API test (preview, create, receipt, replay 409). All 83 browser tests passed in 3.5 minutes. `bun run catalog:check` reports no drift. The client is 578,155 bytes minified and 232,006 gzipped: +27 and +5 bytes over milestone 2, from the config default. `dist/vite.js` is 259,687 bytes (+11,760 over milestone 2). Previewing an install rescans the project, about 280 ms for the small fixture, so the per-kind test samples one template per kind; `tests/catalog.test.ts` still compiles all 83. Limits: inserted usage lines take their indentation from the root's first child, and the import goes after the last import even if the page interleaves other declarations.
 
 ## 4. Tailwind detection and studio base styles
 
@@ -123,6 +124,7 @@ Files: `client/sections/SectionLibrary.btsx`, `Wireframe.btsx`, `types.ts`, `cli
 - [ ] Add missing icons (`chevron-down-tiny` or an existing equivalent).
 - [ ] Reach the library from the palette and from the page editor's “Add a section” menu, replacing the plain name list.
 - [ ] Load a template's source only when it is chosen.
+- [ ] Wire install into `client/controller.ts`: choose a page, call `/install/preview`, show the existing review screen, save through `/install/create`, and recover through `/install/creation` after a reload.
 - [ ] Title studio section edits by kind (“Edit Stats”) rather than “Edit #stats”, since `data-section` roots have no `id`.
 - [ ] Leave out `DesignStudio`, `StudioStage`, `DesignOverlay`, `DesignInspector`, `ThemeDesigner`, `ThemePicker`, and `FullstackBrowser`; saved sections already render in the user's site through HMR.
 

@@ -19,7 +19,7 @@ const inventory: ProjectScan = {
   navigationTargets: [{ id: 'menu', file: 'src/Header.btsx', label: 'Main menu' }],
   pageRoutes: [{ file: pagePath, name: 'RecoveryPage', routePath: '/' }], tabComponents: [component], tabInstances: []
 }
-const config: ClientConfig = { shortcut: 'Mod+B', position: 'center', theme: 'light', scanDuration: 0, launcher: true, pagesDir: 'src/pages', routerFile: 'src/router.ts' }
+const config: ClientConfig = { shortcut: 'Mod+B', position: 'center', theme: 'light', scanDuration: 0, launcher: true, pagesDir: 'src/pages', sectionsDir: 'src/sections', routerFile: 'src/router.ts' }
 const launcher = (page: Page) => page.getByRole('button', { name: 'Open Beast page builder', exact: true })
 const close = (page: Page) => page.getByRole('button', { name: 'Close builder', exact: true }).click()
 const ready = (page: Page) => expect(page.getByText('Builder ready', { exact: true })).toBeVisible()

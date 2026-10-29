@@ -43,6 +43,21 @@ test('API serves section summaries and fetches one template on demand', async ()
   expect((await fetch(base + '/sections/missing')).status).toBe(404)
   expect((await fetch(base + '/sections/%E0%A4%A')).status).toBe(404)
 })
+test('API reviews and installs a catalog section with a reload receipt', async () => {
+  const origin = await fixture(), base = origin + '/__beast-page-builder'
+  const root = roots.at(-1)!
+  await mkdir(join(root, 'src/pages'), { recursive: true })
+  await writeFile(join(root, 'src/pages/HomePage.btsx'), 'main\n  h1 Hello\n')
+  const post = (route: string, body: unknown) => fetch(base + route, { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: origin }, body: JSON.stringify(body) })
+  const draft = { page: 'src/pages/HomePage.btsx', template: 'faq-accordion' }
+  expect((await post('/install/preview', { ...draft, template: 'missing' })).status).toBe(404)
+  const preview = await (await post('/install/preview', draft)).json() as { hash: string; path: string; files: unknown[] }
+  expect(preview).toMatchObject({ path: 'src/sections/Faq.btsx', files: expect.any(Array) })
+  expect((await post('/install/create', { ...draft, hash: preview.hash })).status).toBe(201)
+  expect(await (await fetch(base + '/install/creation?hash=' + preview.hash)).json()).toMatchObject({ path: 'src/sections/Faq.btsx' })
+  expect((await post('/install/create', { ...draft, hash: preview.hash })).status).toBe(409)
+  expect(await readFile(join(root, 'src/pages/HomePage.btsx'), 'utf8')).toContain('  Faq\n')
+})
 test('API rejects cross-site, malformed, oversized, and non-JSON writes', async () => {
   const origin = await fixture(), url = origin + '/__beast-page-builder/preview'
   expect((await fetch(url, { method: 'POST', headers: { Origin: 'https://untrusted.example', 'Content-Type': 'application/json' }, body: '{}' })).status).toBe(403)

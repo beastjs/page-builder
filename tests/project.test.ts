@@ -4,6 +4,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { BuilderProject } from '../server/project.js'
 import { templates } from '../client/templates.js'
+import { templatesOf } from '../server/catalog/index.js'
+import { sectionKinds } from '../shared/catalog/kinds.js'
 import { HEADER, ROUTER } from './fixtures.js'
 
 const roots: string[] = []
@@ -163,5 +165,67 @@ describe('page editing', () => {
     await expect(project.preview({ ...draft, path: 'src/components/Header.btsx' })).rejects.toThrow('page from')
     await expect(project.preview({ ...draft, path: '../Outside.btsx' })).rejects.toThrow('outside')
     await expect(project.create(draft, '')).rejects.toThrow('Review')
+  })
+})
+
+describe('section installs', () => {
+  test('installs a catalog section as a component, renders it on the page, and links it in the next scan', async () => {
+    const { project, root } = await fixture()
+    const draft = { page: 'src/pages/HomePage.btsx', template: 'stats-row' }
+    const preview = await project.previewSection(draft)
+    expect(preview).toMatchObject({ path: 'src/sections/Stats.btsx', page: draft.page, name: 'Stats', kind: 'stats', template: 'stats-row' })
+    expect(preview.files.map(file => [file.path, file.action])).toEqual([['src/sections/Stats.btsx', 'create'], [draft.page, 'edit']])
+    expect(preview.files[1]!.source).toBe("import Stats from '../sections/Stats.btsx'\n\nmain\n  h1 Hello\n  Stats\n")
+    await project.installSection(draft, preview.hash)
+    expect(await readFile(join(root, 'src/sections/Stats.btsx'), 'utf8')).toContain("data-section='stats'")
+    expect(await project.sectionInstall(preview.hash)).toEqual(preview)
+    const report = await project.scan()
+    expect(report.files.find(file => file.path === 'src/sections/Stats.btsx')?.kind).toBe('component')
+    expect(report.sections.find(section => section.file === 'src/sections/Stats.btsx')?.usedBy).toEqual([{ file: draft.page, line: 5 }])
+
+    // A second section of the same kind is numbered, placed in story order, and never replaces the first.
+    const again = await project.previewSection({ ...draft, template: 'stats-story' })
+    expect(again).toMatchObject({ name: 'Stats2', path: 'src/sections/Stats2.btsx' })
+    const hero = await project.previewSection({ ...draft, template: templatesOf('hero')[0]!.id })
+    expect(hero.files[1]!.source).toBe("import Stats from '../sections/Stats.btsx'\nimport Hero from '../sections/Hero.btsx'\n\nmain\n  h1 Hello\n  Hero\n  Stats\n")
+  })
+
+  test('one template of every kind previews as an install that compiles on a page', async () => {
+    // tests/catalog.test.ts compiles every template; this covers each kind's name and page wiring.
+    const { project } = await fixture()
+    const failures: string[] = []
+    for (const template of sectionKinds.map(kind => templatesOf(kind.id)[0]!)) {
+      try { await project.previewSection({ page: 'src/pages/HomePage.btsx', template: template.id }) }
+      catch (error) { failures.push(`${template.id}: ${error instanceof Error ? error.message.split('\n')[0] : error}`) }
+    }
+    expect(failures).toEqual([])
+  }, 20_000)
+
+  test('rejects taken names, unknown inputs, and stale reviews', async () => {
+    const { project, root } = await fixture()
+    const draft = { page: 'src/pages/HomePage.btsx', template: 'stats-row' }
+    await mkdir(join(root, 'src/sections'), { recursive: true })
+    await writeFile(join(root, 'src/sections/Stats.btsx'), "section(data-section='stats')\n  p Mine\n")
+    expect((await project.previewSection(draft)).name).toBe('Stats2')
+    await expect(project.previewSection({ ...draft, name: 'Stats' })).rejects.toThrow('already used')
+    await expect(project.previewSection({ ...draft, name: 'HomePage' })).rejects.toThrow('already used')
+    await expect(project.previewSection({ ...draft, name: 'stats' })).rejects.toThrow('PascalCase')
+    await expect(project.previewSection({ ...draft, template: 'missing' })).rejects.toThrow('Unknown section template')
+    await expect(project.previewSection({ ...draft, page: 'src/components/Card.btsx' })).rejects.toThrow('Choose a page')
+    const preview = await project.previewSection({ ...draft, name: 'Numbers' })
+    await writeFile(join(root, 'src/pages/HomePage.btsx'), 'main\n  h1 Changed\n')
+    await expect(project.installSection({ ...draft, name: 'Numbers' }, preview.hash)).rejects.toThrow('Review again')
+    await expect(readFile(join(root, 'src/sections/Numbers.btsx'), 'utf8')).rejects.toThrow()
+    expect(await readFile(join(root, 'src/sections/Stats.btsx'), 'utf8')).toContain('Mine')
+  })
+
+  test('sectionsDir defaults beside pagesDir and must stay out of page folders', async () => {
+    const { root } = await fixture()
+    expect(new BuilderProject(root).sectionsDir).toBe('src/sections')
+    expect(new BuilderProject(root, { pagesDir: 'app/pages' }).sectionsDir).toBe('app/sections')
+    expect(new BuilderProject(root).include).toContain('src/sections')
+    expect(() => new BuilderProject(root, { sectionsDir: 'src/pages/sections' })).toThrow('outside pagesDir')
+    expect(() => new BuilderProject(root, { sectionsDir: 'src/routes/blocks' })).toThrow('outside pagesDir')
+    expect(() => new BuilderProject(root, { sectionsDir: '../elsewhere' })).toThrow('inside')
   })
 })

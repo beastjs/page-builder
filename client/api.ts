@@ -2,7 +2,7 @@ import { BASE, type ClientConfig } from '../shared/types.js'
 
 export const defaultConfig: ClientConfig = {
   shortcut: 'Mod+B', position: 'center', theme: 'light', scanDuration: 1600,
-  launcher: true, pagesDir: 'src/pages', routerFile: 'src/router.ts'
+  launcher: true, pagesDir: 'src/pages', sectionsDir: 'src/sections', routerFile: 'src/router.ts'
 }
 
 // Vite's script URL carries its base; bundled Rspack/Rsbuild entries use the root endpoint.

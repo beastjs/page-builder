@@ -386,7 +386,7 @@ test('preferences stay usable in memory when browser storage is unavailable', as
   })
   await page.route('**/__beast-page-builder/config', route => route.fulfill({ json: {
     shortcut: 'Ctrl+Shift+K', position: 'center', theme: 'light', launcher: true,
-    scanDuration: 0, pagesDir: 'src/pages', routerFile: 'src/router.ts'
+    scanDuration: 0, pagesDir: 'src/pages', sectionsDir: 'src/sections', routerFile: 'src/router.ts'
   } }))
   await setup(page)
   await expect(page.locator('.launcher kbd')).toHaveText('Ctrl Shift K')

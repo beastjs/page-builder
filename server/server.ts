@@ -1,8 +1,8 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
-import { BASE, type BeastPageBuilderOptions, type ClientConfig, type PageDraft, type TabsDraft } from '../shared/types.js'
-import { BuilderError, BuilderProject } from './project.js'
+import { BASE, type BeastPageBuilderOptions, type ClientConfig, type PageDraft, type SectionInstallDraft, type TabsDraft } from '../shared/types.js'
+import { BuilderError, BuilderProject, defaultSectionsDir } from './project.js'
 import { sectionSummaries, sectionTemplate } from './catalog/index.js'
 
 // The server modules are bundled into each public entrypoint in dist/.
@@ -16,7 +16,7 @@ export function clientConfig(options: BeastPageBuilderOptions): ClientConfig {
   if (options.theme && !['light', 'dark', 'auto'].includes(options.theme)) throw new BuilderError('Unknown widget theme.')
   const scanDuration = options.scanDuration ?? 1600
   if (!Number.isFinite(scanDuration) || scanDuration < 0 || scanDuration > 10_000) throw new BuilderError('scanDuration must be between 0 and 10,000 milliseconds.')
-  return { shortcut, position: options.position ?? 'center', theme: options.theme ?? 'light', scanDuration, launcher: options.launcher ?? true, pagesDir: options.pagesDir ?? 'src/pages', routerFile: options.routerFile ?? 'src/router.ts' }
+  return { shortcut, position: options.position ?? 'center', theme: options.theme ?? 'light', scanDuration, launcher: options.launcher ?? true, pagesDir: options.pagesDir ?? 'src/pages', sectionsDir: defaultSectionsDir(options), routerFile: options.routerFile ?? 'src/router.ts' }
 }
 
 function checkOrigin(req: IncomingMessage): void {
@@ -69,6 +69,12 @@ export function createBuilderServer(root: string, options: BeastPageBuilderOptio
       else if (req.method === 'GET' && route === '/creation') send(200, await project.creation(url.searchParams.get('hash') ?? ''))
       else if (req.method === 'GET' && route === '/source') send(200, { source: await project.source(url.searchParams.get('path') ?? '') })
       else if (req.method === 'GET' && route === '/tabs/creation') send(200, await project.tabCreation(url.searchParams.get('hash') ?? ''))
+      else if (req.method === 'GET' && route === '/install/creation') send(200, await project.sectionInstall(url.searchParams.get('hash') ?? ''))
+      else if (req.method === 'POST' && (route === '/install/preview' || route === '/install/create')) {
+        const body = await jsonBody(req)
+        const draft = { page: body.page, template: body.template, name: body.name, index: body.index } as SectionInstallDraft
+        send(route === '/install/create' ? 201 : 200, route === '/install/create' ? await project.installSection(draft, body.hash as string) : await project.previewSection(draft))
+      }
       else if (req.method === 'GET' && route === '/sections') send(200, sectionSummaries)
       else if (req.method === 'GET' && route.startsWith('/sections/')) {
         // Template ids are plain kebab-case, so an encoded or malformed id is simply unknown.

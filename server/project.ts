@@ -1,39 +1,49 @@
 import { createHash, randomUUID } from 'node:crypto'
 import { lstat, mkdir, readdir, readFile, realpath, writeFile, unlink, link, rename, stat, chmod } from 'node:fs/promises'
-import { basename, dirname, isAbsolute, relative, resolve, sep } from 'node:path'
-import { compileBeastResult, componentNameFromPath } from 'beast-tsrx'
+import { basename, dirname, isAbsolute, posix as posixPath, relative, resolve, sep } from 'node:path'
+import { compileBeastResult, componentNameFromPath, type BeastNode } from 'beast-tsrx'
 import { createOctaneCompiler } from 'octane/compiler/bundler'
-import type { BeastPageBuilderOptions, NavigationTarget, PageDraft, PagePreview, PlannedFile, ProjectFile, ProjectScan, SectionUse, TabsDraft, TabsPreview } from '../shared/types.js'
+import type { BeastPageBuilderOptions, NavigationTarget, PageDraft, PagePreview, PlannedFile, ProjectFile, ProjectScan, SectionInstallDraft, SectionInstallPreview, SectionUse, TabsDraft, TabsPreview } from '../shared/types.js'
 import { addNavigation, discoverNavigation, registerRoute } from './integration.js'
 import { discoverProjectItems, type DiscoverySource } from './discovery.js'
 import { addTabs, discoverPageRoutes, discoverTabInstances } from './tabs.js'
-import { discoverComponentUses, discoverSections } from './sections.js'
+import { componentImports, discoverComponentUses, discoverSections, importedNames, literalAttr } from './sections.js'
+import { addSectionUse } from './install.js'
+import { BuilderError } from './errors.js'
+import { sectionTemplate } from './catalog/index.js'
+import { sectionKind } from '../shared/catalog/kinds.js'
+import { sectionKindOf } from '../shared/sections.js'
 
 const IGNORED = new Set(['node_modules', '.git', '.beast', 'dist', 'build', 'coverage', '.next'])
-export class BuilderError extends Error {
-  constructor(message: string, readonly status = 400) { super(message) }
-}
+export { BuilderError }
 const posix = (path: string) => path.split(sep).join('/')
+/** Sections sit beside pages by default: src/pages → src/sections. */
+export const defaultSectionsDir = (options: BeastPageBuilderOptions) => options.sectionsDir ?? posixPath.join(posixPath.dirname(options.pagesDir ?? 'src/pages'), 'sections')
 const inside = (root: string, path: string) => { const rel = relative(root, path); return rel === '' || (!rel.startsWith(`..${sep}`) && rel !== '..' && !isAbsolute(rel)) }
 
 export class BuilderProject {
   readonly root: string
   readonly include: string[]
   readonly pagesDir: string
+  readonly sectionsDir: string
   readonly routerFile: string
   private compiler: ReturnType<typeof createOctaneCompiler> | undefined
   private mutation: Promise<void> = Promise.resolve()
   private creations = new Map<string, Promise<PagePreview>>()
   private tabCreations = new Map<string, Promise<TabsPreview>>()
+  private sectionInstalls = new Map<string, Promise<SectionInstallPreview>>()
 
   constructor(root: string, private readonly options: BeastPageBuilderOptions = {}) {
     this.root = resolve(root)
     this.pagesDir = options.pagesDir ?? 'src/pages'
+    this.sectionsDir = defaultSectionsDir(options)
     this.routerFile = options.routerFile ?? 'src/router.ts'
-    this.include = [...new Set([...(options.include ?? ['src']), this.pagesDir])]
+    this.include = [...new Set([...(options.include ?? ['src']), this.pagesDir, this.sectionsDir])]
     for (const path of [...this.include, this.routerFile, ...(options.navigation ? [options.navigation.file] : [])]) {
       if (isAbsolute(path) || !inside(this.root, resolve(this.root, path))) throw new BuilderError('Scan and page directories must be inside the project.')
     }
+    // Files under a pages folder scan as pages, so installed sections would never be treated as components.
+    if (inside(resolve(this.root, this.pagesDir), resolve(this.root, this.sectionsDir)) || /(?:^|\/)(pages|routes)(?:\/|$)/.test(posix(relative(this.root, resolve(this.root, this.sectionsDir))))) throw new BuilderError('sectionsDir must be outside pagesDir and any pages or routes folder.')
     if (!this.routerFile.endsWith('.ts')) throw new BuilderError('routerFile must be a TypeScript file.')
     if (options.navigation && !/\.(?:tsx?|btsx)$/.test(options.navigation.file)) throw new BuilderError('navigation.file must be .ts, .tsx, or .btsx.')
   }
@@ -323,6 +333,92 @@ export class BuilderProject {
 
   async tabCreation(hash: string): Promise<TabsPreview> {
     const result = this.tabCreations.get(hash)
+    if (!result) throw new BuilderError('Save result is unavailable. Inspect the page before retrying.', 404)
+    return result
+  }
+
+  async previewSection(draft: SectionInstallDraft): Promise<SectionInstallPreview> {
+    if (typeof draft.page !== 'string' || typeof draft.template !== 'string') throw new BuilderError('Choose a page and a section template.')
+    const template = sectionTemplate(draft.template)
+    if (!template) throw new BuilderError('Unknown section template.', 404)
+    if (draft.name !== undefined && (typeof draft.name !== 'string' || !/^[A-Z][A-Za-z0-9]{0,79}$/.test(draft.name))) throw new BuilderError('Use a PascalCase section name, such as Pricing.')
+    if (draft.index !== undefined && typeof draft.index !== 'number') throw new BuilderError('Section position must be a number.')
+    const report = await this.scan()
+    const page = report.files.find(file => file.path === draft.page && file.kind === 'page')
+    if (!page) throw new BuilderError('Choose a page from the project scan.', 403)
+    if (page.error) throw new BuilderError(`${page.path} does not compile. Fix it before adding sections.`, 422)
+    const before = await this.source(page.path)
+    const document = compileBeastResult(before, { filename: resolve(this.root, page.path) }).ast
+
+    // A default name is numbered past anything the page already binds or the sections folder already holds;
+    // a chosen name must be free. Either way an existing component file is never overwritten.
+    const taken = new Set([...importedNames(document), ...page.components])
+    const available = async (name: string) => {
+      if (taken.has(name)) return false
+      try { await lstat(resolve(this.root, this.sectionsDir, `${name}.btsx`)); return false }
+      catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; return true }
+    }
+    let name = draft.name
+    if (name !== undefined) {
+      if (!await available(name)) throw new BuilderError(`${name} is already used by this page or ${this.sectionsDir}. Choose another name.`, 409)
+    } else {
+      const base = sectionKind(template.kind).component
+      for (let count = 1; name === undefined; count++) {
+        if (count > 100) throw new BuilderError(`Too many ${base} sections. Choose a name.`, 409)
+        const candidate = count === 1 ? base : `${base}${count}`
+        if (await available(candidate)) name = candidate
+      }
+    }
+    const path = posix(relative(this.root, resolve(this.root, this.sectionsDir, `${name}.btsx`)))
+    await this.safe(resolve(this.root, path))
+    const relativePath = posixPath.relative(posixPath.dirname(page.path), path)
+    const specifier = relativePath.startsWith('.') ? relativePath : `./${relativePath}`
+
+    const imports = componentImports(document, page.path)
+    const kindOf = (node: BeastNode) => {
+      if (node.kind !== 'element') return undefined
+      const marker = literalAttr(node, 'data-section') ?? literalAttr(node, 'id') ?? node.id
+      const kind = marker ? sectionKindOf(marker) : undefined
+      if (kind) return kind
+      const target = node.isComponent ? imports.get(node.tag) : undefined
+      return target ? report.sections.find(section => section.file === target && section.kind)?.kind : undefined
+    }
+    const pageSource = addSectionUse(before, document, { name, specifier, kind: template.kind, index: draft.index }, kindOf)
+    if (Buffer.byteLength(pageSource) > 60_000) throw new BuilderError('Page source must contain between 1 and 60,000 bytes.')
+    const sectionSource = template.source.trimEnd() + '\n'
+    try {
+      this.compiler ??= createOctaneCompiler({ root: this.root, environment: 'client', hmr: false, dev: true })
+      for (const [file, source, componentName] of [[path, sectionSource, name], [page.path, pageSource, undefined]] as const) {
+        const target = resolve(this.root, file)
+        const result = compileBeastResult(source, { filename: target, ...(componentName ? { componentName } : {}) })
+        this.compiler.transform(result.code, target.replace(/\.btsx$/, '.tsrx'), { environment: 'client', dev: true })
+      }
+    } catch (cause) { throw new BuilderError(cause instanceof Error ? cause.message : String(cause), 422) }
+    const files: PlannedFile[] = [
+      { path, action: 'create', before: null, source: sectionSource },
+      { path: page.path, action: 'edit', before, source: pageSource },
+    ]
+    const routePath = report.pageRoutes.find(route => route.file === page.path)?.routePath ?? ''
+    const hash = createHash('sha256').update(JSON.stringify({ template: template.id, name, files, routePath })).digest('hex')
+    return { path, page: page.path, name, kind: template.kind, template: template.id, routePath, hash, files }
+  }
+
+  async installSection(draft: SectionInstallDraft, hash: string): Promise<SectionInstallPreview> {
+    if (typeof hash !== 'string' || !/^[a-f0-9]{64}$/.test(hash)) throw new BuilderError('Review the section before saving.')
+    const operation = this.mutation.then(async () => {
+      const preview = await this.previewSection(draft)
+      if (preview.hash !== hash) throw new BuilderError('The page, section, or project files changed. Review again before saving.', 409)
+      await this.writeFiles(preview.files)
+      return preview
+    })
+    this.mutation = operation.then(() => {}, () => {})
+    this.sectionInstalls.set(hash, operation)
+    if (this.sectionInstalls.size > 20) this.sectionInstalls.delete(this.sectionInstalls.keys().next().value!)
+    return operation
+  }
+
+  async sectionInstall(hash: string): Promise<SectionInstallPreview> {
+    const result = this.sectionInstalls.get(hash)
     if (!result) throw new BuilderError('Save result is unavailable. Inspect the page before retrying.', 404)
     return result
   }
