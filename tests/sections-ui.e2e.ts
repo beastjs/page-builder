@@ -79,3 +79,25 @@ test('detected component sections support search, editing, review and save; miss
   await expect(page.getByLabel('BTSX page source', { exact: true })).toHaveValue(/aside.sidebar#sidebar/)
   expect(errors).toEqual([])
 })
+
+test('studio section components are listed by kind, hide their template, and edit in their own file', async ({ page }) => {
+  const errors: string[] = []
+  page.on('pageerror', error => errors.push(error.message))
+  const statsPath = 'src/sections/Stats.btsx'
+  const statsSource = "section(data-section='stats')\n  p Numbers\n"
+  const studio: ProjectScan = {
+    ...inventory,
+    files: [...inventory.files, { path: statsPath, name: 'Stats', kind: 'component', lines: 3, components: ['Stats'], error: null }],
+    sections: [...inventory.sections, { id: `${statsPath}:1:stats`, elementId: 'stats', file: statsPath, line: 1, marker: 'data-section', kind: 'stats', usedBy: [{ file: 'src/pages/HomePage.btsx', line: 6 }] }]
+  }
+  await page.route('**/__beast-page-builder/scan', route => route.fulfill({ json: studio }))
+  await page.route('**/__beast-page-builder/source?*', route => route.fulfill({ json: { source: new URL(route.request().url()).searchParams.get('path') === statsPath ? statsSource : source } }))
+  await open(page)
+  const stats = page.getByRole('button', { name: /^Edit Stats data-section=stats · src\/sections\/Stats\.btsx:1 · on src\/pages\/HomePage\.btsx/ })
+  await expect(stats).toBeVisible()
+  await expect(page.locator('[data-action="section:Stats"]')).toHaveCount(0)
+  await expect(page.locator('[data-action="section:Hero"]')).toBeVisible()
+  await stats.click()
+  await expect(page.getByLabel('BTSX section source', { exact: true })).toHaveValue(statsSource)
+  expect(errors).toEqual([])
+})

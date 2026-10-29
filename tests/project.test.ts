@@ -96,6 +96,22 @@ describe('page creation', () => {
   })
 })
 
+describe('section discovery', () => {
+  test('links studio section components to the pages that render them', async () => {
+    const { project, root } = await fixture()
+    await mkdir(join(root, 'src/sections'), { recursive: true })
+    await writeFile(join(root, 'src/sections/Stats.btsx'), "section(data-section='stats')\n  p Numbers\n")
+    await writeFile(join(root, 'src/sections/Unused.btsx'), "section(data-section='faq')\n  p Questions\n")
+    await writeFile(join(root, 'src/pages/HomePage.btsx'), "import Stats from '../sections/Stats.btsx'\nimport type Unused from '../sections/Unused.btsx'\n\nmain\n  h1 Hello\n  Stats\n")
+    const report = await project.scan()
+    expect(report.sections.find(section => section.file === 'src/sections/Stats.btsx')).toEqual({
+      id: 'src/sections/Stats.btsx:1:stats', elementId: 'stats', file: 'src/sections/Stats.btsx', line: 1, marker: 'data-section', kind: 'stats',
+      usedBy: [{ file: 'src/pages/HomePage.btsx', line: 6 }],
+    })
+    expect(report.sections.find(section => section.file === 'src/sections/Unused.btsx')?.usedBy).toBeUndefined()
+  })
+})
+
 describe('page editing', () => {
   test('discovers section IDs and reviews and saves their component file with stale review protection', async () => {
     const { project, root } = await fixture()
@@ -103,7 +119,7 @@ describe('page editing', () => {
     await writeFile(join(root, path), HEADER.replace('header\n', 'header#topbar\n'))
     const router = await readFile(join(root, 'src/router.ts'), 'utf8')
     const report = await project.scan()
-    expect(report.sections).toEqual([{ id: `${path}:2:topbar`, file: path, line: 2, elementId: 'topbar' }])
+    expect(report.sections).toEqual([{ id: `${path}:2:topbar`, file: path, line: 2, elementId: 'topbar', kind: 'topbar' }])
     const source = (await project.source(path)).replace(' Home', ' Welcome')
     const draft = { name: 'Header', path, section: 'topbar', source }
     const preview = await project.preview(draft)

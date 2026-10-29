@@ -10,7 +10,7 @@ Bring the Design Studio section catalog from `~/Code/play` into the page builder
 | --- | --- | --- | --- |
 | 0 | Readiness review | Done | — |
 | 1 | Section catalog and server endpoint | Done | 0 |
-| 2 | Section identity and discovery | Not started | 1 |
+| 2 | Section identity and discovery | Done | 1 |
 | 3 | Section install plan | Not started | 1, 2 |
 | 4 | Tailwind detection and studio base styles | Not started | 3 |
 | 5 | Section library UI | Not started | 1, 3 |
@@ -65,19 +65,19 @@ Evidence (October 29, 2026): `bun run check` passed type checking, client type c
 
 ## 2. Section identity and discovery
 
-Status: **Not started**
+Status: **Done**
 
-Files: `server/sections.ts`, `shared/sections.ts`, `shared/types.ts`, and `client/palette/actions.ts`.
+Files: `server/sections.ts`, `server/project.ts`, `shared/sections.ts`, `shared/types.ts`, `client/palette/actions.ts`, `tests/sections.test.ts`, `tests/project.test.ts`, and `tests/sections-ui.e2e.ts`.
 
-- [ ] Choose one identity: the studio kind id (`partners`) or `sectionKey(label)` (`partners-marquee`). Map the existing `sectionLibrary` entries to it.
-- [ ] Detect `data-section` roots alongside `id`; record the kind and the component file on `DetectedSection`.
-- [ ] Detect studio components used on a page through their imports, so an installed section appears under “Existing sections”.
-- [ ] Keep “Edit section” opening the component file for studio sections and the page line for inline ones.
-- [ ] Decide whether the existing inline snippets in `client/templates.ts` stay, are replaced by catalog sections, or remain as a “simple” fallback for projects without Tailwind.
+- [x] Choose one identity: the studio kind id is canonical. `sectionKindOf(name)` in `shared/sections.ts` also accepts a kind's label and component name as keys, so `#partners-marquee`, `data-section='partners'`, and `Partners` are all kind `partners`, and `Call to action` / `CallToAction` / `cta` are all `cta`. `Sidebar` has no kind and keeps matching by name.
+- [x] Detect `data-section` roots alongside `id` (literal strings only, as for `id`). `DetectedSection` gains optional `marker: 'data-section'` (set when there is no `id`), `kind`, and `usedBy`. An element with both keeps its `id` as its name and takes its kind from `data-section`.
+- [x] Detect studio components used on a page: `discoverComponentUses` follows relative, default, non-type `.btsx` imports to the tags that render them, and the scan sets `usedBy` on sections in component files.
+- [x] Keep “Edit section” opening the component file for studio sections (at the root's line) and the page line for inline ones. The existing edit, review, and save path needed no change.
+- [x] Decide on the inline snippets in `client/templates.ts`: keep them for now as the no-Tailwind fallback. The palette hides a “Create” entry when a section of the same kind is detected. Milestone 5 decides whether the catalog replaces them.
 
 Complete when: scans report both inline and studio sections with stable ids, and the palette no longer offers to create a kind already on the page.
 
-Evidence:
+Evidence (October 29, 2026): `bun run check` passed type checking, client type checking, the production build, and all 71 non-browser tests across 10 files, including 3 new discovery tests (data-section roots and kinds, every catalog template discovered as its own kind, import-based uses) and a new scan test linking a section component to its page. The full browser suite passed all 83 tests in 3.4 minutes, including a new test where a studio section lists as “Edit Stats” with its `data-section` marker and page, hides “Create Stats”, and opens its component source. `bun run catalog:check` reports no drift. The client is 578,128 bytes minified and 232,001 gzipped (Node zlib defaults): +3,015 and +1,174 bytes over milestone 1, from the kind list the palette now imports. Remaining limits: named imports and re-exports are not followed for `usedBy`, and the section edit heading still reads “Edit #stats” for a `data-section` root (see milestone 5).
 
 ## 3. Section install plan
 
@@ -123,6 +123,7 @@ Files: `client/sections/SectionLibrary.btsx`, `Wireframe.btsx`, `types.ts`, `cli
 - [ ] Add missing icons (`chevron-down-tiny` or an existing equivalent).
 - [ ] Reach the library from the palette and from the page editor's “Add a section” menu, replacing the plain name list.
 - [ ] Load a template's source only when it is chosen.
+- [ ] Title studio section edits by kind (“Edit Stats”) rather than “Edit #stats”, since `data-section` roots have no `id`.
 - [ ] Leave out `DesignStudio`, `StudioStage`, `DesignOverlay`, `DesignInspector`, `ThemeDesigner`, `ThemePicker`, and `FullstackBrowser`; saved sections already render in the user's site through HMR.
 
 Complete when: users can browse, search, and install catalog sections from the builder, in light and dark themes, on desktop and mobile.

@@ -1,4 +1,4 @@
-import type { SectionTemplate } from './catalog/types.js'
+import type { SectionKindId, SectionTemplate } from './catalog/types.js'
 export const BASE = '/__beast-page-builder'
 
 export interface BeastPageBuilderOptions {
@@ -51,7 +51,20 @@ export interface ProjectScan {
   tabInstances: TabInstance[]
 }
 
-export interface DetectedSection { id: string; elementId: string; file: string; line: number }
+export interface DetectedSection {
+  id: string
+  /** The element's `id`, or its `data-section` value when `marker` is `data-section`. */
+  elementId: string
+  file: string
+  line: number
+  /** Set for studio section roots, which carry `data-section='<kind>'` instead of an `id`. */
+  marker?: 'data-section'
+  /** The catalog kind this section matches, by kind id, label, or component name. */
+  kind?: SectionKindId
+  /** Pages that render this section's component, when it lives in its own file. */
+  usedBy?: SectionUse[]
+}
+export interface SectionUse { file: string; line: number }
 
 export interface ItemField { name: string; type: string; optional: boolean; scalar?: 'string' | 'number' | 'boolean'; values?: Array<string | number | boolean> }
 export interface ItemType { name: string; origin: 'declared' | 'inferred'; fields: ItemField[]; variants?: ItemType[] }

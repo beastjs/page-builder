@@ -3,11 +3,11 @@ import { lstat, mkdir, readdir, readFile, realpath, writeFile, unlink, link, ren
 import { basename, dirname, isAbsolute, relative, resolve, sep } from 'node:path'
 import { compileBeastResult, componentNameFromPath } from 'beast-tsrx'
 import { createOctaneCompiler } from 'octane/compiler/bundler'
-import type { BeastPageBuilderOptions, NavigationTarget, PageDraft, PagePreview, PlannedFile, ProjectFile, ProjectScan, TabsDraft, TabsPreview } from '../shared/types.js'
+import type { BeastPageBuilderOptions, NavigationTarget, PageDraft, PagePreview, PlannedFile, ProjectFile, ProjectScan, SectionUse, TabsDraft, TabsPreview } from '../shared/types.js'
 import { addNavigation, discoverNavigation, registerRoute } from './integration.js'
 import { discoverProjectItems, type DiscoverySource } from './discovery.js'
 import { addTabs, discoverPageRoutes, discoverTabInstances } from './tabs.js'
-import { discoverSections } from './sections.js'
+import { discoverComponentUses, discoverSections } from './sections.js'
 
 const IGNORED = new Set(['node_modules', '.git', '.beast', 'dist', 'build', 'coverage', '.next'])
 export class BuilderError extends Error {
@@ -56,6 +56,7 @@ export class BuilderProject {
   async scan(): Promise<ProjectScan> {
     const files: ProjectFile[] = []
     const sections: ProjectScan['sections'] = []
+    const uses = new Map<string, SectionUse[]>()
     const warnings: string[] = []
     let navigationTargets: NavigationTarget[] = []
     const sources = new Map<string, DiscoverySource>()
@@ -81,6 +82,7 @@ export class BuilderProject {
               const result = compileBeastResult(source, { filename: path })
               components = [name, ...result.ast.declarations.flatMap(d => d.kind === 'component' ? [d.name] : [])]
               sections.push(...discoverSections(result.ast, filePath))
+              for (const [target, found] of discoverComponentUses(result.ast, filePath)) uses.set(target, [...(uses.get(target) ?? []), ...found])
             } catch (cause) { error = cause instanceof Error ? cause.message : String(cause) }
             files.push({ path: filePath, name, kind: inside(resolve(this.root, this.pagesDir), path) || /(?:^|\/)(pages|routes)\//.test(filePath) || /Page$/.test(name) ? 'page' : 'component', lines: source.split('\n').length, components, error })
             sources.set(filePath, { file: filePath, source, page: files.at(-1)!.kind === 'page' })
@@ -95,6 +97,11 @@ export class BuilderProject {
       }
     }
     for (const directory of this.include) await walk(resolve(this.root, directory))
+    // A section in its own component file is edited there, but belongs to the pages that render it.
+    for (const section of sections) {
+      const usedBy = uses.get(section.file)
+      if (usedBy && files.find(file => file.path === section.file)?.kind === 'component') section.usedBy = usedBy
+    }
     if (this.options.navigation) {
       try {
         const file = posix(relative(this.root, resolve(this.root, this.options.navigation.file)))

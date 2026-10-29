@@ -1,5 +1,6 @@
 import type { DetectedCollection, DetectedSection, ProjectFile, ProjectScan, TabInstance } from '../../shared/types.js'
-import { sectionKey } from '../../shared/sections.js'
+import { sectionKey, sectionKindOf } from '../../shared/sections.js'
+import { sectionKind } from '../../shared/catalog/kinds.js'
 import type { PaletteAction, PaletteTab } from './types.js'
 
 interface PaletteHandlers {
@@ -22,6 +23,22 @@ interface PaletteOptions {
   shortcut: string
   sections: Record<string, string>
   handlers: PaletteHandlers
+}
+
+/** Sections of one catalog kind are the same section whatever their name; other names compare as keys. */
+const kindOf = (section: DetectedSection) => section.kind ?? sectionKindOf(section.elementId)
+function matches(section: DetectedSection, name: string): boolean {
+  const kind = sectionKindOf(name)
+  return kind ? kindOf(section) === kind : sectionKey(section.elementId) === sectionKey(name)
+}
+function sectionName(section: DetectedSection, library: Record<string, string>): string {
+  const kind = kindOf(section)
+  return Object.keys(library).find(name => matches(section, name)) ?? (kind ? sectionKind(kind).label : section.elementId)
+}
+function sectionDetail(section: DetectedSection): string {
+  const marker = section.marker === 'data-section' ? `data-section=${section.elementId}` : `#${section.elementId}`
+  const pages = section.usedBy?.length ? ` · on ${section.usedBy.map(use => use.file).join(', ')}` : ''
+  return `${marker} · ${section.file}:${section.line}${pages}`
 }
 
 export function paletteActions({ report, tab, query, launcherHidden, shortcut, sections, handlers }: PaletteOptions): PaletteAction[] {
@@ -76,13 +93,13 @@ export function paletteActions({ report, tab, query, launcherHidden, shortcut, s
       ? [
         ...(report?.sections ?? []).map(section => ({
           id: `section:edit:${section.id}`,
-          name: `Edit ${Object.keys(sections).find(name => sectionKey(name) === sectionKey(section.elementId)) ?? section.elementId}`,
-          detail: `#${section.elementId} · ${section.file}:${section.line}`,
+          name: `Edit ${sectionName(section, sections)}`,
+          detail: sectionDetail(section),
           icon: 'component',
           group: 'Existing sections',
           run: () => handlers.editSection(section)
         })),
-        ...Object.entries(sections).filter(([name]) => !(report?.sections ?? []).some(section => sectionKey(section.elementId) === sectionKey(name))).map(([name, snippet]) => ({
+        ...Object.entries(sections).filter(([name]) => !(report?.sections ?? []).some(section => matches(section, name))).map(([name, snippet]) => ({
           id: `section:${name}`,
           name: `Create ${name}`,
           detail: 'Add to a page draft',
